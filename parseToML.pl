@@ -40,13 +40,17 @@ parseNextInput( InFile, Clause, OutFile ) :-
         splitClause( Clause, Head, Body ), 
         parseTerm( Head, OutFile ), 
 		splitCompoundTerm( Body, ListBody ),
+		write( OutFile, '[' ),
 		parsePredList( ListBody, OutFile ), 
+		write( OutFile, ']' ),
 		parseProgram( InFile, OutFile ).
 % If In is a query...
 parseNextInput( InFile, Query, OutFile ) :- 
         splitQuery( Query, Body ), 
 		splitCompoundTerm( Body, ListBody ),
+		write( OutFile, '[' ),
 		parsePredList( ListBody, OutFile ), 
+		write( OutFile, ']' ),
 		parseProgram( InFile, OutFile ).
 % Or if In is a fact...
 parseNextInput( InFile, Fact, OutFile ) :- 
@@ -66,11 +70,15 @@ parseTerm( Term, OutFile ) :-
 
 % parsePredList( +Preds, +OutFile )
 % Writes an ML datastructure to OutFile representing the list of predicates.
+% Doesn't output the enclosing square brackets.
 %%%%%
+parsePredList( [], _ ).
+parsePredList( [X], OutFile ) :-
+        parseTerm( X, OutFile ).
 parsePredList( [H|T], OutFile ) :- 
         parseTerm( H, OutFile ), 
+		write( OutFile, ', ' ),
 		parsePredList( T, OutFile ).
-parsePredList( [], _ ).
 		
 % parseTermArgs( +Term, +OutFile, +Arity )
 % Writes a list of the args of a compound Term to OutFile. Outputs an empty 
