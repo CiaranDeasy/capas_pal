@@ -57,8 +57,12 @@ parseNextInput( InFile, Fact, OutFile ) :-
 % Writes an ML datastructure to OutFile representing the Term.
 %%%%%
 parseTerm( Term, OutFile ) :- 
+        write( OutFile, 'Term( Functor( "' ), 
         functor( Term, Functor, Arity ), 
-		parseTermArgs( Term, OutFile, Arity ).
+		write( OutFile, Functor ),
+		write( OutFile, '" ), ' ),
+		parseTermArgs( Term, OutFile, Arity ),
+		write( OutFile, ' )' ).
 
 % parsePredList( +Preds, +OutFile )
 % Writes an ML datastructure to OutFile representing the list of predicates.
