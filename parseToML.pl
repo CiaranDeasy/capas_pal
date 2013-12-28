@@ -74,13 +74,13 @@ parseTermArgs( _, _, _ ).
 % parseSingleTermArg( +Term, +Arity, +ArgNo, +OutFile )
 %%%%%
 % Special case: unary Term.
-parseSingleTermArg( Arg, 1, 1, OutFile ) :- write( OutFile, '[' ), write( OutFile, Arg ), write( OutFile, ']' ), !.
+parseSingleTermArg( Arg, 1, 1, OutFile ) :- write( OutFile, '["' ), write( OutFile, Arg ), write( OutFile, '"]' ), !.
 % First arg.
-parseSingleTermArg( Arg, 1, _, OutFile ) :- write( OutFile, '[' ), write( OutFile, Arg ), write( OutFile, ', ' ), !.
+parseSingleTermArg( Arg, 1, _, OutFile ) :- write( OutFile, '["' ), write( OutFile, Arg ), write( OutFile, '", ' ), !.
 % Last arg.
-parseSingleTermArg( Arg, Arity, Arity, OutFile ) :- write( OutFile, Arg ), write( OutFile, ']' ), !.
+parseSingleTermArg( Arg, Arity, Arity, OutFile ) :- write( OutFile, '"' ), write( OutFile, Arg ), write( OutFile, '"]' ), !.
 % Other args.
-parseSingleTermArg( Arg, _, _, OutFile ) :- write( OutFile, Arg ), write( OutFile, ', ' ).
+parseSingleTermArg( Arg, _, _, OutFile ) :- write( OutFile, '"' ), write( OutFile, Arg ), write( OutFile, '", ' ).
 
 
 :- open( "infile.txt", read, InFile ),
