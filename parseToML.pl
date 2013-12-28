@@ -1,10 +1,3 @@
-%foo(X) :- read(X).
-
-%take([H|T], H, T).
-%take([H|T], X, [H|S]) :- take(T, X, S).
-
-%:- read(X). take([1,2], 1, [2]). print(X).
-
 parseNext( end_of_file, _ ) :- !.
 parseNext( Term, OutFile ) :- splitClause( Term, Term, null ), functor( Term, Functor, Arity ), writeArgs( Term, OutFile, Arity ).  %print "Term.
 
@@ -18,13 +11,14 @@ writeNextArg( Arg, Arity, Arity, OutFile ) :- write( OutFile, Arg ), write( OutF
 writeNextArg( Arg, _, _, OutFile ) :- write( OutFile, Arg ), write( OutFile, ', ' ).
 
 % splitClause( +Clause, -Head, -Body )
-% This predicate takes a clause as input and 
 % If the first value is a clause, the second and third will be the head and 
-% body respectively.
+% body respectively. Otherwise, fail.
 splitClause( X:-Y, X, Y ).
-% If the first value is not a clause, the second will be the term itself and 
-% the third will be "null".
-splitClause( X, X, null ).
+
+% splitQuery( +Query, -Body )
+% If the first value is a query, the second will be the body of the query (ie:
+% without the ':-').
+splitQuery( :-X, X ).
 
 % splitCompoundTerm( +CompoundTerm, -ListOfTerms )
 % This predicate takes a compound term, of the form (X1, X2, ..., Xn) and 
@@ -41,6 +35,9 @@ read(File, _),
 %read(File, Z),
 read(File, A),
 parseNext( A, OutFile ),
+read(File, _), read(File, B),
+splitQuery(B, C),
 close(File),
 %write(Outfile, [Y, I, J, K, A]),
+print( C ),
 close(OutFile).
