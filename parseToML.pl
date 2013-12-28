@@ -45,7 +45,8 @@ parseNextInput( InFile, Clause, OutFile ) :-
 % If In is a query...
 parseNextInput( InFile, Query, OutFile ) :- 
         splitQuery( Query, Body ), 
-		parsePredList( Body, OutFile ), 
+		splitCompoundTerm( Body, ListBody ),
+		parsePredList( ListBody, OutFile ), 
 		parseProgram( InFile, OutFile ).
 % Or if In is a fact...
 parseNextInput( InFile, Fact, OutFile ) :- 
