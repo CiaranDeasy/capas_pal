@@ -98,6 +98,11 @@ parseQuery( Body, OutFile ) :-
 % Writes an ML datastructure to OutFile representing the Term.
 %%%%%
 parseTerm( Term, OutFile ) :- 
+        var( Term ),
+        write( OutFile, 'Variable( "' ), 
+		write( OutFile, Term ),
+		write( OutFile, '" )' ).
+parseTerm( Term, OutFile ) :- 
         write( OutFile, 'Term( Functor( "' ), 
         functor( Term, Functor, Arity ), 
 		write( OutFile, Functor ),
@@ -137,27 +142,29 @@ parseTermArgs( _, _, _ ).
 %%%%%
 % Special case: unary Term.
 parseSingleTermArg( Arg, 1, 1, OutFile ) :- 
-        write( OutFile, '["' ), 
-		write( OutFile, Arg ), 
-		write( OutFile, '"]' ), 
+        write( OutFile, '[' ), 
+%		write( OutFile, Arg ), 
+        parseTerm( Arg, OutFile ),
+		write( OutFile, ']' ), 
 		!.
 % First arg.
 parseSingleTermArg( Arg, 1, _, OutFile ) :- 
-        write( OutFile, '["' ), 
-		write( OutFile, Arg ), 
-		write( OutFile, '", ' ), 
+        write( OutFile, '[' ), 
+%		write( OutFile, Arg ), 
+        parseTerm( Arg, OutFile ),
+		write( OutFile, ', ' ), 
 		!.
 % Last arg.
 parseSingleTermArg( Arg, Arity, Arity, OutFile ) :- 
-        write( OutFile, '"' ), 
-		write( OutFile, Arg ), 
-		write( OutFile, '"]' ), 
+%		write( OutFile, Arg ), 
+        parseTerm( Arg, OutFile ),
+		write( OutFile, ']' ), 
 		!.
 % Other args.
 parseSingleTermArg( Arg, _, _, OutFile ) :- 
-        write( OutFile, '"' ), 
-		write( OutFile, Arg ), 
-		write( OutFile, '", ' ).
+%		write( OutFile, Arg ), 
+        parseTerm( Arg, OutFile ),
+		write( OutFile, ', ' ).
 
 % writeUnlessQueryOrEOF( +OutFile, +Out, +Condition )
 % If Condition is a query term or "end_of_file", then this predicate succeeds  
