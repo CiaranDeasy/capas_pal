@@ -25,6 +25,7 @@ splitCompoundTerm( X, [X] ).
 % Read an input, and pass it on to be parsed, along with the filehandle for the
 % rest of the program.
 parseProgram( InFile, OutFile ) :- 
+        
         read( InFile, In ), 
 		parseNextInput( InFile, In, OutFile ).
 
@@ -38,24 +39,34 @@ parseNextInput( _, end_of_file, _ ).
 % If In is a clause...
 parseNextInput( InFile, Clause, OutFile ) :- 
         splitClause( Clause, Head, Body ), 
+		!, 
+        write( OutFile, 'Clause( ' ),
         parseTerm( Head, OutFile ), 
+		write( OutFile, ', ' ),
 		splitCompoundTerm( Body, ListBody ),
 		write( OutFile, '[' ),
 		parsePredList( ListBody, OutFile ), 
-		write( OutFile, ']' ),
-		parseProgram( InFile, OutFile ).
+		write( OutFile, '] )\n' ),
+		read( InFile, In ),
+		parseNextInput( InFile, In, OutFile ).
 % If In is a query...
 parseNextInput( InFile, Query, OutFile ) :- 
         splitQuery( Query, Body ), 
+		!, 
+		write( OutFile, 'Query ( ' ),
 		splitCompoundTerm( Body, ListBody ),
 		write( OutFile, '[' ),
 		parsePredList( ListBody, OutFile ), 
-		write( OutFile, ']' ),
-		parseProgram( InFile, OutFile ).
+		write( OutFile, '] )\n' ),
+		read( InFile, In ),
+		parseNextInput( InFile, In, OutFile ).
 % Or if In is a fact...
 parseNextInput( InFile, Fact, OutFile ) :- 
+        write( OutFile, 'Clause( ' ),
         parseTerm( Fact, OutFile ), 
-		parseProgram( InFile, OutFile ).
+		write( OutFile, ', [] )\n' ),
+		read( InFile, In ),
+		parseNextInput( InFile, In, OutFile ).
 
 % parseTerm( +Term, +OutFile )
 % Writes an ML datastructure to OutFile representing the Term.
