@@ -25,19 +25,25 @@ splitCompoundTerm( X, [X] ).
 % Read an input, and pass it on to be parsed, along with the filehandle for the
 % rest of the program.
 parseProgram( InFile, OutFile ) :- 
-        
+        write( OutFile, 'val program = Program( [' ),
         read( InFile, In ), 
 		parseNextInput( InFile, In, OutFile ).
 
 % parseNextInput( +InFile, +In, +OutFile )
-% Reads the In term, and outputs an ML datastructure representing that term, 
-% then calls parseProgram to parse the rest of the InFile.
+% Outputs an ML datastructure representing the "In" term, then reads another 
+% term from InFile and calls parseNextInput on that term.
 %%%%%
-% If we're at the end of the InFile, then do nothing, and don't ask 
-% ParseProgram for anything else.
-parseNextInput( _, end_of_file, _ ).
+% On the first call, initialise the query list to empty.
+parseNextInput( InFile, In, OutFile ) :- parseNextInput( InFile, In, OutFile, [] ).
+
+% If we're at the end of the InFile, then stop.
+parseNextInput( _, end_of_file, OutFile, Queries ) :-
+        write( OutFile, '] );\n' ),
+        write( OutFile, 'val queries = [' ),
+        parseQueries( Queries, OutFile ),
+		write( OutFile, '];' ).
 % If In is a clause...
-parseNextInput( InFile, Clause, OutFile ) :- 
+parseNextInput( InFile, Clause, OutFile, Queries ) :- 
         splitClause( Clause, Head, Body ), 
 		!, 
         write( OutFile, 'Clause( ' ),
@@ -46,27 +52,47 @@ parseNextInput( InFile, Clause, OutFile ) :-
 		splitCompoundTerm( Body, ListBody ),
 		write( OutFile, '[' ),
 		parsePredList( ListBody, OutFile ), 
-		write( OutFile, '] )\n' ),
+		write( OutFile, '] )' ),
 		read( InFile, In ),
-		parseNextInput( InFile, In, OutFile ).
-% If In is a query...
-parseNextInput( InFile, Query, OutFile ) :- 
-        splitQuery( Query, Body ), 
+		writeUnlessQueryOrEOF( OutFile, ', \n', In),
+		parseNextInput( InFile, In, OutFile, Queries ).
+% If In is a query, add it to the list and move on.
+parseNextInput( InFile, Query, OutFile, Queries ) :- 
+        splitQuery( Query, QueryBody ), 
 		!, 
+        read( InFile, In ),
+		writeUnlessQueryOrEOF( OutFile, ', \n', In),
+        parseNextInput( InFile, In, OutFile, [ QueryBody | Queries ] ).
+% Or if In is a fact...
+parseNextInput( InFile, Fact, OutFile, Queries ) :- 
+        write( OutFile, 'Clause( ' ),
+        parseTerm( Fact, OutFile ), 
+		write( OutFile, ', [] )' ),
+		read( InFile, In ),
+		writeUnlessQueryOrEOF( OutFile, ', \n', In),
+		parseNextInput( InFile, In, OutFile, Queries ).
+
+% parseQueries( +QueryList, +OutFile )
+% Writes an ML datastructure representing a list of queries. Does not output
+% the enclosing square brackets.
+%%%%%
+parseQueries( [], _ ).
+parseQueries( [X], OutFile ) :-
+        parseQuery( X, OutFile ).
+parseQueries( [H|T], OutFile ) :-
+        parseQuery( H, OutFile ),
+		write( OutFile, ', ' ),
+		parseQueries( T, OutFile ).
+
+% parseQuery( +Query, +OutFile )
+% Writes an ML datastructure representing a single query.
+%%%%%
+parseQuery( Body, OutFile ) :-
 		write( OutFile, 'Query ( ' ),
 		splitCompoundTerm( Body, ListBody ),
 		write( OutFile, '[' ),
 		parsePredList( ListBody, OutFile ), 
-		write( OutFile, '] )\n' ),
-		read( InFile, In ),
-		parseNextInput( InFile, In, OutFile ).
-% Or if In is a fact...
-parseNextInput( InFile, Fact, OutFile ) :- 
-        write( OutFile, 'Clause( ' ),
-        parseTerm( Fact, OutFile ), 
-		write( OutFile, ', [] )\n' ),
-		read( InFile, In ),
-		parseNextInput( InFile, In, OutFile ).
+		write( OutFile, '] )' ).
 
 % parseTerm( +Term, +OutFile )
 % Writes an ML datastructure to OutFile representing the Term.
@@ -133,9 +159,22 @@ parseSingleTermArg( Arg, _, _, OutFile ) :-
 		write( OutFile, Arg ), 
 		write( OutFile, '", ' ).
 
+% writeUnlessQueryOrEOF( +OutFile, +Out, +Condition )
+% If Condition is a query term or "end_of_file", then this predicate succeeds  
+% without writing to OutFile. Otherwise, it writes Out to OutFile and then 
+% succeeds.
+%%%%%
+% EOF case:
+writeUnlessQueryOrEOF( _, _, end_of_file ).
+% Query case:
+writeUnlessQueryOrEOF( _, _, Query ) :- 
+    splitQuery( Query, _ ).
+% Else do the write:
+writeUnlessQueryOrEOF( OutFile, Out, _ ) :-
+    write( OutFile, Out ).
 
 :- open( "infile.txt", read, InFile ),
-open( "outfile.txt", write, OutFile ),
+open( "outfile.sml", write, OutFile ),
 parseProgram( InFile, OutFile ),
 close( InFile ),
 close( OutFile ).
