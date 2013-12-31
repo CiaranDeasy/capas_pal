@@ -48,3 +48,20 @@ fun flip( x, y ) = ( y, x );
    order. *)
 fun flipBinding ( Binding( x, y ) ) = Binding( y, x );
 
+(* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
+   common term, then the first value is true, and the second value is the 
+   Binding containing the two distinct terms (ie: the Binding that exists by 
+   transitivity). If they do not share a common term, then the first value is 
+   false. *)
+fun getTransitiveBinding ( Binding( term1A, term1B ) ) 
+            ( Binding( term2A, term2B ) ) = 
+	    if( term1A = term2A )
+		    then ( true, Binding( term1B, term2B ) )
+		else if( term1A = term2B )
+		    then ( true, Binding( term1B, term2A ) )
+		else if( term1B = term2A )
+		    then ( true, Binding( term1A, term2B ) )
+		else if( term1B = term2B )
+		    then ( true, Binding( term1A, term2A ) )
+		else ( false, Binding( term1A, term2A ) );
+

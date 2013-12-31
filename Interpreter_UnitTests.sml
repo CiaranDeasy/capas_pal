@@ -26,7 +26,31 @@ fun unitTest() =
 	printResult ( andList [] ) true;
 	printResult ( flip (1,2) ) (2,1);
 	printResult ( 
-	  flipBinding ( Binding( Variable("1"), Variable("2") ) ) ) 
-	  ( Binding( Variable("2"), Variable("1") ) )
-    )
+	  flipBinding ( Binding( Variable("1"), Variable("2") ) ) 
+	) (
+	  Binding( Variable("2"), Variable("1") ) )
+    );
+	printResult (
+	  getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
+	  ( Binding( Variable("2"), Variable("3") ) ) 
+	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	printResult (
+	  getTransitiveBinding ( Binding( Variable("2"), Variable("1") ) )
+	    ( Binding( Variable("2"), Variable("3") ) )
+	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	printResult (
+	  getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
+	    ( Binding( Variable("3"), Variable("2") ) ) 
+	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	  
+	printResult (
+	  getTransitiveBinding ( Binding( Variable("2"), Variable("1") ) )
+	    ( Binding( Variable("3"), Variable("2") ) )
+	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	printResult (
+	  first( 
+	    getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
+	      ( Binding( Variable("3"), Variable("4") ) )
+      )
+	) false
     end end;
