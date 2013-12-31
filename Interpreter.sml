@@ -15,20 +15,40 @@ Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor(
 val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675" )] ), Term( Functor( "likes" ), [Variable( "_G1675" ), Term( Functor( "honey" ), [] )] )] )];
 
 
-
 (* Takes a list and a value. Returns true if the value is in the list. *)
 fun member x [] = false
   | member x (y::ys) = (x = y) orelse member x ys
   
-(* Takes two lists, and removes from the first any elements that occur in the second. *)
+(* Takes two lists, and removes from the first any elements that occur in the 
+   second. *)
 fun removeDuplicates [] ys = []
-  | removeDuplicates (x::xs) ys = if ( member x ys ) then removeDuplicates xs ys else (x::( removeDuplicates xs ys ));
+  | removeDuplicates (x::xs) ys = 
+        if ( member x ys ) 
+		    then removeDuplicates xs ys 
+	    else (x::( removeDuplicates xs ys ));
+
+(* Takes two lists of equal length, and returns a list of 2-tuples, where the 
+   i'th tuple contains the i'th element of each input list. *)
+fun zip [] [] = []
+  | zip (x::xs) (y::ys) = (x,y) :: (zip xs ys);
+
+(* Return the first and second elements of an input 2-tuple, respectively. *)
+fun first (a, b) = a;
+fun second (a, b) = b;
+
+(* Takes a list of bools and returns the result of ANDing them all together. *)
+fun andList [] = true
+  | andList (x::xs) = x andalso andList xs;
+
+(* Takes a 2-tuple and returns the a 2-tuple with the same elements in reverse 
+   order. *)
+fun flip( x, y ) = ( y, x );
 
 
 
 fun unitTest() = 
         let val testNo = ref 1 in 
-		let fun printTestResult actualResult expectedResult = (
+		let fun printResult actualResult expectedResult = (
 		    if( actualResult = expectedResult )
 		        then ( print "Test "; print ( Int.toString (!testNo) ); 
 			    print " passed.\n" )
@@ -36,12 +56,21 @@ fun unitTest() =
 			    print " FAILED!!!!!\n" ); ( testNo := (!testNo) + 1 ) 
 		) in
 			
-		( printTestResult ( member 1 [1,2,3] ) true;
-          printTestResult ( member 3 [1,2,3] ) true;
-          printTestResult ( member 4 [1,2,3] ) false;
-          printTestResult ( member 4 [] ) false;
-          printTestResult ( removeDuplicates [2,3,4] [1,2,3] ) [4];
-          printTestResult ( removeDuplicates [] [1,2,3] ) [];
-          printTestResult ( removeDuplicates [2,3,4] [] ) [2,3,4]
+		( printResult ( member 1 [1,2,3] ) true;
+          printResult ( member 3 [1,2,3] ) true;
+          printResult ( member 4 [1,2,3] ) false;
+          printResult ( member 4 [] ) false;
+          printResult ( removeDuplicates [2,3,4] [1,2,3] ) [4];
+          printResult ( removeDuplicates [] [1,2,3] ) [];
+          printResult ( removeDuplicates [2,3,4] [] ) [2,3,4];
+          printResult ( zip [1,2] [3,4] ) [(1,3),(2,4)];
+          printResult ( zip [1] [2] ) [(1,2)];
+          printResult ( zip [] [] ) [];
+          printResult ( first (1,2) ) 1;
+          printResult ( second (1,2) ) 2;
+		  printResult ( andList [true, false, true] ) false;
+		  printResult ( andList [true, true, true] ) true;
+		  printResult ( andList [] ) true;
+		  printResult ( flip (1,2) ) (2,1)
           )
 		end end;
