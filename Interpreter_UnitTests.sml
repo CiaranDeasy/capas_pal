@@ -12,9 +12,9 @@ fun unitTest() =
     printResult ( member 3 [1,2,3] ) true;
     printResult ( member 4 [1,2,3] ) false;
     printResult ( member 4 [] ) false;
-    printResult ( removeDuplicates [2,3,4] [1,2,3] ) [4];
-    printResult ( removeDuplicates [] [1,2,3] ) [];
-    printResult ( removeDuplicates [2,3,4] [] ) [2,3,4];
+    printResult ( removeWithBlacklist [2,3,4] [1,2,3] ) [4];
+    printResult ( removeWithBlacklist [] [1,2,3] ) [];
+    printResult ( removeWithBlacklist [2,3,4] [] ) [2,3,4];
     printResult ( zip [1,2] [3,4] ) [(1,3),(2,4)];
     printResult ( zip [1] [2] ) [(1,2)];
     printResult ( zip [] [] ) [];

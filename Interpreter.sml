@@ -21,11 +21,11 @@ fun member x [] = false
   
 (* Takes two lists, and removes from the first any elements that occur in the 
    second. *)
-fun removeDuplicates [] ys = []
-  | removeDuplicates (x::xs) ys = 
+fun removeWithBlacklist [] ys = []
+  | removeWithBlacklist (x::xs) ys = 
         if ( member x ys ) 
-		    then removeDuplicates xs ys 
-	    else (x::( removeDuplicates xs ys ));
+		    then removeWithBlacklist xs ys 
+	    else (x::( removeWithBlacklist xs ys ));
 
 (* Takes two lists of equal length, and returns a list of 2-tuples, where the 
    i'th tuple contains the i'th element of each input list. *)
