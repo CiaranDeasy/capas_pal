@@ -44,6 +44,10 @@ fun andList [] = true
    order. *)
 fun flip( x, y ) = ( y, x );
 
+(* Takes a binding and returns another Binding with the elements in reverse 
+   order. *)
+fun flipBinding ( Binding( x, y ) ) = Binding( y, x );
+
 
 
 fun unitTest() = 
@@ -66,11 +70,15 @@ fun unitTest() =
           printResult ( zip [1,2] [3,4] ) [(1,3),(2,4)];
           printResult ( zip [1] [2] ) [(1,2)];
           printResult ( zip [] [] ) [];
+		  
           printResult ( first (1,2) ) 1;
           printResult ( second (1,2) ) 2;
 		  printResult ( andList [true, false, true] ) false;
 		  printResult ( andList [true, true, true] ) true;
 		  printResult ( andList [] ) true;
-		  printResult ( flip (1,2) ) (2,1)
+		  printResult ( flip (1,2) ) (2,1);
+		  printResult ( 
+		          flipBinding ( Binding( Variable("1"), Variable("2") ) ) ) 
+				  ( Binding( Variable("2"), Variable("1") ) )
           )
 		end end;
