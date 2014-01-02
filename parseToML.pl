@@ -40,7 +40,7 @@ parseProgram( InFileName, OutFileName ) :-
 % On the first call, initialise the query list to empty.
 parseNextInput( InFile, In, OutFile ) :- parseNextInput( InFile, In, OutFile, [] ).
 
-% If we're at the end of the InFile, then stop.
+% If we're at the end of the InFile, then process all the queries and stop.
 parseNextInput( _, end_of_file, OutFile, Queries ) :-
         write( OutFile, '] );\n' ),
         write( OutFile, 'val queries = [' ),
