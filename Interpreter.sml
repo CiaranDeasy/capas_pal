@@ -48,6 +48,9 @@ fun flip( x, y ) = ( y, x );
    order. *)
 fun flipBinding ( Binding( x, y ) ) = Binding( y, x );
 
+(* Equality test for Bindings *)
+fun eqBinding( x, y ) = (x = y) orelse ( x = (flipBinding y) ); 
+
 (* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
    common term, then the first value is true, and the second value is the 
    Binding containing the two distinct terms (ie: the Binding that exists by 
@@ -64,4 +67,4 @@ fun getTransitiveBinding ( Binding( term1A, term1B ) )
 		else if( term1B = term2B )
 		    then ( true, Binding( term1A, term2A ) )
 		else ( false, Binding( term1A, term2A ) );
-
+		
