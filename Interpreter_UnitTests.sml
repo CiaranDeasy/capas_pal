@@ -1,11 +1,14 @@
 fun unitTest() = 
   let val testNo = ref 1 in 
-  let fun printResult actualResult expectedResult = (
-    if( actualResult = expectedResult )
+  let fun printResultPoly actualResult expectedResult eqTest = (
+    if( eqTest( actualResult, expectedResult ) )
 	  then ( print "Test "; print ( Int.toString (!testNo) ); 
 	    print " passed.\n" )
 	else ( print "Test "; print ( Int.toString (!testNo) ); 
 	    print " FAILED!!!!!\n" ); ( testNo := (!testNo) + 1 ) 
+  ) in
+  let fun printResult actualResult expectedResult = (
+    printResultPoly actualResult expectedResult op=
   ) in
 			
   ( printResult ( member 1 [1,2,3] ) true;
@@ -28,7 +31,7 @@ fun unitTest() =
 	printResult ( 
 	  flipBinding ( Binding( Variable("1"), Variable("2") ) ) 
 	) (
-	  Binding( Variable("2"), Variable("1") ) )
+	  Binding( Variable("2"), Variable("1") )
     );
 	printResult (
 	  getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
@@ -53,4 +56,6 @@ fun unitTest() =
 	      ( Binding( Variable("3"), Variable("4") ) )
       )
 	) false
-    end end;
+  )
+	
+  end end end;
