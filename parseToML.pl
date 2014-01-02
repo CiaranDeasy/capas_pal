@@ -19,15 +19,19 @@ splitCompoundTerm( (X, Y), [X | T] ) :-
 splitCompoundTerm( X, [X] ).
 
 % parseProgram( +InFile, +OutFile )
-% Reads a Prolog program from InFile, and outputs an ML datastructure 
-% representing that program to OutFile.
+% Reads a Prolog program from InFileName, and outputs an ML datastructure 
+% representing that program to OutFileName.
 %%%%%
-% Read an input, and pass it on to be parsed, along with the filehandle for the
-% rest of the program.
-parseProgram( InFile, OutFile ) :- 
+% Open the files, then read an input, and pass it on to be parsed, along with 
+% the filehandle for the rest of the program. Close the files afterwards.
+parseProgram( InFileName, OutFileName ) :- 
+        open( InFileName, read, InFile ),
+        open( OutFileName, write, OutFile ),
         write( OutFile, 'val program = Program( [' ),
         read( InFile, In ), 
-		parseNextInput( InFile, In, OutFile ).
+		parseNextInput( InFile, In, OutFile ),
+        close( InFile ),
+        close( OutFile ).
 
 % parseNextInput( +InFile, +In, +OutFile )
 % Outputs an ML datastructure representing the "In" term, then reads another 
@@ -176,10 +180,3 @@ writeUnlessQueryOrEOF( _, _, Query ) :-
 % Else do the write:
 writeUnlessQueryOrEOF( OutFile, Out, _ ) :-
     write( OutFile, Out ).
-
-:- open( "cfd27.pl", read, InFile ),
-%:- open( "infile.txt", read, InFile ),
-open( "outfile.sml", write, OutFile ),
-parseProgram( InFile, OutFile ),
-close( InFile ),
-close( OutFile ).
