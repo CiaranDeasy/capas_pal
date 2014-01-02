@@ -71,6 +71,24 @@ fun unitTest() =
 	printResult (
 	  eqBinding( Binding( Variable("1"), Variable("2") ), 
 	    Binding( Variable("3"), Variable("1") ) )
+	) false;
+	printResult (
+	  eqTupleBinding(
+	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
+	    ( false, ( Binding( Variable("1"), Variable("2") ) ) )
+	  )
+	) false;
+	printResult (
+	  eqTupleBinding(
+	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
+	    ( true, ( Binding( Variable("2"), Variable("1") ) ) )
+	  )
+	) true;
+	printResult (
+	  eqTupleBinding( 
+	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
+	    ( true, ( Binding( Variable("1"), Variable("3") ) ) )
+	  )
 	) false
 	(*printResult (
 	  first( 
