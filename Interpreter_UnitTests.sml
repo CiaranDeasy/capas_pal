@@ -135,15 +135,24 @@ fun unitTest() =
 	    [ ( Binding( Variable("1"), Variable("2") ) ) ]
 	  )
 	) false;
-	
-    (*printResultPoly (
+	printResultPoly "getAllTransitiveBindings 1" (
 	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
 	      [ ( Binding( Variable("2"), Variable("3") ) ),
 		    ( Binding( Variable("3"), Variable("4") ) ),
 		    ( Binding( Variable("4"), Variable("2") ) ) ]
 	) [ ( Binding( Variable("1"), Variable("3") ) ), 
 	    ( Binding( Variable("1"), Variable("4") ) ) 
-	  ] eqBinding*)
+	  ] eqBindingList;
+	printResultPoly "getAllTransitiveBindings 2" (
+	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
+	      []
+	) [] eqBindingList;
+	printResultPoly "getAllTransitiveBindings 3" (
+	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("5") ) )
+	      [ ( Binding( Variable("2"), Variable("3") ) ),
+		    ( Binding( Variable("3"), Variable("4") ) ),
+		    ( Binding( Variable("4"), Variable("2") ) ) ]
+	) [] eqBindingList;
 	  
 	conclude()
   )

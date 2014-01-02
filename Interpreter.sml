@@ -80,3 +80,14 @@ fun getTransitiveBinding ( Binding( term1A, term1B ) )
 		    then ( true, Binding( term1A, term2A ) )
 		else ( false, Binding( term1A, term2A ) );
 		
+(* Takes a binding x and a list of bindings. Returns all transitive bindings 
+   that are implied by adding x to the list. *)
+fun getAllTransitiveBindings x [] = []
+  | getAllTransitiveBindings x (y::ys) = 
+    let val transitive = getTransitiveBinding x y in
+		if ( first transitive )
+		    then ( ( second transitive ) :: ( getAllTransitiveBindings x ys ) )
+		else
+		    getAllTransitiveBindings x ys
+	end;
+
