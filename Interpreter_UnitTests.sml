@@ -89,15 +89,40 @@ fun unitTest() =
 	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
 	    ( true, ( Binding( Variable("1"), Variable("3") ) ) )
 	  )
+	) false;
+	printResult (
+	  eqBindingList( 
+	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
+	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ]
+	  )
+	) true;
+	printResult (
+	  eqBindingList( 
+	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
+	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("6") ) ) ]
+	  )
+	) false;
+	printResult (
+	  eqBindingList( [], [] )
+	) true;
+	printResult (
+	  eqBindingList( [], [ ( Binding( Variable("1"), Variable("2") ) ) ] )
+	) false;
+	printResult (
+	  eqBindingList( 
+	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
+	    [ ( Binding( Variable("1"), Variable("2") ) ) ]
+	  )
 	) false
-	(*printResult (
-	  first( 
-	    getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
+	
+    (*printResultPoly (
+	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
 	      [ ( Binding( Variable("2"), Variable("3") ) ),
 		    ( Binding( Variable("3"), Variable("4") ) ),
 		    ( Binding( Variable("4"), Variable("2") ) ) ]
-      )
-	) false*)
+	) [ ( Binding( Variable("1"), Variable("3") ) ), 
+	    ( Binding( Variable("1"), Variable("4") ) ) 
+	  ] eqBinding*)
   )
 	
   end end end;

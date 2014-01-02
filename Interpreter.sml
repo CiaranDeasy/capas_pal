@@ -55,6 +55,13 @@ fun eqBinding( x, y ) = (x = y) orelse ( x = (flipBinding y) );
 fun eqTupleBinding( x, y ) = 
         ( (first x) = (first y) ) andalso 
           ( eqBinding( ( second x ), (second y) ) ) ; 
+		  
+(* Equality test for lists of Bindings. *)
+fun eqBindingList( [], [] ) = true
+  | eqBindingList( [], ys ) = false
+  | eqBindingList( xs, [] ) = false
+  | eqBindingList( (x::xs), (y::ys) ) = 
+        eqBinding( x, y ) andalso eqBindingList( xs, ys );
 
 (* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
    common term, then the first value is true, and the second value is the 
