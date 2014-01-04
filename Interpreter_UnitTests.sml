@@ -181,6 +181,48 @@ fun unitTest() =
 		    ( Binding( Variable("4"), Variable("2") ) ) ]
 	) [] eqUnorderedBindingList;
 	
+	printResultPoly "getTransitiveClosure 1" (
+	  getTransitiveClosure [ ( Binding( Variable("1"), Variable("2") ) ),
+	                         ( Binding( Variable("3"), Variable("2") ) ),
+	                         ( Binding( Variable("2"), Variable("4") ) ),
+	                         ( Binding( Variable("5"), Variable("7") ) ),
+	                         ( Binding( Variable("7"), Variable("6") ) ) ]
+	) [ ( Binding( Variable("1"), Variable("2") ) ),
+	    ( Binding( Variable("1"), Variable("3") ) ),
+	    ( Binding( Variable("1"), Variable("4") ) ),
+	    ( Binding( Variable("2"), Variable("3") ) ),
+	    ( Binding( Variable("2"), Variable("4") ) ),
+	    ( Binding( Variable("3"), Variable("4") ) ),
+	    ( Binding( Variable("5"), Variable("6") ) ),
+	    ( Binding( Variable("5"), Variable("7") ) ),
+	    ( Binding( Variable("6"), Variable("7") ) ) ]
+		  eqUnorderedBindingList;
+		  
+    printResultPoly "getTransitiveClosure 2" (
+	  getTransitiveClosure [ ( Binding( Variable("1"), Variable("2") ) ),
+	                         ( Binding( Variable("1"), Variable("3") ) ),
+	                         ( Binding( Variable("1"), Variable("4") ) ),
+	                         ( Binding( Variable("2"), Variable("3") ) ),
+	                         ( Binding( Variable("2"), Variable("4") ) ),
+	                         ( Binding( Variable("3"), Variable("4") ) ),
+	                         ( Binding( Variable("5"), Variable("6") ) ),
+	                         ( Binding( Variable("5"), Variable("7") ) ),
+	                         ( Binding( Variable("6"), Variable("7") ) ) ]
+	) [ ( Binding( Variable("1"), Variable("2") ) ),
+	    ( Binding( Variable("1"), Variable("3") ) ),
+	    ( Binding( Variable("1"), Variable("4") ) ),
+	    ( Binding( Variable("2"), Variable("3") ) ),
+	    ( Binding( Variable("2"), Variable("4") ) ),
+	    ( Binding( Variable("3"), Variable("4") ) ),
+	    ( Binding( Variable("5"), Variable("6") ) ),
+	    ( Binding( Variable("5"), Variable("7") ) ),
+	    ( Binding( Variable("6"), Variable("7") ) ) ]
+		  eqUnorderedBindingList;
+		  
+    printResultPoly "getTransitiveClosure 3" (
+	  getTransitiveClosure []
+	) [] eqUnorderedBindingList;
+	
 	  
 	conclude()
   )

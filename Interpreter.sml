@@ -112,3 +112,17 @@ fun getAllTransitiveBindings x [] = []
 		    getAllTransitiveBindings x ys
 	end;
 
+(* Takes a list of Bindings and returns the transitive closure. *)
+fun getTransitiveClosure xs = 
+    (* Start with an empty list, add each input Binding one by one, adding the 
+	   transitive links each time. *)
+    let fun getTransitiveClosureWorker [] ys = ys
+          | getTransitiveClosureWorker (x::xs) ys = 
+            if ( memberPoly x ys eqBinding )
+		        then getTransitiveClosureWorker xs ys
+		    else
+		        getTransitiveClosureWorker xs 
+				        ( (x::ys) @ ( getAllTransitiveBindings x ys ) ) in 
+		getTransitiveClosureWorker xs []
+	end;
+
