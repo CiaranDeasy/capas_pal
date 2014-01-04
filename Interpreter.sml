@@ -139,24 +139,6 @@ fun getTransitiveClosure xs =
 fun combineUnifiers [] = []
   | combineUnifiers ((Unifier(xs))::ys) = xs @ ( combineUnifiers ys );
 
-
-(* Takes a list of bindings and returns a (bool, Unifier) tuple. If the 
-   bindings are consistent, then the first value is true and the second value 
-   is a Unifier containing the bindings. If the bindings are inconsistent, then
-   the first value is false. *)
-(*fun validateUnifier xs = 
-    let val transitiveClosure = getTransitiveClosure xs in
-	    if( consistentBindings transitiveClosure )
-		    then ( true, Unifier( transitiveClosure ) )
-		else
-		    ( false, Unifier( [] ) )
-	end;
-			
-(* Takes a list of Bindings and returns true if the Bindings are consistent. *)
-fun consistentBindings [] = true;
-  | consistentBindings (x::xs) = 
-        first ( unify x ) andalso consistentBindings xs;*)
-
 (* Takes a Binding and returns a 2-tuple. If the binding is consistent, the first return value is "true" and the second is a Unifier that satisfies it. If the binding is not consistent, the first return value is "false" and the second return value is (...?) *)
 fun unify ( Binding( Term( funcA, argsA ), Term( funcB, argsB ) ) ) = 
 		
