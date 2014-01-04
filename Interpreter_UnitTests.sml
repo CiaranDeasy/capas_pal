@@ -260,6 +260,21 @@ fun unitTest() =
 	  getTransitiveClosure []
 	) [] eqUnorderedBindingList;
 	
+    printResultPoly "combineUnifiers 1" ( combineUnifiers [] ) [] eqUnorderedBindingList;
+    
+    printResultPoly "combineUnifiers 2" ( 
+      combineUnifiers [ Unifier([ Binding( Variable("1"), Variable("2") ) ]) ] 
+    ) [ Binding( Variable("1"), Variable("2") ) ] eqUnorderedBindingList;
+    
+    printResultPoly "combineUnifiers 3" ( 
+      combineUnifiers [ Unifier([ Binding( Variable("1"), Variable("2") ), 
+                                  Binding( Variable("3"), Variable("4") ) ]),
+                        Unifier([ Binding( Variable("2"), Variable("3") ) ]) ]
+    ) [ Binding( Variable("1"), Variable("2") ), 
+        Binding( Variable("3"), Variable("4") ),
+        Binding( Variable("2"), Variable("3") ) ]
+      eqUnorderedBindingList;
+    
 	  
 	conclude()
   )
