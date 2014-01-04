@@ -162,6 +162,43 @@ fun unitTest() =
 	    [ ( Binding( Variable("1"), Variable("2") ) ) ]
 	  )
 	) false;
+	printResult "eqUnifier 1" (
+	  eqUnifier( Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ), 
+          ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ), 
+          ( Binding( Variable("3"), Variable("4") ) ) ])
+	  )
+	) true;
+	printResult "eqUnifier 2" (
+	  eqUnifier( Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ), 
+          ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
+	    [ ( Binding( Variable("3"), Variable("4") ) ), 
+          ( Binding( Variable("1"), Variable("2") ) ) ])
+	  )
+	) true;
+	printResult "eqUnifier 3" (
+	  eqUnifier( Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ), 
+          ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ), 
+          ( Binding( Variable("3"), Variable("6") ) ) ])
+	  )
+	) false;
+	printResult "eqUnifier 4" (
+	  eqUnifier( Unifier([]), Unifier([]) )
+	) true;
+	printResult "eqUnifier 5" (
+	  eqUnifier( Unifier([]), Unifier([ ( Binding( Variable("1"), Variable("2") ) ) ]) )
+	) false;
+	printResult "eqUnifier 6" (
+	  eqUnifier( Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ), 
+        ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
+	    [ ( Binding( Variable("1"), Variable("2") ) ) ])
+	  )
+	) false;
 	printResultPoly "getAllTransitiveBindings 1" (
 	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
 	      [ ( Binding( Variable("2"), Variable("3") ) ),
