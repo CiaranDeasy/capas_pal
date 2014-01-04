@@ -77,6 +77,12 @@ fun unitTest() =
 	      ( Binding( Variable("3"), Variable("4") ) )
       )
 	) false;
+	printResult "getTransitiveBinding 6" (
+	  first( 
+	    getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
+	      ( Binding( Variable("2"), Variable("1") ) )
+      )
+	) false;
 	printResult "eqBinding 1" (
 	  eqBinding( Binding( Variable("1"), Variable("2") ), 
 	    Binding( Variable("1"), Variable("2") ) )
