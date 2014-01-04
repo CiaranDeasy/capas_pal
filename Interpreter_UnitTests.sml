@@ -199,6 +199,52 @@ fun unitTest() =
 	    [ ( Binding( Variable("1"), Variable("2") ) ) ])
 	  )
 	) false;
+	printResult "eqTupleUnifier 1" (
+	  eqTupleUnifier( 
+        ( true, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ), 
+            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+        ( false, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ), 
+            ( Binding( Variable("3"), Variable("4") ) ) ]) )
+	  )
+	) false;
+	printResult "eqTupleUnifier 2" (
+	  eqTupleUnifier( 
+        ( false, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ), 
+            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+        ( false, Unifier(
+	      [ ( Binding( Variable("3"), Variable("4") ) ), 
+            ( Binding( Variable("1"), Variable("2") ) ) ]) )
+	  )
+	) true;
+	printResult "eqTupleUnifier 3" (
+	  eqTupleUnifier( 
+        ( true, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ), 
+            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+        ( true, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ), 
+            ( Binding( Variable("3"), Variable("6") ) ) ]) )
+	  )
+	) false;
+	printResult "eqTupleUnifier 4" (
+	  eqTupleUnifier( ( true, Unifier([]) ), ( true, Unifier([]) ) )
+	) true;
+	printResult "eqTupleUnifier 5" (
+	  eqTupleUnifier( ( true, Unifier([]) ), 
+        ( true, Unifier([ ( Binding( Variable("1"), Variable("2") ) ) ]) ) )
+	) false;
+	printResult "eqTupleUnifier 6" (
+	  eqTupleUnifier( 
+        ( true, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ), 
+            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+        ( true, Unifier(
+	      [ ( Binding( Variable("1"), Variable("2") ) ) ]) )
+	  )
+	) false;
 	printResultPoly "getAllTransitiveBindings 1" (
 	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
 	      [ ( Binding( Variable("2"), Variable("3") ) ),
@@ -275,7 +321,97 @@ fun unitTest() =
         Binding( Variable("2"), Variable("3") ) ]
       eqUnorderedBindingList;
     
-	  
+    printResultPoly "unify 1" (
+      unify ( Binding( Variable("1"), Variable("2") ) )
+    ) ( true, Unifier([ Binding( Variable("1"), Variable("2") ) ]) ) 
+      eqTupleUnifier;
+    
+    printResultPoly "unify 2" (
+      unify ( Binding( Term( Functor("1"), [] ), Variable("2") ) )
+    ) ( true, Unifier([ Binding( Term( Functor("1"), [] ), Variable("2") ) ]) )
+      eqTupleUnifier;
+    
+    printResultPoly "unify 3" (
+      unify ( Binding( 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ), 
+        Variable("2") 
+      ) )
+    ) ( true, Unifier([ Binding( 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ), 
+        Variable("2") 
+      ) ]) )
+      eqTupleUnifier;
+    
+    printResultPoly "unify 4" (
+      unify ( Binding( 
+        Variable("2"), 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] )
+      ) )
+    ) ( true, Unifier([ Binding( 
+        Variable("2"), 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ) 
+      ) ]) )
+      eqTupleUnifier;
+    
+    printResultPoly "unify 5" (
+      unify ( Binding( 
+        Term( Functor("1"), [] ),
+        Term( Functor("1"), [] )
+      ) )
+    ) ( true, Unifier([]) )
+      eqTupleUnifier;
+    
+    printResult "unify 6" (
+      first( unify ( Binding( 
+        Term( Functor("1"), [] ),
+        Term( Functor("2"), [] )
+      ) ) )
+    ) false;
+    
+    printResultPoly "unify 7" (
+      unify ( Binding( 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ),
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] )
+      ) )
+    ) ( true, Unifier([]) )
+      eqTupleUnifier;
+    
+    printResult "unify 8" (
+      first( unify ( Binding( 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ),
+        Term( Functor("1"), 
+          [ Term( Functor("2"), [] ), Term( Functor("4"), [] ) ] )
+      ) ) )
+    ) false;
+    
+    printResultPoly "unify 9" (
+      unify ( Binding( 
+        Term( Functor("1"), 
+          [ Term( Functor("2"), 
+            [ Variable("5") ] ), 
+          Term( Functor("3"), [] ) ] ),
+        Term( Functor("1"), 
+          [ Term( Functor("2"), 
+            [ Term( Functor("6"), [] ) ] ), 
+          Variable("4") ] )
+      ) )
+    ) ( true, Unifier([ Binding( 
+        Variable("4"), 
+        Term( Functor("3"), [] ) 
+      ), Binding( 
+        Term( Functor("6"), [] ), 
+        Variable("5") 
+      ) ]) )
+      eqTupleUnifier;
+	
+    
 	conclude()
   )
 	

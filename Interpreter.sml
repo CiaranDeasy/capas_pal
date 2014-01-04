@@ -89,6 +89,9 @@ fun eqUnorderedBindingList( [], [] ) = true
 (* Equality test for Unifiers *)
 fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedBindingList( xs, ys );
 
+(* Equality test for (''a, Unifier) tuples *)
+fun eqTupleUnifier ( (a,b), (c,d) ) = (a=c) andalso ( eqUnifier( b, d ) );
+
 (* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
    common term, then the first value is true, and the second value is the 
    Binding containing the two distinct terms (ie: the Binding that exists by 
