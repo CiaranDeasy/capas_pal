@@ -14,10 +14,13 @@ Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor(
 ] );
 val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675" )] ), Term( Functor( "likes" ), [Variable( "_G1675" ), Term( Functor( "honey" ), [] )] )] )];
 
+  
+(* Takes a list and a value. Returns true if the value is in the list. *)
+fun memberPoly x [] _ = false
+  | memberPoly x (y::ys) eqTest = eqTest(x, y) orelse memberPoly x ys eqTest;
 
 (* Takes a list and a value. Returns true if the value is in the list. *)
-fun member x [] = false
-  | member x (y::ys) = (x = y) orelse member x ys
+fun member x ys = memberPoly x ys op=;
   
 (* Takes two lists, and removes from the first any elements that occur in the 
    second. *)

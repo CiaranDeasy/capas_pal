@@ -36,6 +36,21 @@ fun unitTest() =
     printResult "member 2" ( member 3 [1,2,3] ) true;
     printResult "member 3" ( member 4 [1,2,3] ) false;
     printResult "member 4" ( member 4 [] ) false;
+	printResult "memberPoly 1" ( 
+	  memberPoly ( Binding( Variable("1"), Variable("2") ) ) 
+	    [ Binding( Variable("1"), Variable("3") ), 
+		  Binding( Variable("1"), Variable("2") ) ] 
+		eqBinding
+	) true;
+	printResult "memberPoly 2" ( 
+	  memberPoly ( Binding( Variable("1"), Variable("2") ) ) 
+	    [ Binding( Variable("1"), Variable("3") ), 
+		  Binding( Variable("1"), Variable("4") ) ] 
+		eqBinding
+	) false;
+	printResult "memberPoly 3" ( 
+	  memberPoly ( Binding( Variable("1"), Variable("2") ) ) [] eqBinding
+	) false;
     printResult "removeWithBlacklist 1" ( 
 	  removeWithBlacklist [2,3,4] [1,2,3] 
 	) [4];
