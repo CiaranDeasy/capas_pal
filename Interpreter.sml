@@ -56,12 +56,27 @@ fun eqTupleBinding( x, y ) =
         ( (first x) = (first y) ) andalso 
           ( eqBinding( ( second x ), (second y) ) ) ; 
 		  
-(* Equality test for lists of Bindings. *)
-fun eqBindingList( [], [] ) = true
-  | eqBindingList( [], ys ) = false
-  | eqBindingList( xs, [] ) = false
-  | eqBindingList( (x::xs), (y::ys) ) = 
-        eqBinding( x, y ) andalso eqBindingList( xs, ys );
+(* Equality test for lists of Bindings. Lists with the same elements in a 
+   different order are considered equal. *)
+fun eqUnorderedBindingList( [], [] ) = true
+  | eqUnorderedBindingList( [], ys ) = false
+  | eqUnorderedBindingList( xs, [] ) = false
+  | eqUnorderedBindingList( (x::xs), ys ) = 
+    (* For each element of the first list, step through the second list and 
+	   match it to an equal element. Remove both elements and repeat. *)
+    let fun remove( x, [] ) = ( false, [] )
+	      | remove( x, (y::ys) ) = 
+		        if( eqBinding(x, y) )
+			        then ( true, ys )
+				else
+				    let val result = remove( x, ys ) in
+					    if( first result )
+						    then ( true, (y::( second result )) )
+					    else result 
+					end in
+	let val result = remove( x, ys ) in
+        (first result) andalso eqUnorderedBindingList( xs, ( second result ) )
+	end end;
 
 (* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
    common term, then the first value is true, and the second value is the 

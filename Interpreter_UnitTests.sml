@@ -111,26 +111,32 @@ fun unitTest() =
 	    ( true, ( Binding( Variable("1"), Variable("3") ) ) )
 	  )
 	) false;
-	printResult "eqBindingList 1" (
-	  eqBindingList( 
+	printResult "eqUnorderedBindingList 1" (
+	  eqUnorderedBindingList( 
 	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
 	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ]
 	  )
 	) true;
-	printResult "eqBindingList 2" (
-	  eqBindingList( 
+	printResult "eqUnorderedBindingList 2" (
+	  eqUnorderedBindingList( 
+	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
+	    [ ( Binding( Variable("3"), Variable("4") ) ), ( Binding( Variable("1"), Variable("2") ) ) ]
+	  )
+	) true;
+	printResult "eqUnorderedBindingList 3" (
+	  eqUnorderedBindingList( 
 	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
 	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("6") ) ) ]
 	  )
 	) false;
-	printResult "eqBindingList 3" (
-	  eqBindingList( [], [] )
+	printResult "eqUnorderedBindingList 4" (
+	  eqUnorderedBindingList( [], [] )
 	) true;
-	printResult "eqBindingList 4" (
-	  eqBindingList( [], [ ( Binding( Variable("1"), Variable("2") ) ) ] )
+	printResult "eqUnorderedBindingList 5" (
+	  eqUnorderedBindingList( [], [ ( Binding( Variable("1"), Variable("2") ) ) ] )
 	) false;
-	printResult "eqBindingList 5" (
-	  eqBindingList( 
+	printResult "eqUnorderedBindingList 6" (
+	  eqUnorderedBindingList( 
 	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
 	    [ ( Binding( Variable("1"), Variable("2") ) ) ]
 	  )
@@ -142,17 +148,18 @@ fun unitTest() =
 		    ( Binding( Variable("4"), Variable("2") ) ) ]
 	) [ ( Binding( Variable("1"), Variable("3") ) ), 
 	    ( Binding( Variable("1"), Variable("4") ) ) 
-	  ] eqBindingList;
+	  ] eqUnorderedBindingList;
 	printResultPoly "getAllTransitiveBindings 2" (
 	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
 	      []
-	) [] eqBindingList;
+	) [] eqUnorderedBindingList;
 	printResultPoly "getAllTransitiveBindings 3" (
 	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("5") ) )
 	      [ ( Binding( Variable("2"), Variable("3") ) ),
 		    ( Binding( Variable("3"), Variable("4") ) ),
 		    ( Binding( Variable("4"), Variable("2") ) ) ]
-	) [] eqBindingList;
+	) [] eqUnorderedBindingList;
+	
 	  
 	conclude()
   )
