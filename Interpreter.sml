@@ -142,13 +142,19 @@ fun getTransitiveClosure xs =
 fun combineUnifiers [] = []
   | combineUnifiers ((Unifier(xs))::ys) = xs @ ( combineUnifiers ys );
 
-(* Takes a Binding and returns a 2-tuple. If the binding is consistent, the first return value is "true" and the second is a Unifier that satisfies it. If the binding is not consistent, the first return value is "false" and the second return value is (...?) *)
-fun unify ( Binding( Term( funcA, argsA ), Term( funcB, argsB ) ) ) = 
+(* Takes a Unifier and a Binding and returns a 2-tuple. If the binding is 
+   consistent with itself and with the input Unifier, the first return value is 
+   "true" and the second is an updated Unifier that satisfies the input Binding.
+   If the binding is not consistent, the first return value is "false" and the 
+   second return value is undefined. *)
+fun unify ( Unifier(defaultBindings) ) 
+        ( Binding( Term( funcA, argsA ), Term( funcB, argsB ) ) ) = 
 		
-    (* Takes a list of Bindings and returns true if the Bindings are consistent. *)
+    (* Takes a list of Bindings and returns true if the Bindings are consistent.
+    *)
     let fun consistentBindings [] = true
           | consistentBindings (x::xs) = 
-                first ( unify x ) andalso consistentBindings xs in
+                first ( unify (Unifier([])) x ) andalso consistentBindings xs in
 
     (* Takes a list of bindings and returns a (bool, Unifier) tuple. If the 
        bindings are consistent, then the first value is true and the second 
@@ -168,21 +174,41 @@ fun unify ( Binding( Term( funcA, argsA ), Term( funcB, argsB ) ) ) =
 	    ( length( argsA ) = length( argsB ) ) in
 	if( not successOfThis ) then ( false, Unifier([]) ) else
     (* unify the arguments pairwise *)
-    let val unificationOfArgs = map unify ( zipBinding argsA argsB ) in
+    let val unificationOfArgs = 
+            map ( unify ( Unifier([]) ) ) ( zipBinding argsA argsB ) in
 	(* check that all the arguments unified successfully *)
 	let val successOfArgs = andList ( map first unificationOfArgs ) in
 	if( not successOfArgs ) then ( false, Unifier([]) ) else 
 	(* verify that the resulting unifier is consistent *)
-	let val rawBindings = combineUnifiers( map second unificationOfArgs ) in
+	let val rawBindings = combineUnifiers( 
+            ( Unifier(defaultBindings) )::( map second unificationOfArgs ) ) in
 	let val finalUnifier = validateUnifier rawBindings in
 	if ( first finalUnifier )
 	    then ( true, ( second finalUnifier ) )
 	else
 	    ( false, Unifier([]) )
 	end end end end end end end
-  | unify ( Binding( Term( func, args ), Variable( name ) ) ) =
-        ( true, Unifier([ ( Binding( Variable( name ), Term( func, args ) ) ) ]) )
-  | unify ( Binding( Variable( name ), Term( func, args ) ) ) = 
-        unify( Binding( Term( func, args ), Variable( name ) ) )
-  | unify ( Binding( Variable( name1 ), Variable( name2 ) ) ) =
-        ( true, Unifier([ ( Binding( Variable( name1 ), Variable( name2 ) ) ) ]) );
+  | unify ( Unifier([]) ) x = ( true, Unifier( [x] ) )
+  | unify ( Unifier(defaultBindings) ) ( Binding( x, y ) ) = 
+    (* Takes a list of Bindings and returns true if the Bindings are consistent.
+    *)
+    let fun consistentBindings [] = true
+          | consistentBindings (x::xs) = 
+                first ( unify (Unifier([])) x ) andalso consistentBindings xs in
+
+    (* Takes a list of bindings and returns a (bool, Unifier) tuple. If the 
+       bindings are consistent, then the first value is true and the second 
+	   value is a Unifier containing the bindings. If the bindings are 
+	   inconsistent, then the first value is false. *)
+    let fun validateUnifier xs = 
+        let val transitiveClosure = getTransitiveClosure xs in
+	        if( consistentBindings transitiveClosure )
+		        then ( true, Unifier( transitiveClosure ) )
+		    else
+		        ( false, Unifier( [] ) )
+	    end 
+    in
+        validateUnifier( ( Binding( x, y ) ):: defaultBindings ) 
+        
+    end end;
+

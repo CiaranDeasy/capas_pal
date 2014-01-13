@@ -322,17 +322,17 @@ fun unitTest() =
       eqUnorderedBindingList;
     
     printResultPoly "unify 1" (
-      unify ( Binding( Variable("1"), Variable("2") ) )
+      unify (Unifier([])) ( Binding( Variable("1"), Variable("2") ) )
     ) ( true, Unifier([ Binding( Variable("1"), Variable("2") ) ]) ) 
       eqTupleUnifier;
     
     printResultPoly "unify 2" (
-      unify ( Binding( Term( Functor("1"), [] ), Variable("2") ) )
+      unify (Unifier([])) ( Binding( Term( Functor("1"), [] ), Variable("2") ) )
     ) ( true, Unifier([ Binding( Term( Functor("1"), [] ), Variable("2") ) ]) )
       eqTupleUnifier;
     
     printResultPoly "unify 3" (
-      unify ( Binding( 
+      unify (Unifier([])) ( Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ), 
         Variable("2") 
@@ -345,7 +345,7 @@ fun unitTest() =
       eqTupleUnifier;
     
     printResultPoly "unify 4" (
-      unify ( Binding( 
+      unify (Unifier([])) ( Binding( 
         Variable("2"), 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] )
@@ -358,7 +358,7 @@ fun unitTest() =
       eqTupleUnifier;
     
     printResultPoly "unify 5" (
-      unify ( Binding( 
+      unify (Unifier([])) ( Binding( 
         Term( Functor("1"), [] ),
         Term( Functor("1"), [] )
       ) )
@@ -366,14 +366,14 @@ fun unitTest() =
       eqTupleUnifier;
     
     printResult "unify 6" (
-      first( unify ( Binding( 
+      first( unify (Unifier([])) ( Binding( 
         Term( Functor("1"), [] ),
         Term( Functor("2"), [] )
       ) ) )
     ) false;
     
     printResultPoly "unify 7" (
-      unify ( Binding( 
+      unify (Unifier([])) ( Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ),
         Term( Functor("1"), 
@@ -383,7 +383,7 @@ fun unitTest() =
       eqTupleUnifier;
     
     printResult "unify 8" (
-      first( unify ( Binding( 
+      first( unify (Unifier([])) ( Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ),
         Term( Functor("1"), 
@@ -392,7 +392,7 @@ fun unitTest() =
     ) false;
     
     printResultPoly "unify 9" (
-      unify ( Binding( 
+      unify (Unifier([])) ( Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), 
             [ Variable("5") ] ), 
@@ -410,6 +410,152 @@ fun unitTest() =
         Variable("5") 
       ) ]) )
       eqTupleUnifier;
+    
+    printResultPoly "unify 10" 
+    (* Test *)
+    (
+      unify (
+        Unifier([ 
+          Binding( 
+            Term( Functor("6"), [] ), 
+            Variable("5") 
+          ) 
+        ])
+      ) 
+      ( 
+        Binding( 
+          Term( 
+            Functor("1"), 
+            [ 
+              Term( 
+                Functor("2"), 
+                [ Variable("5") ] 
+              ), 
+              Term( Functor("3"), [] ) 
+            ] 
+          ),
+          Term( 
+            Functor("1"), 
+            [ 
+              Term( 
+                Functor("2"), 
+                [ Term( Functor("6"), [] ) ] 
+              ), 
+            Variable("4") ] 
+          )
+        ) 
+      )
+    ) 
+    (* Result *)
+    ( 
+      true, 
+      Unifier([ 
+        Binding( 
+          Variable("4"), 
+          Term( Functor("3"), [] ) 
+        ), 
+        Binding( 
+          Term( Functor("6"), [] ), 
+          Variable("5") 
+        ) 
+      ]) 
+    )
+    (* Equality test *)
+    eqTupleUnifier;
+    
+    (* ------------------------------- *)
+    
+    printResultPoly "unify 11" 
+    (* Test *)
+    (
+      unify (
+        Unifier([ 
+          Binding( 
+            Term( Functor("8"), [] ), 
+            Variable("9") 
+          ) 
+        ])
+      ) 
+      ( 
+        Binding( 
+          Term( 
+            Functor("1"), 
+            [ 
+              Term( 
+                Functor("2"), 
+                [ Variable("5") ] 
+              ), 
+              Term( Functor("3"), [] ) 
+            ] 
+          ),
+          Term( 
+            Functor("1"), 
+            [ 
+              Term( 
+                Functor("2"), 
+                [ Term( Functor("6"), [] ) ] 
+              ), 
+            Variable("4") ] 
+          )
+        ) 
+      )
+    ) 
+    (* Result *)
+    ( 
+      true, 
+      Unifier([ 
+        Binding( 
+          Term( Functor("8"), [] ), 
+          Variable("9") 
+        ), 
+        Binding( 
+          Variable("4"), 
+          Term( Functor("3"), [] ) 
+        ), 
+        Binding( 
+          Term( Functor("6"), [] ), 
+          Variable("5") 
+        ) 
+      ]) 
+    )
+    (* Equality test *)
+    eqTupleUnifier;
+    
+    (* ------------------------------- *)
+    
+    printResultPoly "unify 12" 
+    (* Test *)
+    (
+      unify ( 
+        Unifier([ 
+          Binding( 
+            Term( Functor("8"), [] ), 
+            Variable("9") ) 
+        ])
+      ) 
+      ( 
+        Binding( 
+          Variable("1"), 
+          Variable("2") 
+        ) 
+      )
+    ) 
+    (* Result *)
+    ( 
+      true, 
+      Unifier([ 
+        Binding( 
+          Term( Functor("8"), [] ), 
+          Variable("9") 
+        ), 
+        Binding( 
+          Variable("1"), 
+          Variable("2") 
+        ) 
+      ]) 
+    )
+    (* Equality test *)
+    eqTupleUnifier;
 	
     
 	conclude()
