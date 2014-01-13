@@ -1,5 +1,3 @@
-datatype suit = hearts | diamonds | spades | clubs
-
 fun unitTest() = 
   let val testsRun = ref 0 in 
   let val testsPassed = ref 0 in
@@ -33,7 +31,6 @@ fun unitTest() =
 	print ( Int.toString ( (!testsRun) - (!testsPassed) ) );
 	print " tests failed.\n"
   ) in
-  let fun curriedEquals x y = ( x = y ) in
 			
   ( printResult "member 1" ( member 1 [1,2,3] ) true;
     printResult "member 2" ( member 3 [1,2,3] ) true;
@@ -679,9 +676,48 @@ fun unitTest() =
             ( fn x => fn y => false) 
             ( fn () => true ) ) true;
 	
+    (* Two query terms, both succeed. *)
+    printResult "executeQuery 1" ( 
+      executeQuery ( 
+        Query([ 
+          Term( Functor( "green" ), [] ), 
+          Term( Functor( "red" ), [] ) 
+        ]) 
+      )
+      ( fn x => eqUnifier ( Unifier([]), x ) )
+      ( fn() => false )
+    ) true;
+	
+    (* Two query terms, second fails. *)
+    printResult "executeQuery 2" ( 
+      executeQuery ( 
+        Query([ 
+          Term( Functor( "green" ), [] ), 
+          Term( Functor( "blue" ), [] ) 
+        ]) 
+      )
+      ( fn x => false )
+      ( fn() => true )
+    ) true;
+	
+    (* Variable query term. *)
+    printResult "executeQuery 3" ( 
+      executeQuery ( 
+        Query([ 
+          Term( Functor( "bear" ), [ Variable("1") ] )
+        ]) 
+      )
+      ( fn x => eqUnifier ( Unifier([
+        Binding(
+          Variable("1"),
+          Term( Functor( "pooh" ), [] )
+        )
+      ]), x ) )
+      ( fn() => false )
+    ) true;
     
 	conclude()
   )
 	
-  end end end end end end;
+  end end end end end;
   

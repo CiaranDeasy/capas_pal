@@ -239,3 +239,17 @@ fun findUnifier term unifier k1 k2 =
     let fun getClauses ( Program(xs) ) = xs in
         worker ( getClauses program )
     end end end;
+
+(* Takes a query and two continuations. If the query is satisfiable, then the 
+   first continuation is called with the most general unifier that satisfies it.
+   If not, then the second continuation is called with unit. *)
+fun executeQuery (Query(xs)) k1 k2 = 
+    let fun executeQueryTerms [] unifier k1 _ = k1 unifier
+          | executeQueryTerms (x::xs) unifier k1 k2 = 
+            let fun m1 newUnifier k = executeQueryTerms xs newUnifier k1 k
+            in
+                findUnifier x unifier m1 k2
+            end
+    in
+        executeQueryTerms xs (Unifier([])) k1 k2
+    end;
