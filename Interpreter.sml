@@ -94,6 +94,56 @@ fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedBindingList( xs, ys );
 (* Equality test for (''a, Unifier) tuples *)
 fun eqTupleUnifier ( (a,b), (c,d) ) = (a=c) andalso ( eqUnifier( b, d ) );
 
+fun printTerm ( Variable(name) ) = print name
+  | printTerm ( Term( Functor( func ), terms ) ) = 
+    let fun printTerms [] = ()
+          | printTerms (term::terms) = ( 
+                printTerm term; 
+                print ", ";
+                printTerms terms
+            ) in 
+        ( 
+            print func; 
+            if( not( null terms ) )
+                then ( 
+                    print "(";
+                    printTerms terms;
+                    print ")"
+                )
+            else
+                ()
+        )
+    end;
+        
+fun printQuery ( Query(terms) ) = 
+    let fun printTerms [] = ()
+          | printTerms [term] = printTerm term
+          | printTerms (term::terms) = ( 
+                printTerm ( term ); 
+                print ", ";
+                printTerms( terms ) 
+            ) in
+        printTerms terms 
+    end;
+    
+fun printBindings [] = ()
+  | printBindings (binding::bindings) = 
+    let fun printBinding ( Binding( Variable( name ), term2 ) ) = (
+        print name;
+        print " = ";
+        printTerm term2
+       ) 
+         | printBinding binding = printBinding ( flipBinding binding ) 
+    in
+        (
+            printBinding binding;
+            print "\n";
+            printBindings bindings
+        )
+    end;
+    
+fun printUnifier ( Unifier(bindings) ) = printBindings bindings;
+
 (* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
    common term, then the first value is true, and the second value is the 
    Binding containing the two distinct terms (ie: the Binding that exists by 
@@ -253,3 +303,22 @@ fun executeQuery (Query(xs)) k1 k2 =
     in
         executeQueryTerms xs (Unifier([])) k1 k2
     end;
+    
+(* Takes a list of queries. Returns true if all of the queries can be 
+   satisfied. *)
+fun executeQueries [] = true
+  | executeQueries (x::xs) = 
+    let fun m1 unifier = ( 
+            printQuery x; 
+            print "\n"; 
+            printUnifier unifier; 
+            executeQueries xs 
+    ) in
+    let fun m2() = ( 
+            printQuery x; 
+            print "\nQuery not satisfiable."; 
+            false 
+    ) in
+        executeQuery x m1 m2
+    end end;
+
