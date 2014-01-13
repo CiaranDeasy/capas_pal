@@ -8,9 +8,11 @@ datatype binding_t = Binding of term_t * term_t;
 datatype unifier_t = Unifier of binding_t list;
 
 val program = Program( [
+Clause( Term( Functor( "green" ), [] ), [] ), 
+Clause( Term( Functor( "red" ), [] ), [] ), 
 Clause( Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] ), [] ), 
-Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor( "honey" ), [] )] ), [] ), 
-Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor( "honey" ), [] )] ), [Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] ), Term( Functor( "real" ), [Term( Functor( "bear" ), [] )] ), Term( Functor( "my" ), [Term( Functor( "term" ), [] )] )] )
+Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor( "honey" ), [] )] ), [Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] )] ),
+Clause( Term( Functor( "purple" ), [] ), [Term( Functor( "red" ), [] ), Term( Functor( "blue" ), [] )] )
 ] );
 val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675" )] ), Term( Functor( "likes" ), [Variable( "_G1675" ), Term( Functor( "honey" ), [] )] )] )];
 
@@ -212,3 +214,28 @@ fun unify ( Unifier(defaultBindings) )
         
     end end;
 
+(* Takes a term, an input Unifier and two continuations. If the term is 
+   satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
+   with the input Unifier, then the first continuation is called with the 
+   updated Unifier. If not, then the second continuation is called with unit. *)
+fun findUnifier term unifier k1 k2 = 
+    (* Takes a list of terms and finds a unifier that satisfies all of them. *)
+    let fun findUnifiers [] unifier k1 k2 = k1 unifier k2
+          | findUnifiers (term::terms) unifier k1 k2 = 
+            let fun m1 newUnifier k3 = findUnifiers terms newUnifier k1 k3
+            in findUnifier term unifier m1 k2
+            end in
+
+    let fun worker [] = k2()
+          | worker ( ( Clause( head, body ) )::clauses ) = 
+            let val unification = unify unifier ( Binding( term, head ) )
+            in
+                if ( first unification )
+                    then let fun m1() = worker clauses
+                         in findUnifiers body ( second unification ) k1 m1 end
+                    else
+                        worker clauses
+            end in
+    let fun getClauses ( Program(xs) ) = xs in
+        worker ( getClauses program )
+    end end end;

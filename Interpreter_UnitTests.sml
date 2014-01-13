@@ -1,3 +1,5 @@
+datatype suit = hearts | diamonds | spades | clubs
+
 fun unitTest() = 
   let val testsRun = ref 0 in 
   let val testsPassed = ref 0 in
@@ -31,6 +33,7 @@ fun unitTest() =
 	print ( Int.toString ( (!testsRun) - (!testsPassed) ) );
 	print " tests failed.\n"
   ) in
+  let fun curriedEquals x y = ( x = y ) in
 			
   ( printResult "member 1" ( member 1 [1,2,3] ) true;
     printResult "member 2" ( member 3 [1,2,3] ) true;
@@ -556,10 +559,129 @@ fun unitTest() =
     )
     (* Equality test *)
     eqTupleUnifier;
+    
+    (* ------------------------------- *)
+    
+    (* Single term, empty unifier, successful unification *)
+    printResult "findUnifier 1" ( findUnifier ( Term( Functor( "green" ), [] ) )
+            ( Unifier([]) ) ( fn x => fn y => op= ( Unifier([]), x ) ) 
+            ( fn () => false ) ) true;
+    
+    (* Single term, empty unifier, failed unification *)
+    printResult "findUnifier 2" ( findUnifier ( Term( Functor( "blue" ), [] ) )
+            ( Unifier([]) ) ( fn x => fn y => false ) 
+            ( fn () => true ) ) true;
+    
+    (* Single term, non-empty unifier *)
+    printResult "findUnifier 3" ( findUnifier ( Term( Functor( "green" ), [] ) )
+            ( Unifier([ 
+              Binding(
+                Variable("2"), 
+                Variable("3")
+              )
+            ]) )
+            ( fn x => fn y => ( eqUnifier ( Unifier( [ 
+              Binding(
+                Variable("2"), 
+                Variable("3")
+              ) ] ), x ) ) ) 
+            ( fn () => true ) ) true;
+    
+    (* Variable, empty unifier *)
+    printResult "findUnifier 4" ( findUnifier ( Variable("1") )
+            ( Unifier([]) ) 
+            ( fn x => fn y => ( eqUnifier ( Unifier( [ Binding(
+              Variable("1"), 
+              Term( Functor( "green" ), [] )
+            ) ] ), x ) ) ) 
+            ( fn () => false ) ) true;
+	
+    (* Variable, non-empty unifier *)
+    printResult "findUnifier 5" ( findUnifier ( Variable("1") )
+            ( Unifier([ 
+              Binding(
+                Variable("2"), 
+                Variable("3")
+              )
+            ]) ) 
+            (* k1 *)
+            ( fn x => fn y => ( eqUnifier ( Unifier( [ 
+              Binding(
+                Variable("2"), 
+                Variable("3")
+              ), 
+              Binding(
+                Variable("1"), 
+                Term( Functor( "green" ), [] )
+              ) ] ), x ) ) ) 
+            (* k2 *)
+            ( fn () => false ) ) true;
+    
+    (* Variable, reject and retry *)
+    printResult "findUnifier 6" ( findUnifier ( Variable("1") )
+            ( Unifier([]) ) 
+            ( fn x => fn y => ( 
+              if eqUnifier ( 
+                Unifier([ 
+                  Binding(
+                    Variable("1"), 
+                    Term( Functor( "green" ), [] )
+                  ) 
+                ]), 
+                x 
+              ) 
+                then y() 
+              else eqUnifier ( 
+                Unifier([ 
+                  Binding(
+                    Variable("1"), 
+                    Term( Functor( "red" ), [] )
+                  ) 
+                ]), 
+                x 
+              )
+            ) ) 
+            ( fn () => false ) ) true;
+    
+    (* Clause with condition, direct input *)
+    printResult "findUnifier 7" ( findUnifier 
+            ( Term( Functor( "likes" ), [
+              Term( Functor( "pooh" ), [] ), 
+              Term( Functor( "honey" ), [] )
+            ] ) )
+            ( Unifier([]) ) ( fn x => fn y => op= ( Unifier([]), x ) ) 
+            ( fn () => false ) ) true;
+    
+    (* Clause with condition, variable input, success *)
+    printResult "findUnifier 8" ( findUnifier 
+            ( Term( Functor( "likes" ), [
+              Variable("1"), 
+              Variable("2")
+            ] ) )
+            ( Unifier([]) ) 
+            ( fn x => fn y => op= ( Unifier([
+              Binding(
+                Variable("1"),
+                Term( Functor( "pooh" ), [] )
+              ),
+              Binding(
+                Variable("2"),
+                Term( Functor( "honey" ), [] )
+              )
+            ]), x ) ) 
+            ( fn () => false ) ) true;
+    
+    (* Clause with condition, direct input, failure on second term of clause 
+       body *)
+    printResult "findUnifier 9" ( findUnifier 
+            ( Term( Functor( "purple" ), [] ) )
+            ( Unifier([]) ) 
+            ( fn x => fn y => false) 
+            ( fn () => true ) ) true;
 	
     
 	conclude()
   )
 	
-  end end end end end;
+  end end end end end end;
   
