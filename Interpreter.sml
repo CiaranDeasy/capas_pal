@@ -97,6 +97,7 @@ fun eqTupleUnifier ( (a,b), (c,d) ) = (a=c) andalso ( eqUnifier( b, d ) );
 fun printTerm ( Variable(name) ) = print name
   | printTerm ( Term( Functor( func ), terms ) ) = 
     let fun printTerms [] = ()
+          | printTerms [term] = printTerm term
           | printTerms (term::terms) = ( 
                 printTerm term; 
                 print ", ";
