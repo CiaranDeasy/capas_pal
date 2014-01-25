@@ -16,7 +16,6 @@ Clause( Term( Functor( "purple" ), [] ), [Term( Functor( "red" ), [] ), Term( Fu
 ] );
 val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675" )] ), Term( Functor( "likes" ), [Variable( "_G1675" ), Term( Functor( "honey" ), [] )] )] )];
 
-  
 (* Takes a list and a value. Returns true if the value is in the list. *)
 fun memberPoly x [] _ = false
   | memberPoly x (y::ys) eqTest = eqTest(x, y) orelse memberPoly x ys eqTest;
@@ -305,6 +304,58 @@ fun executeQuery (Query(xs)) k1 k2 =
         executeQueryTerms xs (Unifier([])) k1 k2
     end;
     
+(* Takes two term-to-variable bindings, and applies the first to the second as a
+   substitution, returning the updated second binding. Returns the binding 
+   unchanged if either binding is variable-to-variable. *)
+(* If either Binding is purely variables, then there is no change. *)
+fun substitute ( Binding( Variable( _ ), Variable( _ ) ) ) b2 = b2
+  | substitute b1 ( Binding( Variable( v1 ), Variable( v2 ) ) ) = 
+        ( Binding( Variable( v1 ), Variable( v2 ) ) )
+(* Mirror bindings if the variable comes before the term. *)
+  | substitute ( Binding( Variable( v1 ), t1 ) ) b2 = 
+        substitute ( Binding( t1, Variable( v1 ) ) ) b2
+  | substitute b1 ( Binding( Variable( v2 ), t2 ) ) = 
+        substitute b1 ( Binding( t2, Variable( v2 ) ) )
+(* Main version: *)
+  | substitute ( Binding( Term( f1, args1 ), Variable( v1 ) ) ) 
+            ( Binding( Term( f2, args2 ), Variable( v2 ) ) ) =
+    let fun worker ( Term( f, args ) ) = 
+            let fun iterateArgs [] = []
+                  | iterateArgs (arg::remaining) = 
+                        ( worker arg ) :: ( iterateArgs remaining )
+            in
+                Term( f, ( iterateArgs args ) )
+            end
+          | worker ( Variable( v ) ) = 
+                if( v = v1 )
+                    then Term( f1, args1 )
+                else Variable( v )
+    in
+        Binding( ( worker ( Term( f2, args2 ) ) ), Variable( v2 ) )
+    end;
+
+(* Takes a consistent Unifier with no term-to-term Bindings. Expands Bindings 
+   containing Terms by replacing Variables with Terms according to other 
+   Bindings in the Unifier. *)
+fun substituteUnifier ( Unifier(xs) ) = 
+    let fun addBinding ( Binding( x, y ) ) bindings = 
+        let fun firstRound newBinding [] = newBinding
+              | firstRound newBinding ( nextBinding::remaining ) = 
+                    firstRound ( substitute nextBinding newBinding ) remaining
+        in
+        let fun secondRound newBinding [] = [ newBinding ]
+              | secondRound newBinding ( nextBinding::remaining ) = 
+                    ( substitute newBinding nextBinding )::
+                            ( secondRound newBinding remaining )
+        in
+            secondRound ( firstRound ( Binding( x, y ) ) bindings ) bindings
+        end end in
+    let fun worker [] ys = Unifier(ys)
+          | worker (x::xs) ys = worker xs ( addBinding x ys )
+    in
+        worker xs []
+    end end;
+
 (* Takes a list of queries. Returns true if all of the queries can be 
    satisfied. *)
 fun executeQueries [] = true
@@ -312,7 +363,7 @@ fun executeQueries [] = true
     let fun m1 unifier = ( 
             printQuery x; 
             print "\n"; 
-            printUnifier unifier; 
+            printUnifier ( substituteUnifier unifier ); 
             executeQueries xs 
     ) in
     let fun m2() = ( 

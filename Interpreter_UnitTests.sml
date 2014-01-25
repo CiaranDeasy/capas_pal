@@ -716,6 +716,175 @@ fun unitTest() =
       ( fn() => false )
     ) true;
     
+    (* ---------------------------------------------------------------------- *)
+    
+    (* B1( V, V ), B2( V, V ) *)
+    printResultPoly "substitute 1" ( 
+      substitute (
+        Binding( Variable("1"), Variable("2") )
+      )
+      (
+        Binding( Variable("3"), Variable("4") )
+      )
+    )
+    (
+      Binding( Variable("3"), Variable("4") )
+    )
+    eqBinding;
+    
+    (* B1( T, V ), B2( V, V ) *)
+    printResultPoly "substitute 2" ( 
+      substitute (
+        Binding( Term( Functor("1"), [] ), Variable("2") )
+      )
+      (
+        Binding( Variable("3"), Variable("4") )
+      )
+    )
+    (
+      Binding( Variable("3"), Variable("4") )
+    )
+    eqBinding;
+    
+    (* B1( V, V ), B2( T, V ) *)
+    printResultPoly "substitute 3" ( 
+      substitute (
+        Binding( Variable("1"), Variable("2") )
+      )
+      (
+        Binding( Term( Functor("3"), [] ), Variable("4") )
+      )
+    )
+    (
+      Binding( Term( Functor("3"), [] ), Variable("4") )
+    )
+    eqBinding;
+    
+    (* No substitution *)
+    printResultPoly "substitute 4" ( 
+      substitute (
+        Binding( Term( Functor("1"), [] ), Variable("2") )
+      )
+      (
+        Binding( Term( Functor("3"), [] ), Variable("4") )
+      )
+    )
+    (
+      Binding( Term( Functor("3"), [] ), Variable("4") )
+    )
+    eqBinding;
+    
+    (* Substitutions *)
+    printResultPoly "substitute 5" ( 
+      substitute (
+        Binding( Term( Functor("1"), [] ), Variable("2") )
+      )
+      (
+        Binding( 
+          Term( 
+            Functor("3"), 
+            [
+              Variable("2"), 
+              Variable("4"), 
+              Variable("2")
+            ]
+          ), 
+          Variable("5") 
+        )
+      )
+    )
+    (
+      Binding( 
+          Term( 
+            Functor("3"), 
+            [
+              Term( Functor("1"), [] ), 
+              Variable("4"), 
+              Term( Functor("1"), [] )
+            ]
+          ), 
+          Variable("5") 
+        )
+    )
+    eqBinding;
+    
+    (* Potential (incorrect) reverse substitution *)
+    printResultPoly "substitute 6" ( 
+      substitute (
+        Binding( 
+          Term( 
+            Functor("1"), 
+            [
+              Variable("4"), 
+              Variable("5"), 
+              Variable("4")
+            ]
+          ), 
+          Variable("2") 
+        )
+      )
+      (
+        Binding( Term( Functor("3"), [] ), Variable("4") )
+      )
+    )
+    (
+      Binding( Term( Functor("3"), [] ), Variable("4") )
+    )
+    eqBinding;
+    
+    (* ---------------------------------------------------------------------- *)
+    
+    (* Empty Unifier *)
+    printResultPoly "substituteUnifier 1" (
+      substituteUnifier ( Unifier([]) )
+    )
+    (
+      Unifier([])
+    )
+    eqUnifier;
+    
+    (* Single Binding *)
+    printResultPoly "substituteUnifier 2" (
+      substituteUnifier ( Unifier([ Binding( Variable("1"), Variable("2") ) ]) )
+    )
+    (
+      Unifier([ Binding( Variable("1"), Variable("2") ) ])
+    )
+    eqUnifier;
+    
+    (* Two independent Bindings *)
+    printResultPoly "substituteUnifier 3" (
+      substituteUnifier ( Unifier([
+        Binding( Variable("1"), Variable("2") ) ,
+        Binding( Variable("3"), Variable("4") )
+      ]) )
+    )
+    (
+      Unifier([
+        Binding( Variable("1"), Variable("2") ) ,
+        Binding( Variable("3"), Variable("4") )
+      ])
+    )
+    eqUnifier;
+    
+    (* Two dependent Bindings *)
+    printResultPoly "substituteUnifier 4" (
+      substituteUnifier ( Unifier([
+        Binding( Term( Functor("1"), [ Variable("2") ] ), Variable("3") ) ,
+        Binding( Term( Functor("4"), [] ), Variable("2") )
+      ]) )
+    )
+    (
+      Unifier([
+        Binding( 
+          Term( Functor("1"), [ Term( Functor("4"), [] ) ] ), 
+          Variable("3") 
+        ) ,
+        Binding( Term( Functor("4"), [] ), Variable("2") )
+      ])
+    )
+    eqUnifier;
+    
 	conclude()
   )
 	
