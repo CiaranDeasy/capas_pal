@@ -1,6 +1,6 @@
 datatype functor_t = Functor of string;
 datatype term_t = Term of functor_t * term_t list
-                | Variable of string;
+                | Variable of string * int;
 datatype clause_t = Clause of term_t * term_t list;
 datatype program_t = Program of clause_t list;
 datatype query_t = Query of term_t list;
@@ -14,7 +14,9 @@ Clause( Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] ), [] ),
 Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor( "honey" ), [] )] ), [Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] )] ),
 Clause( Term( Functor( "purple" ), [] ), [Term( Functor( "red" ), [] ), Term( Functor( "blue" ), [] )] )
 ] );
-val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675" )] ), Term( Functor( "likes" ), [Variable( "_G1675" ), Term( Functor( "honey" ), [] )] )] )];
+val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675", 0 )] ), Term( Functor( "likes" ), [Variable( "_G1675", 0 ), Term( Functor( "honey" ), [] )] )] )];
+
+val scopeCounter = ref 2;
 
 (* Takes a list and a value. Returns true if the value is in the list. *)
 fun memberPoly x [] _ = false
@@ -93,7 +95,8 @@ fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedBindingList( xs, ys );
 (* Equality test for (''a, Unifier) tuples *)
 fun eqTupleUnifier ( (a,b), (c,d) ) = (a=c) andalso ( eqUnifier( b, d ) );
 
-fun printTerm ( Variable(name) ) = print name
+fun printTerm ( Variable(name, scope) ) = 
+        ( print ( Int.toString( scope ) ); print "_"; print name )
   | printTerm ( Term( Functor( func ), terms ) ) = 
     let fun printTerms [] = ()
           | printTerms [term] = printTerm term
@@ -126,10 +129,10 @@ fun printQuery ( Query(terms) ) =
         printTerms terms 
     end;
     
-fun printBindings [] = ()
-  | printBindings (binding::bindings) = 
-    let fun printBinding ( Binding( Variable( name ), term2 ) ) = (
-        print name;
+fun printAllBindings [] = ()
+  | printAllBindings (binding::bindings) = 
+    let fun printBinding ( Binding( Variable( name, scope ), term2 ) ) = (
+        printTerm ( Variable( name, scope ) );
         print " = ";
         printTerm term2
        ) 
@@ -138,11 +141,33 @@ fun printBindings [] = ()
         (
             printBinding binding;
             print "\n";
-            printBindings bindings
+            printAllBindings bindings
         )
     end;
     
-fun printUnifier ( Unifier(bindings) ) = printBindings bindings;
+(* Only outputs variable-to-term Bindings, and only for variables in the 
+   original query, ie: scope "1". *)
+fun printCoreBindings [] = ()
+  | printCoreBindings (binding::bindings) = 
+    let fun printBinding( Binding( Variable( name, scope ), Term( f, a ) ) ) =
+        if( scope = 1 ) then (
+            printTerm ( Variable( name, scope ) );
+            print " = ";
+            printTerm ( Term( f, a ) );
+            print "\n"
+        )
+        else 
+            ()
+         | printBinding( Binding( Variable( _, _ ), Variable( _, _ ) ) ) = ()
+         | printBinding binding = printBinding ( flipBinding binding ) 
+    in
+        (
+            printBinding binding;
+            printCoreBindings bindings
+        )
+    end;
+    
+fun printUnifier ( Unifier(bindings) ) = printCoreBindings bindings;
 
 (* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
    common term, then the first value is true, and the second value is the 
@@ -264,6 +289,37 @@ fun unify ( Unifier(defaultBindings) )
         
     end end;
 
+(* Takes a Clause and a scope id. Returns a clause whose variables have the 
+   given scope id. *)
+fun scopeClause( Clause( head, body ), scope ) = 
+    let fun scopeTerms [] = []
+          | scopeTerms (term::terms) = 
+            let fun scopeTerm ( Term( f, args ) ) = 
+                        Term( f, ( scopeTerms args ) )
+                  | scopeTerm ( Variable( v, _ ) ) = 
+                        Variable( v, scope )
+            in
+                ( scopeTerm( term ) ) :: ( scopeTerms( terms ) )
+            end
+    in
+        Clause( ( hd( scopeTerms( [ head ] ) ) ), scopeTerms( body ) )                        
+    end;
+
+(* Takes a Query and updates all variables occurring in it to have scope "1". *)
+fun scopeQuery( Query(xs) ) = 
+    let fun scopeTerms [] = []
+          | scopeTerms (term::terms) = 
+            let fun scopeTerm ( Term( f, args ) ) = 
+                        Term( f, ( scopeTerms args ) )
+                  | scopeTerm ( Variable( v, _ ) ) = 
+                        Variable( v, 1 )
+            in
+                ( scopeTerm( term ) ) :: ( scopeTerms( terms ) )
+            end
+    in
+        Query( scopeTerms( xs ) )                        
+    end;
+    
 (* Takes a term, an input Unifier and two continuations. If the term is 
    satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
    with the input Unifier, then the first continuation is called with the 
@@ -277,15 +333,20 @@ fun findUnifier term unifier k1 k2 =
             end in
 
     let fun worker [] = k2()
-          | worker ( ( Clause( head, body ) )::clauses ) = 
+          | worker ( ( clause as Clause( _, _ ) )::clauses ) = 
+            let val scope = !scopeCounter in 
+            let val liveClause as Clause( head, body ) = 
+                    scopeClause( clause, scope ) in 
             let val unification = unify unifier ( Binding( term, head ) )
             in
+                scopeCounter := !scopeCounter + 1;
                 if ( first unification )
-                    then let fun m1() = worker clauses
-                         in findUnifiers body ( second unification ) k1 m1 end
+                    then let fun m2() = worker clauses
+                         in findUnifiers body ( second unification ) k1 m2
+                         end
                     else
                         worker clauses
-            end in
+            end end end in
     let fun getClauses ( Program(xs) ) = xs in
         worker ( getClauses program )
     end end end;
@@ -308,17 +369,17 @@ fun executeQuery (Query(xs)) k1 k2 =
    substitution, returning the updated second binding. Returns the binding 
    unchanged if either binding is variable-to-variable. *)
 (* If either Binding is purely variables, then there is no change. *)
-fun substitute ( Binding( Variable( _ ), Variable( _ ) ) ) b2 = b2
-  | substitute b1 ( Binding( Variable( v1 ), Variable( v2 ) ) ) = 
-        ( Binding( Variable( v1 ), Variable( v2 ) ) )
+fun substitute ( Binding( Variable( _, _ ), Variable( _, _ ) ) ) b2 = b2
+  | substitute b1 ( Binding( Variable( v1, s1 ), Variable( v2, s2 ) ) ) = 
+        ( Binding( Variable( v1, s1 ), Variable( v2, s2 ) ) )
 (* Mirror bindings if the variable comes before the term. *)
-  | substitute ( Binding( Variable( v1 ), t1 ) ) b2 = 
-        substitute ( Binding( t1, Variable( v1 ) ) ) b2
-  | substitute b1 ( Binding( Variable( v2 ), t2 ) ) = 
-        substitute b1 ( Binding( t2, Variable( v2 ) ) )
+  | substitute ( Binding( Variable( v1, s1 ), t1 ) ) b2 = 
+        substitute ( Binding( t1, Variable( v1, s1 ) ) ) b2
+  | substitute b1 ( Binding( Variable( v2, s2 ), t2 ) ) = 
+        substitute b1 ( Binding( t2, Variable( v2, s2 ) ) )
 (* Main version: *)
-  | substitute ( Binding( Term( f1, args1 ), Variable( v1 ) ) ) 
-            ( Binding( Term( f2, args2 ), Variable( v2 ) ) ) =
+  | substitute ( Binding( Term( f1, args1 ), Variable( v1, s1 ) ) ) 
+            ( Binding( Term( f2, args2 ), Variable( v2, s2 ) ) ) =
     let fun worker ( Term( f, args ) ) = 
             let fun iterateArgs [] = []
                   | iterateArgs (arg::remaining) = 
@@ -326,12 +387,12 @@ fun substitute ( Binding( Variable( _ ), Variable( _ ) ) ) b2 = b2
             in
                 Term( f, ( iterateArgs args ) )
             end
-          | worker ( Variable( v ) ) = 
-                if( v = v1 )
+          | worker ( Variable( v, s ) ) = 
+                if( Variable( v, s ) = Variable( v1, s1 ) )
                     then Term( f1, args1 )
-                else Variable( v )
+                else Variable( v, s )
     in
-        Binding( ( worker ( Term( f2, args2 ) ) ), Variable( v2 ) )
+        Binding( ( worker ( Term( f2, args2 ) ) ), Variable( v2, s2 ) )
     end;
 
 (* Takes a consistent Unifier with no term-to-term Bindings. Expands Bindings 
@@ -362,7 +423,7 @@ fun executeQueries [] = true
   | executeQueries (x::xs) = 
     let fun m1 unifier = ( 
             printQuery x; 
-            print "\n"; 
+            print "\n";
             printUnifier ( substituteUnifier unifier ); 
             executeQueries xs 
     ) in
@@ -371,6 +432,5 @@ fun executeQueries [] = true
             print "\nQuery not satisfiable."; 
             false 
     ) in
-        executeQuery x m1 m2
+        executeQuery (scopeQuery x) m1 m2
     end end;
-

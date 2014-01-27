@@ -37,25 +37,27 @@ fun unitTest() =
     printResult "member 3" ( member 4 [1,2,3] ) false;
     printResult "member 4" ( member 4 [] ) false;
 	printResult "memberPoly 1" ( 
-	  memberPoly ( Binding( Variable("1"), Variable("2") ) ) 
-	    [ Binding( Variable("1"), Variable("3") ), 
-		  Binding( Variable("1"), Variable("2") ) ] 
+	  memberPoly ( Binding( Variable("1",0), Variable("2",0) ) ) 
+	    [ Binding( Variable("1",0), Variable("3",0) ), 
+		  Binding( Variable("1",0), Variable("2",0) ) ] 
 		eqBinding
 	) true;
 	printResult "memberPoly 2" ( 
-	  memberPoly ( Binding( Variable("1"), Variable("2") ) ) 
-	    [ Binding( Variable("1"), Variable("3") ), 
-		  Binding( Variable("1"), Variable("4") ) ] 
+	  memberPoly ( Binding( Variable("1",0), Variable("2",0) ) ) 
+	    [ Binding( Variable("1",0), Variable("3",0) ), 
+		  Binding( Variable("1",0), Variable("4",0) ) ] 
 		eqBinding
 	) false;
 	printResult "memberPoly 3" ( 
-	  memberPoly ( Binding( Variable("1"), Variable("2") ) ) [] eqBinding
+	  memberPoly ( Binding( Variable("1",0), Variable("2",0) ) ) [] eqBinding
 	) false;
     printResult "removeWithBlacklist 1" ( 
 	  removeWithBlacklist [2,3,4] [1,2,3] 
 	) [4];
     printResult "removeWithBlacklist 2"( removeWithBlacklist [] [1,2,3] ) [];
-    printResult "removeWithBlacklist 3"( removeWithBlacklist [2,3,4] [] ) [2,3,4];
+    printResult "removeWithBlacklist 3"( 
+      removeWithBlacklist [2,3,4] [] 
+    ) [2,3,4];
     printResult "zip 1" ( zip [1,2] [3,4] ) [(1,3),(2,4)];
     printResult "zip 2" ( zip [1] [2] ) [(1,2)];
     printResult "zip 3" ( zip [] [] ) [];
@@ -66,167 +68,178 @@ fun unitTest() =
 	printResult "andList 1" ( andList [] ) true;
 	printResult "flip" ( flip (1,2) ) (2,1);
 	printResult "flipBinding" ( 
-	  flipBinding ( Binding( Variable("1"), Variable("2") ) ) 
+	  flipBinding ( Binding( Variable("1",0), Variable("2",0) ) ) 
 	) (
-	  Binding( Variable("2"), Variable("1") )
+	  Binding( Variable("2",0), Variable("1",0) )
     );
 	printResult "getTransitiveBinding 1" (
-	  getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
-	  ( Binding( Variable("2"), Variable("3") ) ) 
-	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	  getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
+	  ( Binding( Variable("2",0), Variable("3",0) ) ) 
+	) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) );
 	printResult "getTransitiveBinding 2" (
-	  getTransitiveBinding ( Binding( Variable("2"), Variable("1") ) )
-	    ( Binding( Variable("2"), Variable("3") ) )
-	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	  getTransitiveBinding ( Binding( Variable("2",0), Variable("1",0) ) )
+	    ( Binding( Variable("2",0), Variable("3",0) ) )
+	) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) );
 	printResult "getTransitiveBinding 3" (
-	  getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
-	    ( Binding( Variable("3"), Variable("2") ) ) 
-	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	  getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
+	    ( Binding( Variable("3",0), Variable("2",0) ) ) 
+	) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) );
 	printResult "getTransitiveBinding 4" (
-	  getTransitiveBinding ( Binding( Variable("2"), Variable("1") ) )
-	    ( Binding( Variable("3"), Variable("2") ) )
-	) ( true, ( Binding( Variable("1"), Variable("3") ) ) );
+	  getTransitiveBinding ( Binding( Variable("2",0), Variable("1",0) ) )
+	    ( Binding( Variable("3",0), Variable("2",0) ) )
+	) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) );
 	printResult "getTransitiveBinding 5" (
 	  first( 
-	    getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
-	      ( Binding( Variable("3"), Variable("4") ) )
+	    getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
+	      ( Binding( Variable("3",0), Variable("4",0) ) )
       )
 	) false;
 	printResult "getTransitiveBinding 6" (
 	  first( 
-	    getTransitiveBinding ( Binding( Variable("1"), Variable("2") ) )
-	      ( Binding( Variable("2"), Variable("1") ) )
+	    getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
+	      ( Binding( Variable("2",0), Variable("1",0) ) )
       )
 	) false;
 	printResult "eqBinding 1" (
-	  eqBinding( Binding( Variable("1"), Variable("2") ), 
-	    Binding( Variable("1"), Variable("2") ) )
+	  eqBinding( Binding( Variable("1",0), Variable("2",0) ), 
+	    Binding( Variable("1",0), Variable("2",0) ) )
 	) true;
 	printResult "eqBinding 2" (
-	  eqBinding( Binding( Variable("1"), Variable("2") ), 
-	    Binding( Variable("2"), Variable("1") ) )
+	  eqBinding( Binding( Variable("1",0), Variable("2",0) ), 
+	    Binding( Variable("2",0), Variable("1",0) ) )
 	) true;
 	printResult "eqBinding 3" (
-	  eqBinding( Binding( Variable("1"), Variable("2") ), 
-	    Binding( Variable("1"), Variable("3") ) )
+	  eqBinding( Binding( Variable("1",0), Variable("2",0) ), 
+	    Binding( Variable("1",0), Variable("3",0) ) )
 	) false;
 	printResult "eqBinding 4" (
-	  eqBinding( Binding( Variable("1"), Variable("2") ), 
-	    Binding( Variable("3"), Variable("1") ) )
+	  eqBinding( Binding( Variable("1",0), Variable("2",0) ), 
+	    Binding( Variable("3",0), Variable("1",0) ) )
 	) false;
 	printResult "eqTupleBinding 1" (
 	  eqTupleBinding(
-	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
-	    ( false, ( Binding( Variable("1"), Variable("2") ) ) )
+	    ( true, ( Binding( Variable("1",0), Variable("2",0) ) ) ), 
+	    ( false, ( Binding( Variable("1",0), Variable("2",0) ) ) )
 	  )
 	) false;
 	printResult "eqTupleBinding 2" (
 	  eqTupleBinding(
-	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
-	    ( true, ( Binding( Variable("2"), Variable("1") ) ) )
+	    ( true, ( Binding( Variable("1",0), Variable("2",0) ) ) ), 
+	    ( true, ( Binding( Variable("2",0), Variable("1",0) ) ) )
 	  )
 	) true;
 	printResult "eqTupleBinding 3" (
 	  eqTupleBinding( 
-	    ( true, ( Binding( Variable("1"), Variable("2") ) ) ), 
-	    ( true, ( Binding( Variable("1"), Variable("3") ) ) )
+	    ( true, ( Binding( Variable("1",0), Variable("2",0) ) ) ), 
+	    ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) )
 	  )
 	) false;
 	printResult "eqUnorderedBindingList 1" (
 	  eqUnorderedBindingList( 
-	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
-	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ]
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ]
 	  )
 	) true;
 	printResult "eqUnorderedBindingList 2" (
 	  eqUnorderedBindingList( 
-	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
-	    [ ( Binding( Variable("3"), Variable("4") ) ), ( Binding( Variable("1"), Variable("2") ) ) ]
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+	    [ ( Binding( Variable("3",0), Variable("4",0) ) ), 
+          ( Binding( Variable("1",0), Variable("2",0) ) ) ]
 	  )
 	) true;
 	printResult "eqUnorderedBindingList 3" (
 	  eqUnorderedBindingList( 
-	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
-	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("6") ) ) ]
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("6",0) ) ) ]
 	  )
 	) false;
 	printResult "eqUnorderedBindingList 4" (
 	  eqUnorderedBindingList( [], [] )
 	) true;
 	printResult "eqUnorderedBindingList 5" (
-	  eqUnorderedBindingList( [], [ ( Binding( Variable("1"), Variable("2") ) ) ] )
+	  eqUnorderedBindingList( [], [ 
+        ( Binding( Variable("1",0), Variable("2",0) ) ) 
+      ] )
 	) false;
 	printResult "eqUnorderedBindingList 6" (
 	  eqUnorderedBindingList( 
-	    [ ( Binding( Variable("1"), Variable("2") ) ), ( Binding( Variable("3"), Variable("4") ) ) ], 
-	    [ ( Binding( Variable("1"), Variable("2") ) ) ]
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ) ]
 	  )
 	) false;
 	printResult "eqUnifier 1" (
 	  eqUnifier( Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ), 
-          ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ), 
-          ( Binding( Variable("3"), Variable("4") ) ) ])
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ]), Unifier(
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ])
 	  )
 	) true;
 	printResult "eqUnifier 2" (
 	  eqUnifier( Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ), 
-          ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
-	    [ ( Binding( Variable("3"), Variable("4") ) ), 
-          ( Binding( Variable("1"), Variable("2") ) ) ])
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ]), Unifier(
+	    [ ( Binding( Variable("3",0), Variable("4",0) ) ), 
+          ( Binding( Variable("1",0), Variable("2",0) ) ) ])
 	  )
 	) true;
 	printResult "eqUnifier 3" (
 	  eqUnifier( Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ), 
-          ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ), 
-          ( Binding( Variable("3"), Variable("6") ) ) ])
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ]), Unifier(
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("6",0) ) ) ])
 	  )
 	) false;
 	printResult "eqUnifier 4" (
 	  eqUnifier( Unifier([]), Unifier([]) )
 	) true;
 	printResult "eqUnifier 5" (
-	  eqUnifier( Unifier([]), Unifier([ ( Binding( Variable("1"), Variable("2") ) ) ]) )
+	  eqUnifier( Unifier([]), Unifier([ 
+        ( Binding( Variable("1",0), Variable("2",0) ) ) 
+      ]) )
 	) false;
 	printResult "eqUnifier 6" (
 	  eqUnifier( Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ), 
-        ( Binding( Variable("3"), Variable("4") ) ) ]), Unifier(
-	    [ ( Binding( Variable("1"), Variable("2") ) ) ])
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+        ( Binding( Variable("3",0), Variable("4",0) ) ) ]), Unifier(
+	    [ ( Binding( Variable("1",0), Variable("2",0) ) ) ])
 	  )
 	) false;
 	printResult "eqTupleUnifier 1" (
 	  eqTupleUnifier( 
         ( true, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ), 
-            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+            ( Binding( Variable("3",0), Variable("4",0) ) ) ]) ), 
         ( false, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ), 
-            ( Binding( Variable("3"), Variable("4") ) ) ]) )
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+            ( Binding( Variable("3",0), Variable("4",0) ) ) ]) )
 	  )
 	) false;
 	printResult "eqTupleUnifier 2" (
 	  eqTupleUnifier( 
         ( false, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ), 
-            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+            ( Binding( Variable("3",0), Variable("4",0) ) ) ]) ), 
         ( false, Unifier(
-	      [ ( Binding( Variable("3"), Variable("4") ) ), 
-            ( Binding( Variable("1"), Variable("2") ) ) ]) )
+	      [ ( Binding( Variable("3",0), Variable("4",0) ) ), 
+            ( Binding( Variable("1",0), Variable("2",0) ) ) ]) )
 	  )
 	) true;
 	printResult "eqTupleUnifier 3" (
 	  eqTupleUnifier( 
         ( true, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ), 
-            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+            ( Binding( Variable("3",0), Variable("4",0) ) ) ]) ), 
         ( true, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ), 
-            ( Binding( Variable("3"), Variable("6") ) ) ]) )
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+            ( Binding( Variable("3",0), Variable("6",0) ) ) ]) )
 	  )
 	) false;
 	printResult "eqTupleUnifier 4" (
@@ -234,124 +247,131 @@ fun unitTest() =
 	) true;
 	printResult "eqTupleUnifier 5" (
 	  eqTupleUnifier( ( true, Unifier([]) ), 
-        ( true, Unifier([ ( Binding( Variable("1"), Variable("2") ) ) ]) ) )
+        ( true, Unifier([ ( Binding( Variable("1",0), Variable("2",0) ) ) ]) ) )
 	) false;
 	printResult "eqTupleUnifier 6" (
 	  eqTupleUnifier( 
         ( true, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ), 
-            ( Binding( Variable("3"), Variable("4") ) ) ]) ), 
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+            ( Binding( Variable("3",0), Variable("4",0) ) ) ]) ), 
         ( true, Unifier(
-	      [ ( Binding( Variable("1"), Variable("2") ) ) ]) )
+	      [ ( Binding( Variable("1",0), Variable("2",0) ) ) ]) )
 	  )
 	) false;
 	printResultPoly "getAllTransitiveBindings 1" (
-	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
-	      [ ( Binding( Variable("2"), Variable("3") ) ),
-		    ( Binding( Variable("3"), Variable("4") ) ),
-		    ( Binding( Variable("4"), Variable("2") ) ) ]
-	) [ ( Binding( Variable("1"), Variable("3") ) ), 
-	    ( Binding( Variable("1"), Variable("4") ) ) 
+	  getAllTransitiveBindings ( Binding( Variable("1",0), Variable("2",0) ) )
+	      [ ( Binding( Variable("2",0), Variable("3",0) ) ),
+		    ( Binding( Variable("3",0), Variable("4",0) ) ),
+		    ( Binding( Variable("4",0), Variable("2",0) ) ) ]
+	) [ ( Binding( Variable("1",0), Variable("3",0) ) ), 
+	    ( Binding( Variable("1",0), Variable("4",0) ) ) 
 	  ] eqUnorderedBindingList;
 	printResultPoly "getAllTransitiveBindings 2" (
-	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("2") ) )
+	  getAllTransitiveBindings ( Binding( Variable("1",0), Variable("2",0) ) )
 	      []
 	) [] eqUnorderedBindingList;
 	printResultPoly "getAllTransitiveBindings 3" (
-	  getAllTransitiveBindings ( Binding( Variable("1"), Variable("5") ) )
-	      [ ( Binding( Variable("2"), Variable("3") ) ),
-		    ( Binding( Variable("3"), Variable("4") ) ),
-		    ( Binding( Variable("4"), Variable("2") ) ) ]
+	  getAllTransitiveBindings ( Binding( Variable("1",0), Variable("5",0) ) )
+	      [ ( Binding( Variable("2",0), Variable("3",0) ) ),
+		    ( Binding( Variable("3",0), Variable("4",0) ) ),
+		    ( Binding( Variable("4",0), Variable("2",0) ) ) ]
 	) [] eqUnorderedBindingList;
 	
 	printResultPoly "getTransitiveClosure 1" (
-	  getTransitiveClosure [ ( Binding( Variable("1"), Variable("2") ) ),
-	                         ( Binding( Variable("3"), Variable("2") ) ),
-	                         ( Binding( Variable("2"), Variable("4") ) ),
-	                         ( Binding( Variable("5"), Variable("7") ) ),
-	                         ( Binding( Variable("7"), Variable("6") ) ) ]
-	) [ ( Binding( Variable("1"), Variable("2") ) ),
-	    ( Binding( Variable("1"), Variable("3") ) ),
-	    ( Binding( Variable("1"), Variable("4") ) ),
-	    ( Binding( Variable("2"), Variable("3") ) ),
-	    ( Binding( Variable("2"), Variable("4") ) ),
-	    ( Binding( Variable("3"), Variable("4") ) ),
-	    ( Binding( Variable("5"), Variable("6") ) ),
-	    ( Binding( Variable("5"), Variable("7") ) ),
-	    ( Binding( Variable("6"), Variable("7") ) ) ]
+	  getTransitiveClosure [ ( Binding( Variable("1",0), Variable("2",0) ) ),
+	                         ( Binding( Variable("3",0), Variable("2",0) ) ),
+	                         ( Binding( Variable("2",0), Variable("4",0) ) ),
+	                         ( Binding( Variable("5",0), Variable("7",0) ) ),
+	                         ( Binding( Variable("7",0), Variable("6",0) ) ) ]
+	) [ ( Binding( Variable("1",0), Variable("2",0) ) ),
+	    ( Binding( Variable("1",0), Variable("3",0) ) ),
+	    ( Binding( Variable("1",0), Variable("4",0) ) ),
+	    ( Binding( Variable("2",0), Variable("3",0) ) ),
+	    ( Binding( Variable("2",0), Variable("4",0) ) ),
+	    ( Binding( Variable("3",0), Variable("4",0) ) ),
+	    ( Binding( Variable("5",0), Variable("6",0) ) ),
+	    ( Binding( Variable("5",0), Variable("7",0) ) ),
+	    ( Binding( Variable("6",0), Variable("7",0) ) ) ]
 		  eqUnorderedBindingList;
 		  
     printResultPoly "getTransitiveClosure 2" (
-	  getTransitiveClosure [ ( Binding( Variable("1"), Variable("2") ) ),
-	                         ( Binding( Variable("1"), Variable("3") ) ),
-	                         ( Binding( Variable("1"), Variable("4") ) ),
-	                         ( Binding( Variable("2"), Variable("3") ) ),
-	                         ( Binding( Variable("2"), Variable("4") ) ),
-	                         ( Binding( Variable("3"), Variable("4") ) ),
-	                         ( Binding( Variable("5"), Variable("6") ) ),
-	                         ( Binding( Variable("5"), Variable("7") ) ),
-	                         ( Binding( Variable("6"), Variable("7") ) ) ]
-	) [ ( Binding( Variable("1"), Variable("2") ) ),
-	    ( Binding( Variable("1"), Variable("3") ) ),
-	    ( Binding( Variable("1"), Variable("4") ) ),
-	    ( Binding( Variable("2"), Variable("3") ) ),
-	    ( Binding( Variable("2"), Variable("4") ) ),
-	    ( Binding( Variable("3"), Variable("4") ) ),
-	    ( Binding( Variable("5"), Variable("6") ) ),
-	    ( Binding( Variable("5"), Variable("7") ) ),
-	    ( Binding( Variable("6"), Variable("7") ) ) ]
+	  getTransitiveClosure [ ( Binding( Variable("1",0), Variable("2",0) ) ),
+	                         ( Binding( Variable("1",0), Variable("3",0) ) ),
+	                         ( Binding( Variable("1",0), Variable("4",0) ) ),
+	                         ( Binding( Variable("2",0), Variable("3",0) ) ),
+	                         ( Binding( Variable("2",0), Variable("4",0) ) ),
+	                         ( Binding( Variable("3",0), Variable("4",0) ) ),
+	                         ( Binding( Variable("5",0), Variable("6",0) ) ),
+	                         ( Binding( Variable("5",0), Variable("7",0) ) ),
+	                         ( Binding( Variable("6",0), Variable("7",0) ) ) ]
+	) [ ( Binding( Variable("1",0), Variable("2",0) ) ),
+	    ( Binding( Variable("1",0), Variable("3",0) ) ),
+	    ( Binding( Variable("1",0), Variable("4",0) ) ),
+	    ( Binding( Variable("2",0), Variable("3",0) ) ),
+	    ( Binding( Variable("2",0), Variable("4",0) ) ),
+	    ( Binding( Variable("3",0), Variable("4",0) ) ),
+	    ( Binding( Variable("5",0), Variable("6",0) ) ),
+	    ( Binding( Variable("5",0), Variable("7",0) ) ),
+	    ( Binding( Variable("6",0), Variable("7",0) ) ) ]
 		  eqUnorderedBindingList;
 		  
     printResultPoly "getTransitiveClosure 3" (
 	  getTransitiveClosure []
 	) [] eqUnorderedBindingList;
 	
-    printResultPoly "combineUnifiers 1" ( combineUnifiers [] ) [] eqUnorderedBindingList;
+    printResultPoly "combineUnifiers 1" 
+      ( combineUnifiers [] ) [] eqUnorderedBindingList;
     
     printResultPoly "combineUnifiers 2" ( 
-      combineUnifiers [ Unifier([ Binding( Variable("1"), Variable("2") ) ]) ] 
-    ) [ Binding( Variable("1"), Variable("2") ) ] eqUnorderedBindingList;
+      combineUnifiers [ 
+        Unifier([ Binding( Variable("1",0), Variable("2",0) ) ]) 
+      ] 
+    ) [ Binding( Variable("1",0), Variable("2",0) ) ] eqUnorderedBindingList;
     
     printResultPoly "combineUnifiers 3" ( 
-      combineUnifiers [ Unifier([ Binding( Variable("1"), Variable("2") ), 
-                                  Binding( Variable("3"), Variable("4") ) ]),
-                        Unifier([ Binding( Variable("2"), Variable("3") ) ]) ]
-    ) [ Binding( Variable("1"), Variable("2") ), 
-        Binding( Variable("3"), Variable("4") ),
-        Binding( Variable("2"), Variable("3") ) ]
+      combineUnifiers [ 
+        Unifier([ Binding( Variable("1",0), Variable("2",0) ), 
+                  Binding( Variable("3",0), Variable("4",0) ) ]),
+        Unifier([ Binding( Variable("2",0), Variable("3",0) ) ])
+      ]
+    ) [ Binding( Variable("1",0), Variable("2",0) ), 
+        Binding( Variable("3",0), Variable("4",0) ),
+        Binding( Variable("2",0), Variable("3",0) ) ]
       eqUnorderedBindingList;
     
     printResultPoly "unify 1" (
-      unify (Unifier([])) ( Binding( Variable("1"), Variable("2") ) )
-    ) ( true, Unifier([ Binding( Variable("1"), Variable("2") ) ]) ) 
+      unify (Unifier([])) ( Binding( Variable("1",0), Variable("2",0) ) )
+    ) ( true, Unifier([ Binding( Variable("1",0), Variable("2",0) ) ]) ) 
       eqTupleUnifier;
     
     printResultPoly "unify 2" (
-      unify (Unifier([])) ( Binding( Term( Functor("1"), [] ), Variable("2") ) )
-    ) ( true, Unifier([ Binding( Term( Functor("1"), [] ), Variable("2") ) ]) )
-      eqTupleUnifier;
+      unify (Unifier([])) 
+        ( Binding( Term( Functor("1"), [] ), Variable("2",0) ) )
+    ) 
+    ( true, Unifier([ Binding( Term( Functor("1"), [] ), Variable("2",0) ) ]) )
+    eqTupleUnifier;
     
     printResultPoly "unify 3" (
       unify (Unifier([])) ( Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ), 
-        Variable("2") 
+        Variable("2",0) 
       ) )
     ) ( true, Unifier([ Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ), 
-        Variable("2") 
+        Variable("2",0) 
       ) ]) )
       eqTupleUnifier;
     
     printResultPoly "unify 4" (
       unify (Unifier([])) ( Binding( 
-        Variable("2"), 
+        Variable("2",0), 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] )
       ) )
     ) ( true, Unifier([ Binding( 
-        Variable("2"), 
+        Variable("2",0), 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ) 
       ) ]) )
@@ -395,19 +415,19 @@ fun unitTest() =
       unify (Unifier([])) ( Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), 
-            [ Variable("5") ] ), 
+            [ Variable("5",0) ] ), 
           Term( Functor("3"), [] ) ] ),
         Term( Functor("1"), 
           [ Term( Functor("2"), 
             [ Term( Functor("6"), [] ) ] ), 
-          Variable("4") ] )
+          Variable("4",0) ] )
       ) )
     ) ( true, Unifier([ Binding( 
-        Variable("4"), 
+        Variable("4",0), 
         Term( Functor("3"), [] ) 
       ), Binding( 
         Term( Functor("6"), [] ), 
-        Variable("5") 
+        Variable("5",0) 
       ) ]) )
       eqTupleUnifier;
     
@@ -418,7 +438,7 @@ fun unitTest() =
         Unifier([ 
           Binding( 
             Term( Functor("6"), [] ), 
-            Variable("5") 
+            Variable("5",0) 
           ) 
         ])
       ) 
@@ -429,7 +449,7 @@ fun unitTest() =
             [ 
               Term( 
                 Functor("2"), 
-                [ Variable("5") ] 
+                [ Variable("5",0) ] 
               ), 
               Term( Functor("3"), [] ) 
             ] 
@@ -441,7 +461,7 @@ fun unitTest() =
                 Functor("2"), 
                 [ Term( Functor("6"), [] ) ] 
               ), 
-            Variable("4") ] 
+            Variable("4",0) ] 
           )
         ) 
       )
@@ -451,12 +471,12 @@ fun unitTest() =
       true, 
       Unifier([ 
         Binding( 
-          Variable("4"), 
+          Variable("4",0), 
           Term( Functor("3"), [] ) 
         ), 
         Binding( 
           Term( Functor("6"), [] ), 
-          Variable("5") 
+          Variable("5",0) 
         ) 
       ]) 
     )
@@ -472,7 +492,7 @@ fun unitTest() =
         Unifier([ 
           Binding( 
             Term( Functor("8"), [] ), 
-            Variable("9") 
+            Variable("9",0) 
           ) 
         ])
       ) 
@@ -483,7 +503,7 @@ fun unitTest() =
             [ 
               Term( 
                 Functor("2"), 
-                [ Variable("5") ] 
+                [ Variable("5",0) ] 
               ), 
               Term( Functor("3"), [] ) 
             ] 
@@ -495,7 +515,7 @@ fun unitTest() =
                 Functor("2"), 
                 [ Term( Functor("6"), [] ) ] 
               ), 
-            Variable("4") ] 
+            Variable("4",0) ] 
           )
         ) 
       )
@@ -506,15 +526,15 @@ fun unitTest() =
       Unifier([ 
         Binding( 
           Term( Functor("8"), [] ), 
-          Variable("9") 
+          Variable("9",0) 
         ), 
         Binding( 
-          Variable("4"), 
+          Variable("4",0), 
           Term( Functor("3"), [] ) 
         ), 
         Binding( 
           Term( Functor("6"), [] ), 
-          Variable("5") 
+          Variable("5",0) 
         ) 
       ]) 
     )
@@ -530,13 +550,13 @@ fun unitTest() =
         Unifier([ 
           Binding( 
             Term( Functor("8"), [] ), 
-            Variable("9") ) 
+            Variable("9",0) ) 
         ])
       ) 
       ( 
         Binding( 
-          Variable("1"), 
-          Variable("2") 
+          Variable("1",0), 
+          Variable("2",0) 
         ) 
       )
     ) 
@@ -546,11 +566,11 @@ fun unitTest() =
       Unifier([ 
         Binding( 
           Term( Functor("8"), [] ), 
-          Variable("9") 
+          Variable("9",0) 
         ), 
         Binding( 
-          Variable("1"), 
-          Variable("2") 
+          Variable("1",0), 
+          Variable("2",0) 
         ) 
       ]) 
     )
@@ -573,55 +593,55 @@ fun unitTest() =
     printResult "findUnifier 3" ( findUnifier ( Term( Functor( "green" ), [] ) )
             ( Unifier([ 
               Binding(
-                Variable("2"), 
-                Variable("3")
+                Variable("2",0), 
+                Variable("3",0)
               )
             ]) )
             ( fn x => fn y => ( eqUnifier ( Unifier( [ 
               Binding(
-                Variable("2"), 
-                Variable("3")
+                Variable("2",0), 
+                Variable("3",0)
               ) ] ), x ) ) ) 
             ( fn () => true ) ) true;
     
     (* Variable, empty unifier *)
-    printResult "findUnifier 4" ( findUnifier ( Variable("1") )
+    printResult "findUnifier 4" ( findUnifier ( Variable("1",0) )
             ( Unifier([]) ) 
             ( fn x => fn y => ( eqUnifier ( Unifier( [ Binding(
-              Variable("1"), 
+              Variable("1",0), 
               Term( Functor( "green" ), [] )
             ) ] ), x ) ) ) 
             ( fn () => false ) ) true;
 	
     (* Variable, non-empty unifier *)
-    printResult "findUnifier 5" ( findUnifier ( Variable("1") )
+    printResult "findUnifier 5" ( findUnifier ( Variable("1",0) )
             ( Unifier([ 
               Binding(
-                Variable("2"), 
-                Variable("3")
+                Variable("2",0), 
+                Variable("3",0)
               )
             ]) ) 
             (* k1 *)
             ( fn x => fn y => ( eqUnifier ( Unifier( [ 
               Binding(
-                Variable("2"), 
-                Variable("3")
+                Variable("2",0), 
+                Variable("3",0)
               ), 
               Binding(
-                Variable("1"), 
+                Variable("1",0), 
                 Term( Functor( "green" ), [] )
               ) ] ), x ) ) ) 
             (* k2 *)
             ( fn () => false ) ) true;
     
     (* Variable, reject and retry *)
-    printResult "findUnifier 6" ( findUnifier ( Variable("1") )
+    printResult "findUnifier 6" ( findUnifier ( Variable("1",0) )
             ( Unifier([]) ) 
             ( fn x => fn y => ( 
               if eqUnifier ( 
                 Unifier([ 
                   Binding(
-                    Variable("1"), 
+                    Variable("1",0), 
                     Term( Functor( "green" ), [] )
                   ) 
                 ]), 
@@ -631,7 +651,7 @@ fun unitTest() =
               else eqUnifier ( 
                 Unifier([ 
                   Binding(
-                    Variable("1"), 
+                    Variable("1",0), 
                     Term( Functor( "red" ), [] )
                   ) 
                 ]), 
@@ -652,17 +672,17 @@ fun unitTest() =
     (* Clause with condition, variable input, success *)
     printResult "findUnifier 8" ( findUnifier 
             ( Term( Functor( "likes" ), [
-              Variable("1"), 
-              Variable("2")
+              Variable("1",0), 
+              Variable("2",0)
             ] ) )
             ( Unifier([]) ) 
             ( fn x => fn y => op= ( Unifier([
               Binding(
-                Variable("1"),
+                Variable("1",0),
                 Term( Functor( "pooh" ), [] )
               ),
               Binding(
-                Variable("2"),
+                Variable("2",0),
                 Term( Functor( "honey" ), [] )
               )
             ]), x ) ) 
@@ -704,12 +724,12 @@ fun unitTest() =
     printResult "executeQuery 3" ( 
       executeQuery ( 
         Query([ 
-          Term( Functor( "bear" ), [ Variable("1") ] )
+          Term( Functor( "bear" ), [ Variable("1",0) ] )
         ]) 
       )
       ( fn x => eqUnifier ( Unifier([
         Binding(
-          Variable("1"),
+          Variable("1",0),
           Term( Functor( "pooh" ), [] )
         )
       ]), x ) )
@@ -721,75 +741,75 @@ fun unitTest() =
     (* B1( V, V ), B2( V, V ) *)
     printResultPoly "substitute 1" ( 
       substitute (
-        Binding( Variable("1"), Variable("2") )
+        Binding( Variable("1",0), Variable("2",0) )
       )
       (
-        Binding( Variable("3"), Variable("4") )
+        Binding( Variable("3",0), Variable("4",0) )
       )
     )
     (
-      Binding( Variable("3"), Variable("4") )
+      Binding( Variable("3",0), Variable("4",0) )
     )
     eqBinding;
     
     (* B1( T, V ), B2( V, V ) *)
     printResultPoly "substitute 2" ( 
       substitute (
-        Binding( Term( Functor("1"), [] ), Variable("2") )
+        Binding( Term( Functor("1"), [] ), Variable("2",0) )
       )
       (
-        Binding( Variable("3"), Variable("4") )
+        Binding( Variable("3",0), Variable("4",0) )
       )
     )
     (
-      Binding( Variable("3"), Variable("4") )
+      Binding( Variable("3",0), Variable("4",0) )
     )
     eqBinding;
     
     (* B1( V, V ), B2( T, V ) *)
     printResultPoly "substitute 3" ( 
       substitute (
-        Binding( Variable("1"), Variable("2") )
+        Binding( Variable("1",0), Variable("2",0) )
       )
       (
-        Binding( Term( Functor("3"), [] ), Variable("4") )
+        Binding( Term( Functor("3"), [] ), Variable("4",0) )
       )
     )
     (
-      Binding( Term( Functor("3"), [] ), Variable("4") )
+      Binding( Term( Functor("3"), [] ), Variable("4",0) )
     )
     eqBinding;
     
     (* No substitution *)
     printResultPoly "substitute 4" ( 
       substitute (
-        Binding( Term( Functor("1"), [] ), Variable("2") )
+        Binding( Term( Functor("1"), [] ), Variable("2",0) )
       )
       (
-        Binding( Term( Functor("3"), [] ), Variable("4") )
+        Binding( Term( Functor("3"), [] ), Variable("4",0) )
       )
     )
     (
-      Binding( Term( Functor("3"), [] ), Variable("4") )
+      Binding( Term( Functor("3"), [] ), Variable("4",0) )
     )
     eqBinding;
     
     (* Substitutions *)
     printResultPoly "substitute 5" ( 
       substitute (
-        Binding( Term( Functor("1"), [] ), Variable("2") )
+        Binding( Term( Functor("1"), [] ), Variable("2",0) )
       )
       (
         Binding( 
           Term( 
             Functor("3"), 
             [
-              Variable("2"), 
-              Variable("4"), 
-              Variable("2")
+              Variable("2",0), 
+              Variable("4",0), 
+              Variable("2",0)
             ]
           ), 
-          Variable("5") 
+          Variable("5",0) 
         )
       )
     )
@@ -799,11 +819,11 @@ fun unitTest() =
             Functor("3"), 
             [
               Term( Functor("1"), [] ), 
-              Variable("4"), 
+              Variable("4",0), 
               Term( Functor("1"), [] )
             ]
           ), 
-          Variable("5") 
+          Variable("5",0) 
         )
     )
     eqBinding;
@@ -815,20 +835,20 @@ fun unitTest() =
           Term( 
             Functor("1"), 
             [
-              Variable("4"), 
-              Variable("5"), 
-              Variable("4")
+              Variable("4",0), 
+              Variable("5",0), 
+              Variable("4",0)
             ]
           ), 
-          Variable("2") 
+          Variable("2",0) 
         )
       )
       (
-        Binding( Term( Functor("3"), [] ), Variable("4") )
+        Binding( Term( Functor("3"), [] ), Variable("4",0) )
       )
     )
     (
-      Binding( Term( Functor("3"), [] ), Variable("4") )
+      Binding( Term( Functor("3"), [] ), Variable("4",0) )
     )
     eqBinding;
     
@@ -845,24 +865,26 @@ fun unitTest() =
     
     (* Single Binding *)
     printResultPoly "substituteUnifier 2" (
-      substituteUnifier ( Unifier([ Binding( Variable("1"), Variable("2") ) ]) )
+      substituteUnifier ( Unifier([
+        Binding( Variable("1",0), Variable("2",0) ) 
+      ]) )
     )
     (
-      Unifier([ Binding( Variable("1"), Variable("2") ) ])
+      Unifier([ Binding( Variable("1",0), Variable("2",0) ) ])
     )
     eqUnifier;
     
     (* Two independent Bindings *)
     printResultPoly "substituteUnifier 3" (
       substituteUnifier ( Unifier([
-        Binding( Variable("1"), Variable("2") ) ,
-        Binding( Variable("3"), Variable("4") )
+        Binding( Variable("1",0), Variable("2",0) ) ,
+        Binding( Variable("3",0), Variable("4",0) )
       ]) )
     )
     (
       Unifier([
-        Binding( Variable("1"), Variable("2") ) ,
-        Binding( Variable("3"), Variable("4") )
+        Binding( Variable("1",0), Variable("2",0) ) ,
+        Binding( Variable("3",0), Variable("4",0) )
       ])
     )
     eqUnifier;
@@ -870,20 +892,66 @@ fun unitTest() =
     (* Two dependent Bindings *)
     printResultPoly "substituteUnifier 4" (
       substituteUnifier ( Unifier([
-        Binding( Term( Functor("1"), [ Variable("2") ] ), Variable("3") ) ,
-        Binding( Term( Functor("4"), [] ), Variable("2") )
+        Binding( Term( Functor("1"), [ Variable("2",0) ] ), Variable("3",0) ) ,
+        Binding( Term( Functor("4"), [] ), Variable("2",0) )
       ]) )
     )
     (
       Unifier([
         Binding( 
           Term( Functor("1"), [ Term( Functor("4"), [] ) ] ), 
-          Variable("3") 
+          Variable("3",0) 
         ) ,
-        Binding( Term( Functor("4"), [] ), Variable("2") )
+        Binding( Term( Functor("4"), [] ), Variable("2",0) )
       ])
     )
     eqUnifier;
+    
+    (* ---------------------------------------------------------------------- *)
+    
+    (* Simple fact clause *)
+    printResult "scopeClause 1" (
+      scopeClause( Clause( Term( Functor("One"), [] ), [] ), 1 )
+    )
+    (
+      Clause( Term( Functor("One"), [] ), [] )
+    );
+    
+    (* Fact clause containing variables *)
+    printResult "scopeClause 2" (
+      scopeClause( Clause( Term( Functor("1"), [
+        Variable("2",0), Variable("3",0)
+      ] ), [] ), 1 )
+    )
+    (
+      Clause( Term( Functor("1"), [
+        Variable("2",1), Variable("3",1)
+      ] ), [] )
+    );
+    
+    (* Clause with two conditions *)
+    printResult "scopeClause 3" (
+      scopeClause( Clause( Term( Functor("1"), [
+        Variable("2",0), Variable("3",0)
+      ] ), [
+        Term( Functor("4"), [
+          Variable("5",0),
+          Variable("6",0)
+        ] ),
+        Variable("7",0)
+      ] ), 1 )
+    )
+    (
+      Clause( Term( Functor("1"), [
+        Variable("2",1), Variable("3",1)
+      ] ), [
+        Term( Functor("4"), [
+          Variable("5",1),
+          Variable("6",1)
+        ] ),
+        Variable("7",1)
+      ] )
+    );
     
 	conclude()
   )
