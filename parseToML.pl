@@ -105,7 +105,7 @@ parseTerm( Term, OutFile ) :-
         var( Term ), 
         write( OutFile, 'Variable( "' ), 
 		write( OutFile, Term ),
-		write( OutFile, '" )' ).
+		write( OutFile, '", 0 )' ).
 parseTerm( Term, OutFile ) :- 
         write( OutFile, 'Term( Functor( "' ), 
         functor( Term, Functor, Arity ), 
