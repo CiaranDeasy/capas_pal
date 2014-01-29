@@ -95,28 +95,49 @@ fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedBindingList( xs, ys );
 (* Equality test for (''a, Unifier) tuples *)
 fun eqTupleUnifier ( (a,b), (c,d) ) = (a=c) andalso ( eqUnifier( b, d ) );
 
-fun printTerm ( Variable(name, scope) ) = 
-        ( print ( Int.toString( scope ) ); print "_"; print name )
+fun printTerm ( Variable(name, scope) ) = ( 
+        if( not(scope = 0) andalso not(scope = 1) )
+            then ( print ( Int.toString( scope ) ); print "_" )
+        else
+            ();
+        print name )
   | printTerm ( Term( Functor( func ), terms ) ) = 
-    let fun printTerms [] = ()
-          | printTerms [term] = printTerm term
-          | printTerms (term::terms) = ( 
-                printTerm term; 
-                print ", ";
-                printTerms terms
-            ) in 
-        ( 
-            print func; 
-            if( not( null terms ) )
-                then ( 
-                    print "(";
-                    printTerms terms;
-                    print ")"
+    let fun printListTerm( Term(_, [term, Variable(v,s)] ) ) = 
+                ( printTerm( term ); print "|"; printTerm( Variable(v,s) ) )
+          | printListTerm( Term(_, [term, Term( Functor( f ), args )] ) ) = (
+                printTerm( term );
+                if( f = "." )
+                    then ( print ", "; 
+                           printListTerm( Term( Functor( f ), args ) ) )
+                else (*if( f = "[]" )*)
+                    ()
                 )
+    in
+        ( 
+            if( func = "." )
+                then ( print "["; 
+                       printListTerm( Term( Functor( func ), terms ) );
+                       print "]" )
             else
-                ()
+                ( print func; 
+                if( not( null terms ) )
+                    then ( 
+                        print "(";
+                        printTerms terms;
+                        print ")"
+                    )
+                else
+                    () )
         )
-    end;
+    end
+
+and printTerms [] = ()
+  | printTerms [term] = printTerm term
+  | printTerms (term::terms) = ( 
+        printTerm term; 
+        print ", ";
+        printTerms terms
+    );
         
 fun printQuery ( Query(terms) ) = 
     let fun printTerms [] = ()
