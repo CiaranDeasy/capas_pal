@@ -1,6 +1,7 @@
 datatype token = ATOM of string
                | VARIABLE of string
-               | NUM of int
+               | INT of int
+               | FLOAT of real
                | LEFTPAREN
                | RIGHTPAREN
                | COMMA
@@ -9,9 +10,36 @@ datatype token = ATOM of string
                | RIGHTSQ
                | PIPE
                | COLONMINUS
+               | IS
+               | PLUS
+               | MINUS
+               | MULT
+               | DIV
+               | MOD
                | EOF;
+               
+fun eqToken( ATOM(a1), ATOM(a2) ) = ( a1 = a2 )
+  | eqToken( VARIABLE(v1), VARIABLE(v2) ) = ( v1 = v2 )
+  | eqToken( INT(i1), INT(i2) ) = ( i1 = i2 )
+  | eqToken( FLOAT(f1), FLOAT(f2) ) = ( Real.==( f1, f2 ) )
+  | eqToken( LEFTPAREN, LEFTPAREN ) = true
+  | eqToken( RIGHTPAREN, RIGHTPAREN ) = true
+  | eqToken( COMMA, COMMA ) = true
+  | eqToken( DOT, DOT ) = true
+  | eqToken( LEFTSQ, LEFTSQ ) = true
+  | eqToken( RIGHTSQ, RIGHTSQ ) = true
+  | eqToken( PIPE, PIPE ) = true
+  | eqToken( COLONMINUS, COLONMINUS ) = true
+  | eqToken( IS, IS ) = true
+  | eqToken( PLUS, PLUS ) = true
+  | eqToken( MINUS, MINUS ) = true
+  | eqToken( MULT, MULT ) = true
+  | eqToken( DIV, DIV ) = true
+  | eqToken( MOD, MOD ) = true
+  | eqToken( EOF, EOF ) = true
+  | eqToken( _, _ ) = false;
 
-val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile2.pl";
+val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile3.pl";
         
 fun printClauses [] = ()
   | printClauses ((Clause(head,body))::clauses) = (
@@ -73,7 +101,7 @@ fun lexIdle [] =
                 ( ATOM( String.implode( worker xs ) ) ) 
                         :: ( lexIdle( !remaining ) )
             end end in
-    let fun lexNum( xs ) =
+    let fun lexFloat( x::xs, digitList ) =
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
@@ -83,11 +111,38 @@ fun lexIdle [] =
                             then x :: ( worker xs )
                         else
                             ( remaining := (x::xs);
-                            [] )
+                            digitList )
             in
-                ( NUM( valOf( Int.fromString( String.implode(worker xs) ) ) ) ) 
-                        :: ( lexIdle( !remaining ) )
+                if( Char.isDigit( hd xs ) )
+                    then FLOAT( valOf( Real.fromString( 
+                                String.implode( worker xs ) ) ) )
+                                  :: ( lexIdle( !remaining ) )
+                (* Catch the case where the dot was an end-of-line character. *)
+                else
+                    ( INT( valOf( Int.fromString( 
+                            String.implode( digitList ) ) ) ) ) 
+                              :: ( lexIdle( !remaining ) )
             end end in
+    let fun lexInt( xs ) =
+            let val remaining = ref [] in
+            let fun worker [] = 
+                        worker ( String.explode( 
+                                valOf( TextIO.inputLine inStream ) ) )
+                  | worker (x::xs) = 
+                        if( Char.isDigit x ) 
+                            then x :: ( worker xs )
+                        else
+                            ( remaining := (x::xs);
+                            [] ) in
+            let val digitList = worker xs
+            in
+                if( hd (!remaining) = #"." )
+                    then lexFloat( !remaining, digitList )
+                else
+                    ( INT( valOf( Int.fromString( 
+                            String.implode( digitList ) ) ) ) ) 
+                              :: ( lexIdle( !remaining ) )
+            end end end in
     let fun lexSingleQuoted( xs ) = 
             let val remaining = ref [] in
             let fun worker [] = 
@@ -110,12 +165,6 @@ fun lexIdle [] =
             let fun worker [] = 
                         worker ( String.explode( 
                                 valOf( TextIO.inputLine inStream ) ) )
-                    (*let val nextLine = TextIO.inputLine inStream
-                    in
-                        if( nextLine = NONE )
-                            then raise 
-                        else
-                            worker ( String.explode( valOf( nextLine ) ) )*)
                   | worker (x::xs) = 
                         if( x = #"\\" ) 
                             then x :: ( hd xs ) :: ( worker ( tl xs ) )
@@ -127,11 +176,25 @@ fun lexIdle [] =
             in
                 ( ATOM( String.implode( #"\"" :: ( worker xs ) ) ) )
                         :: ( lexIdle( !remaining ) )
-            end end
+            end end in
+    let fun lexIs( x::xs ) = 
+            if( x = #"s" andalso Char.isSpace ( hd xs ) ) 
+                then IS :: ( lexIdle xs )
+            else
+                lexAtom( #"i"::x::xs )
     in    
-        if( Char.isUpper x ) then lexVar( x::xs )
+    let fun lexMod( x::xs ) = 
+            if( x = #"o" andalso ( hd xs ) = #"d" 
+                    andalso Char.isSpace ( hd ( tl xs ) ) ) 
+                then MOD :: ( lexIdle ( tl xs ) )
+            else
+                lexAtom( #"m"::x::xs )
+    in    
+        if( x = #"i" ) then lexIs( xs )
+        else if( x = #"m" ) then lexMod( xs )
+        else if( Char.isUpper x ) then lexVar( x::xs )
         else if( Char.isLower x ) then lexAtom( x::xs )
-        else if( Char.isDigit x ) then lexNum( x::xs )
+        else if( Char.isDigit x ) then lexInt( x::xs )
         else if( Char.isSpace x ) then lexIdle( xs )
         else if( x = #":" andalso ( hd xs ) = #"-" ) 
             then COLONMINUS :: lexIdle( tl xs )
@@ -142,17 +205,21 @@ fun lexIdle [] =
         else if( x = #"[" ) then LEFTSQ :: ( lexIdle xs )
         else if( x = #"]" ) then RIGHTSQ :: ( lexIdle xs )
         else if( x = #"|" ) then PIPE :: ( lexIdle xs )
+        else if( x = #"+" ) then PLUS :: ( lexIdle xs )
+        else if( x = #"-" ) then MINUS :: ( lexIdle xs )
+        else if( x = #"*" ) then MULT :: ( lexIdle xs )
+        else if( x = #"/" ) then DIV :: ( lexIdle xs )
         else if( x = #"'" ) then lexSingleQuoted( xs )
         else if( x = #"\"" ) then lexDoubleQuoted( xs )
         else []
-    end end end end end;
+    end end end end end end end end;
         
 val something = lexIdle firstLine;
 
 fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
   | printToken( VARIABLE(v) ) = ( print "VARIABLE( "; print v; print " )" )
-  | printToken( NUM(n) ) = 
-        ( print "NUM( "; print ( Int.toString( n ) ); print " )" )
+  | printToken( INT(n) ) = 
+        ( print "INT( "; print ( Int.toString( n ) ); print " )" )
   | printToken( LEFTPAREN ) = print "LEFTPAREN"
   | printToken( RIGHTPAREN ) = print "RIGHTPAREN"
   | printToken( COMMA ) = print "COMMA"
@@ -185,7 +252,7 @@ fun parseTail( VARIABLE(v)::tokens ) = ( Variable( v, 0 ), tokens )
 and parseArgs( LEFTPAREN::tokens ) =
     let val x as (terms, tokens2) = parseTermList( tokens )
     in
-        if( hd tokens2 = RIGHTPAREN )
+        if( eqToken( hd tokens2, RIGHTPAREN ) )
             then ( terms, ( tl tokens2 ) )
         else
             ( terms, ( tl tokens2 ) ) (*ERROR*)
@@ -208,7 +275,7 @@ and parseTerm( ATOM(a)::tokens ) =
         ( ( buildList terms ), tokens3 )
     end end end
   | parseTerm( VARIABLE(v)::tokens ) = ( Variable(v, 0), tokens )
-  | parseTerm( NUM(n)::tokens ) = 
+  | parseTerm( INT(n)::tokens ) = 
         ( Term( Functor( Int.toString(n) ), [] ), tokens )
 
 (* Returns a term and a list of the remaining tokens *)
@@ -216,7 +283,7 @@ and parseMoreList( RIGHTSQ::tokens ) = ( Term( Functor("[]"), [] ), tokens )
   | parseMoreList( PIPE::tokens ) = 
     let val x as ( term, tokens2 ) = parseTail( tokens )
     in
-        if( hd tokens2 = RIGHTSQ )
+        if( eqToken( hd tokens2, RIGHTSQ ) )
             then ( term, ( tl tokens2 ) )
         else
             ( term, ( tl tokens2 ) ) (* ERROR *)
@@ -280,8 +347,8 @@ and parseLine( COLONMINUS::tokens ) =
     in
         ( [clause], [], tokens2 )
     end
-  | parseLine( NUM(n)::tokens ) = 
-    let val x as ( clause, tokens2 ) = parseClause( NUM(n)::tokens )
+  | parseLine( INT(n)::tokens ) = 
+    let val x as ( clause, tokens2 ) = parseClause( INT(n)::tokens )
     in
         ( [clause], [], tokens2 )
     end
@@ -291,7 +358,7 @@ and parseLine( COLONMINUS::tokens ) =
 and parseMoreLines( ATOM(a)::tokens ) = parseLines( ATOM(a)::tokens )
   | parseMoreLines( VARIABLE(v)::tokens ) = parseLines( VARIABLE(v)::tokens )
   | parseMoreLines( LEFTSQ::tokens ) = parseLines( LEFTSQ::tokens )
-  | parseMoreLines( NUM(n)::tokens ) = parseLines( NUM(n)::tokens )
+  | parseMoreLines( INT(n)::tokens ) = parseLines( INT(n)::tokens )
   | parseMoreLines( COLONMINUS::tokens ) = parseLines( COLONMINUS::tokens )
   | parseMoreLines( EOF::tokens ) = ( [], [], EOF::tokens )
 
@@ -300,7 +367,7 @@ and parseMoreLines( ATOM(a)::tokens ) = parseLines( ATOM(a)::tokens )
 and parseLines( tokens ) =
     let val x as (clause, query, tokens2) = parseLine( tokens )
     in
-        if( hd tokens2 = DOT ) 
+        if( eqToken( hd tokens2, DOT ) ) 
             then 
                 let val y as (clauses, queries, tokens3) = parseMoreLines( tl tokens2 )
                 in
@@ -316,6 +383,8 @@ and parseLines( tokens ) =
 fun parseStart( tokens ) = 
     let val x as (clauses, queries, tokens2) = parseLines( tokens )
     in
-        if( hd tokens2 ) = EOF then (clauses, queries) else ([], []) (*ERROR*)
+        if( eqToken( hd tokens2, EOF ) )
+            then (Program(clauses), queries)
+        else
+            (Program([]), []) (*ERROR*)
     end;
-    
