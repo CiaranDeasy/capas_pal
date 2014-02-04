@@ -1,20 +1,13 @@
 datatype functor_t = Functor of string;
 datatype term_t = Term of functor_t * term_t list
-                | Variable of string * int;
+                | Variable of string * int
+                | IntTerm of int
+                | FloatTerm of real;
 datatype clause_t = Clause of term_t * term_t list;
 datatype program_t = Program of clause_t list;
 datatype query_t = Query of term_t list;
 datatype binding_t = Binding of term_t * term_t;
 datatype unifier_t = Unifier of binding_t list;
-
-val program = Program( [
-Clause( Term( Functor( "green" ), [] ), [] ), 
-Clause( Term( Functor( "red" ), [] ), [] ), 
-Clause( Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] ), [] ), 
-Clause( Term( Functor( "likes" ), [Term( Functor( "pooh" ), [] ), Term( Functor( "honey" ), [] )] ), [Term( Functor( "bear" ), [Term( Functor( "pooh" ), [] )] )] ),
-Clause( Term( Functor( "purple" ), [] ), [Term( Functor( "red" ), [] ), Term( Functor( "blue" ), [] )] )
-] );
-val queries = [Query ( [Term( Functor( "bear" ), [Variable( "_G1675", 0 )] ), Term( Functor( "likes" ), [Variable( "_G1675", 0 ), Term( Functor( "honey" ), [] )] )] )];
 
 val scopeCounter = ref 2;
 
@@ -59,25 +52,43 @@ fun flip( x, y ) = ( y, x );
    order. *)
 fun flipBinding ( Binding( x, y ) ) = Binding( y, x );
 
-(* Equality test for Bindings *)
-fun eqBinding( x, y ) = (x = y) orelse ( x = (flipBinding y) ); 
+(* Polymorphic equality test for ordered lists *)
+fun eqOrderedList _ ( [], [] ) = true
+  | eqOrderedList _ ( xs, [] ) = false
+  | eqOrderedList _ ( [], ys ) = false
+  | eqOrderedList eqTest ( (x::xs), (y::ys) ) = 
+        eqTest( x, y ) andalso eqOrderedList eqTest ( xs, ys );
 
-(* Equality test for (''a, Binding) tuples *)
-fun eqTupleBinding( x, y ) = 
-        ( (first x) = (first y) ) andalso 
-          ( eqBinding( ( second x ), (second y) ) ) ; 
+(* Equality test for Terms *)
+fun eqTerm( Term( f1, args1 ), Term( f2, args2 ) ) = 
+        ( f1 = f2 ) andalso ( eqOrderedList eqTerm ( args1, args2 ) )
+  | eqTerm( Variable( v1, s1 ), Variable( v2, s2 ) ) =
+        ( v1 = v2 ) andalso ( s1 = s2 )
+  | eqTerm( IntTerm( i1 ), IntTerm( i2 ) ) = ( i1 = i2 )
+  | eqTerm( FloatTerm( f1 ), FloatTerm( f2 ) ) = Real.==( f1, f2 )
+  | eqTerm( term1, term2 ) = false;
+  
+(*fun op=( Term( ( f1 : functor_t ), args1 ), Term( ( f2 : functor_t ), args2 ) ) = ( op=( f1, f2 ) ) andalso ( args1 = args2 );*)
+
+(* Equality test for Bindings *)
+fun eqBinding( Binding( term1A, term1B ), Binding( term2A, term2B ) ) = 
+        ( eqTerm( term1A, term2A ) andalso eqTerm( term1B, term2B ) )
+          orelse ( eqTerm( term1A, term2B ) andalso eqTerm( term1B, term2A ) );
 		  
-(* Equality test for lists of Bindings. Lists with the same elements in a 
-   different order are considered equal. *)
-fun eqUnorderedBindingList( [], [] ) = true
-  | eqUnorderedBindingList( [], ys ) = false
-  | eqUnorderedBindingList( xs, [] ) = false
-  | eqUnorderedBindingList( (x::xs), ys ) = 
+(* Polymorphic equality test for 2-tuples *)
+fun eqTwoTuple eqTestA eqTestB ( ( x1, y1 ), (x2, y2 ) ) = 
+        eqTestA( x1, x2 ) andalso eqTestB( y1, y2 );
+		  
+(* Polymorphic equality test for unordered lists. *)
+fun eqUnorderedList _ ( [], [] ) = true
+  | eqUnorderedList _ ( [], ys ) = false
+  | eqUnorderedList _ ( xs, [] ) = false
+  | eqUnorderedList eqTest ( (x::xs), ys ) = 
     (* For each element of the first list, step through the second list and 
 	   match it to an equal element. Remove both elements and repeat. *)
     let fun remove( x, [] ) = ( false, [] )
 	      | remove( x, (y::ys) ) = 
-		        if( eqBinding(x, y) )
+		        if( eqTest(x, y) )
 			        then ( true, ys )
 				else
 				    let val result = remove( x, ys ) in
@@ -86,14 +97,15 @@ fun eqUnorderedBindingList( [], [] ) = true
 					    else result 
 					end in
 	let val result = remove( x, ys ) in
-        (first result) andalso eqUnorderedBindingList( xs, ( second result ) )
+        (first result) andalso eqUnorderedList eqTest ( xs, ( second result ) )
 	end end;
 
 (* Equality test for Unifiers *)
-fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedBindingList( xs, ys );
+fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedList eqBinding ( xs, ys );
 
-(* Equality test for (''a, Unifier) tuples *)
-fun eqTupleUnifier ( (a,b), (c,d) ) = (a=c) andalso ( eqUnifier( b, d ) );
+(* Equality test for Clauses *)
+fun eqClause( Clause(head1, body1), Clause(head2, body2) ) = 
+        eqTerm( head1, head2 ) andalso eqOrderedList eqTerm ( body1, body2 );
 
 fun printTerm ( Variable(name, scope) ) = ( 
         if( not(scope = 0) andalso not(scope = 1) )
@@ -200,13 +212,13 @@ fun getTransitiveBinding ( Binding( term1A, term1B ) )
 		if( eqBinding( ( Binding( term1A, term1B ) ), 
 		        ( Binding( term2A, term2B ) ) ) )
 			then ( false, Binding( term1A, term2A ) )
-	    else if( term1A = term2A )
+	    else if( eqTerm( term1A, term2A ) )
 		    then ( true, Binding( term1B, term2B ) )
-		else if( term1A = term2B )
+		else if( eqTerm( term1A, term2B ) )
 		    then ( true, Binding( term1B, term2A ) )
-		else if( term1B = term2A )
+		else if( eqTerm( term1B, term2A ) )
 		    then ( true, Binding( term1A, term2B ) )
-		else if( term1B = term2B )
+		else if( eqTerm( term1B, term2B ) )
 		    then ( true, Binding( term1A, term2A ) )
 		else ( false, Binding( term1A, term2A ) );
 		
@@ -345,12 +357,12 @@ fun scopeQuery( Query(xs) ) =
    satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
    with the input Unifier, then the first continuation is called with the 
    updated Unifier. If not, then the second continuation is called with unit. *)
-fun findUnifier term unifier k1 k2 = 
+fun findUnifier program term unifier k1 k2 = 
     (* Takes a list of terms and finds a unifier that satisfies all of them. *)
     let fun findUnifiers [] unifier k1 k2 = k1 unifier k2
           | findUnifiers (term::terms) unifier k1 k2 = 
             let fun m1 newUnifier k3 = findUnifiers terms newUnifier k1 k3
-            in findUnifier term unifier m1 k2
+            in findUnifier program term unifier m1 k2
             end in
 
     let fun worker [] = k2()
@@ -372,15 +384,16 @@ fun findUnifier term unifier k1 k2 =
         worker ( getClauses program )
     end end end;
 
-(* Takes a query and two continuations. If the query is satisfiable, then the 
-   first continuation is called with the most general unifier that satisfies it.
-   If not, then the second continuation is called with unit. *)
-fun executeQuery (Query(xs)) k1 k2 = 
+(* Takes a program, a query and two continuations. If the query is satisfiable 
+   by the program, then the first continuation is called with the most general 
+   unifier that satisfies it. If not, then the second continuation is called 
+   with unit. *)
+fun executeQuery program (Query(xs)) k1 k2 = 
     let fun executeQueryTerms [] unifier k1 _ = k1 unifier
           | executeQueryTerms (x::xs) unifier k1 k2 = 
             let fun m1 newUnifier k = executeQueryTerms xs newUnifier k1 k
             in
-                findUnifier x unifier m1 k2
+                findUnifier program x unifier m1 k2
             end
     in
         executeQueryTerms xs (Unifier([])) k1 k2
@@ -409,7 +422,7 @@ fun substitute ( Binding( Variable( _, _ ), Variable( _, _ ) ) ) b2 = b2
                 Term( f, ( iterateArgs args ) )
             end
           | worker ( Variable( v, s ) ) = 
-                if( Variable( v, s ) = Variable( v1, s1 ) )
+                if( eqTerm( Variable( v, s ), Variable( v1, s1 ) ) )
                     then Term( f1, args1 )
                 else Variable( v, s )
     in
@@ -438,20 +451,20 @@ fun substituteUnifier ( Unifier(xs) ) =
         worker xs []
     end end;
 
-(* Takes a list of queries. Returns true if all of the queries can be 
-   satisfied. *)
-fun executeQueries [] = true
-  | executeQueries (x::xs) = 
+(* Takes a program and a list of queries. Returns true if all of the queries 
+   can be satisfied by the program. *)
+fun executeQueries( _, [] ) = true
+  | executeQueries( program, (x::xs) ) = 
     let fun m1 unifier = ( 
             printQuery x; 
             print "\n";
             printUnifier ( substituteUnifier unifier ); 
-            executeQueries xs 
+            executeQueries( program, xs) 
     ) in
     let fun m2() = ( 
             printQuery x; 
             print "\nQuery not satisfiable."; 
             false 
     ) in
-        executeQuery (scopeQuery x) m1 m2
+        executeQuery program (scopeQuery x) m1 m2
     end end;
