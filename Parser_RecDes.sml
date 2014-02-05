@@ -39,7 +39,7 @@ fun eqToken( ATOM(a1), ATOM(a2) ) = ( a1 = a2 )
   | eqToken( EOF, EOF ) = true
   | eqToken( _, _ ) = false;
 
-val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile3.pl";
+val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile5.pl";
         
 fun printClauses [] = ()
   | printClauses ((Clause(head,body))::clauses) = (
@@ -57,8 +57,10 @@ fun printQueries [] = ()
         printQueries( queries )
     );
     
-fun printAllProg ( clauses, queries ) = 
-        ( printClauses( clauses ); printQueries( queries ) );
+fun printProgram( Program(xs) ) = printClauses(xs);
+    
+fun printParserOutput ( program, queries ) = 
+        ( printProg(program); printQueries( queries ) );
 
 val firstLine = String.explode( valOf( TextIO.inputLine inStream ) );
 
@@ -121,7 +123,7 @@ fun lexIdle [] =
                 else
                     ( INT( valOf( Int.fromString( 
                             String.implode( digitList ) ) ) ) ) 
-                              :: ( lexIdle( !remaining ) )
+                              :: ( lexIdle( x::xs ) )
             end end in
     let fun lexInt( xs ) =
             let val remaining = ref [] in
@@ -220,6 +222,8 @@ fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
   | printToken( VARIABLE(v) ) = ( print "VARIABLE( "; print v; print " )" )
   | printToken( INT(n) ) = 
         ( print "INT( "; print ( Int.toString( n ) ); print " )" )
+  | printToken( FLOAT(f) ) = 
+        ( print "FLOAT( "; print ( Real.toString( f ) ); print " )" )
   | printToken( LEFTPAREN ) = print "LEFTPAREN"
   | printToken( RIGHTPAREN ) = print "RIGHTPAREN"
   | printToken( COMMA ) = print "COMMA"
@@ -228,6 +232,12 @@ fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
   | printToken( RIGHTSQ ) = print "RIGHTSQ"
   | printToken( PIPE ) = print "PIPE"
   | printToken( COLONMINUS ) = print "COLONMINUS"
+  | printToken( IS ) = print "IS"
+  | printToken( PLUS ) = print "PLUS"
+  | printToken( MINUS ) = print "MINUS"
+  | printToken( MULT ) = print "MULT"
+  | printToken( DIV ) = print "DIV"
+  | printToken( MOD ) = print "MOD"
   | printToken( EOF ) = print "EOF";
 
 fun printTokenStream( [] ) = ()
@@ -275,8 +285,11 @@ and parseTerm( ATOM(a)::tokens ) =
         ( ( buildList terms ), tokens3 )
     end end end
   | parseTerm( VARIABLE(v)::tokens ) = ( Variable(v, 0), tokens )
-  | parseTerm( INT(n)::tokens ) = 
-        ( Term( Functor( Int.toString(n) ), [] ), tokens )
+  | parseTerm( INT(n)::tokens ) = parseArith( INT(n)::tokens )
+  | parseTerm( FLOAT(f)::tokens ) = parseArith( FLOAT(f)::tokens )
+  | parseTerm( LEFTPAREN::tokens ) = parseArith( LEFTPAREN::tokens )
+(*  | parseTerm( INT(n)::tokens ) = 
+        ( Term( Functor( Int.toString(n) ), [] ), tokens )*)
 
 (* Returns a term and a list of the remaining tokens *)
 and parseMoreList( RIGHTSQ::tokens ) = ( Term( Functor("[]"), [] ), tokens )
@@ -299,10 +312,11 @@ and parseMoreTerms( COMMA::tokens ) = parseTermList( tokens )
 (* Returns a list of terms and a list of the remaining tokens *)
 and parseTermList( tokens ) = 
     let val x as (term, tokens2) = parseTerm( tokens ) in
-    let val y as (terms, tokens3) = parseMoreTerms( tokens2 )
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
     in
-        ( (term::terms), tokens3 )
-    end end
+        ( (isTerm::terms), tokens4 )
+    end end end
 
 (* Returns a list of terms and a list of the remaining tokens. *)
 and parseBody( COLONMINUS::tokens ) = parseTermList( tokens )
@@ -378,13 +392,82 @@ and parseLines( tokens ) =
                 end
         else 
             ([], [], tokens) (*ERROR*)
-    end;
+    end
+    
+(* Returns a term and the remaining tokens. *)
+and parseIsTerm( IS::tokens, prevTerm ) = 
+    let val x as (nextTerm, tokens2) = parseTerm( tokens ) in
+    let val y as (nextIsTerm, tokens3) = parseIsTerm( tokens2, nextTerm )
+    in
+        ( Term( Functor("is"), [ prevTerm, nextIsTerm ] ), tokens3 )
+    end end
+  | parseIsTerm( tokens, prevTerm ) = ( prevTerm, tokens )
 
-fun parseStart( tokens ) = 
+and parseStart( tokens ) = 
     let val x as (clauses, queries, tokens2) = parseLines( tokens )
     in
         if( eqToken( hd tokens2, EOF ) )
             then (Program(clauses), queries)
         else
             (Program([]), []) (*ERROR*)
-    end;
+    end
+    
+(* Returns a Term and the remaining tokens. *)
+and parseArith( tokens ) = 
+    let val x as (arithTerm, tokens2) = parseArithTerm( tokens )
+    in
+        parseMoreArithTerms( tokens2, arithTerm )
+    end
+    
+(* Takes the current tokens and an already-parsed arithmetic term.
+   Returns a Term and the remaining tokens. *)
+and parseMoreArithTerms( PLUS::tokens, arithTerm ) =
+    let val x as (arithTerms, tokens2) = parseArith( tokens )
+    in
+        ( Term( Functor("+"), [ arithTerm, arithTerms ] ), tokens2 )
+    end
+  | parseMoreArithTerms( MINUS::tokens, arithTerm ) =
+    let val x as (arithTerms, tokens2) = parseArith( tokens )
+    in
+        ( Term( Functor("-"), [ arithTerm, arithTerms ] ), tokens2 )
+    end
+  | parseMoreArithTerms( tokens, arithTerm ) = ( arithTerm, tokens )
+    
+(* Returns a Term and the remaining tokens. *)
+and parseArithTerm( tokens ) = 
+    let val x as (factor, tokens2) = parseFactor( tokens )
+    in
+        parseMoreFactors( tokens2, factor )
+    end
+    
+and parseFactor( LEFTPAREN::tokens ) = 
+    let val x as (arith, tokens2) = parseArith( tokens )
+    in
+        if( eqToken( hd tokens2, RIGHTPAREN ) )
+            then ( arith, tl tokens2 )
+        else
+            ( arith, tl tokens2 ) (*ERROR*)
+    end
+  | parseFactor( INT(i)::tokens ) = ( IntTerm( i ), tokens )
+  | parseFactor( FLOAT(f)::tokens ) = ( FloatTerm( f ), tokens )
+  
+and parseMoreFactors( MULT::tokens, prevFactor ) = 
+    let val x as (nextFactor, tokens2) = parseFactor( tokens )
+    in
+        parseMoreFactors( tokens2, 
+                Term( Functor("*"), [ prevFactor, nextFactor ] ) )
+    end
+  | parseMoreFactors( DIV::tokens, prevFactor ) = 
+    let val x as (nextFactor, tokens2) = parseFactor( tokens )
+    in
+        parseMoreFactors( tokens2, 
+                Term( Functor("/"), [ prevFactor, nextFactor ] ) )
+    end
+  | parseMoreFactors( MOD::tokens, prevFactor ) = 
+    let val x as (nextFactor, tokens2) = parseFactor( tokens )
+    in
+        parseMoreFactors( tokens2, 
+                Term( Functor("%"), [ prevFactor, nextFactor ] ) )
+    end
+  | parseMoreFactors( tokens, factor ) = ( factor, tokens );
+  
