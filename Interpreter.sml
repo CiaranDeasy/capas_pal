@@ -142,6 +142,8 @@ fun printTerm ( Variable(name, scope) ) = (
                     () )
         )
     end
+  | printTerm( IntTerm( i ) ) = print ( Int.toString( i ) )
+  | printTerm( FloatTerm( f ) ) = print ( Real.toString( f ) )
 
 and printTerms [] = ()
   | printTerms [term] = printTerm term
