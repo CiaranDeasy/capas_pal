@@ -60,7 +60,7 @@ fun printQueries [] = ()
 fun printProgram( Program(xs) ) = printClauses(xs);
     
 fun printParserOutput ( program, queries ) = 
-        ( printProg(program); printQueries( queries ) );
+        ( printProgram(program); printQueries( queries ) );
 
 val firstLine = String.explode( valOf( TextIO.inputLine inStream ) );
 
