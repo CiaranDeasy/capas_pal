@@ -184,17 +184,17 @@ fun printAllBindings [] = ()
    original query, ie: scope "1". *)
 fun printCoreBindings [] = ()
   | printCoreBindings (binding::bindings) = 
-    let fun printBinding( Binding( Variable( name, scope ), Term( f, a ) ) ) =
+    let fun printBinding( Binding( Variable( _, _ ), Variable( _, _ ) ) ) = ()
+          | printBinding( Binding( Variable( name, scope ), term ) ) =
         if( scope = 1 ) then (
             printTerm ( Variable( name, scope ) );
             print " = ";
-            printTerm ( Term( f, a ) );
+            printTerm ( term );
             print "\n"
         )
         else 
             ()
-         | printBinding( Binding( Variable( _, _ ), Variable( _, _ ) ) ) = ()
-         | printBinding binding = printBinding ( flipBinding binding ) 
+          | printBinding binding = printBinding ( flipBinding binding ) 
     in
         (
             printBinding binding;
@@ -300,6 +300,24 @@ fun unify ( Unifier(defaultBindings) )
 	else
 	    ( false, Unifier([]) )
 	end end end end end end end
+  | unify ( Unifier(xs) ) ( Binding( IntTerm(i1), IntTerm(i2) ) ) =
+        if( i1 = i2 )
+            then ( true, Unifier(xs) )
+        else
+            ( false, Unifier([]) )
+  | unify ( Unifier(xs) ) ( Binding( FloatTerm(f1), FloatTerm(f2) ) ) =
+        if( Real.==( f1, f2 ) )
+            then ( true, Unifier(xs) )
+        else
+            ( false, Unifier([]) )
+  (* Reject incompatible cross-combinations of terms. *)
+  | unify _ ( Binding( Term(_), IntTerm(_) ) ) = ( false, Unifier([]) )
+  | unify _ ( Binding( IntTerm(_), Term(_) ) ) = ( false, Unifier([]) )
+  | unify _ ( Binding( Term(_), FloatTerm(_) ) ) = ( false, Unifier([]) )
+  | unify _ ( Binding( FloatTerm(_), Term(_) ) ) = ( false, Unifier([]) )
+  | unify _ ( Binding( IntTerm(_), FloatTerm(_) ) ) = ( false, Unifier([]) )
+  | unify _ ( Binding( FloatTerm(_), IntTerm(_) ) ) = ( false, Unifier([]) )
+  (* Remaining cases must involve a variable. *)
   | unify ( Unifier([]) ) x = ( true, Unifier( [x] ) )
   | unify ( Unifier(defaultBindings) ) ( Binding( x, y ) ) = 
     (* Takes a list of Bindings and returns true if the Bindings are consistent.
@@ -333,6 +351,8 @@ fun scopeClause( Clause( head, body ), scope ) =
                         Term( f, ( scopeTerms args ) )
                   | scopeTerm ( Variable( v, _ ) ) = 
                         Variable( v, scope )
+                  | scopeTerm ( IntTerm(i) ) = IntTerm(i)
+                  | scopeTerm ( FloatTerm(f) ) = FloatTerm(f)
             in
                 ( scopeTerm( term ) ) :: ( scopeTerms( terms ) )
             end
@@ -348,12 +368,58 @@ fun scopeQuery( Query(xs) ) =
                         Term( f, ( scopeTerms args ) )
                   | scopeTerm ( Variable( v, _ ) ) = 
                         Variable( v, 1 )
+                  | scopeTerm ( IntTerm(i) ) = IntTerm(i)
+                  | scopeTerm ( FloatTerm(f) ) = FloatTerm(f)
             in
                 ( scopeTerm( term ) ) :: ( scopeTerms( terms ) )
             end
     in
         Query( scopeTerms( xs ) )                        
     end;
+    
+fun evaluate( Variable(v) ) = Variable(v)
+  | evaluate( IntTerm(i) ) = IntTerm(i)
+  | evaluate( FloatTerm(f) ) = FloatTerm(f)
+  | evaluate( Term( Functor(f), [arg1, arg2] ) ) = 
+    let fun addTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 + i2 )
+          | addTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) + f2 )
+          | addTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 + real(i2) )
+          | addTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 + f2 )
+    in
+    let fun subTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 - i2 )
+          | subTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) - f2 )
+          | subTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 - real(i2) )
+          | subTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 - f2 )
+    in
+    let fun mulTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 * i2 )
+          | mulTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) * f2 )
+          | mulTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 * real(i2) )
+          | mulTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 * f2 )
+    in
+    let fun divTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 div i2 )
+          | divTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) / f2 )
+          | divTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 / real(i2) )
+          | divTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 / f2 )
+    in
+    let fun modTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 mod i2 )
+    in
+    if( f = "+" )
+        then addTerms( evaluate( arg1 ), evaluate( arg2 ) )
+    else if( f = "-" )
+        then subTerms( evaluate( arg1 ), evaluate( arg2 ) )
+    else if( f = "*" )
+        then mulTerms( evaluate( arg1 ), evaluate( arg2 ) )
+    else if( f = "/" )
+        then divTerms( evaluate( arg1 ), evaluate( arg2 ) )
+    else if( f = "%" )
+        then modTerms( evaluate( arg1 ), evaluate( arg2 ) )
+    else Term( Functor(f), [arg1, arg2] )
+    end end end end end
+  | evaluate( Term( f, args ) ) = Term( f, args );
+  
+(* Returns true if the input is a Term with functor "is", false otherwise. *)
+fun functorIs( Term( Functor( f ), [arg1, arg2] ) ) = ( f = "is" )
+  | functorIs( term ) = false;
     
 (* Takes a term, an input Unifier and two continuations. If the term is 
    satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
@@ -364,23 +430,38 @@ fun findUnifier program term unifier k1 k2 =
     let fun findUnifiers [] unifier k1 k2 = k1 unifier k2
           | findUnifiers (term::terms) unifier k1 k2 = 
             let fun m1 newUnifier k3 = findUnifiers terms newUnifier k1 k3
-            in findUnifier program term unifier m1 k2
+            in 
+                findUnifier program term unifier m1 k2
             end in
-
     let fun worker [] = k2()
           | worker ( ( clause as Clause( _, _ ) )::clauses ) = 
             let val scope = !scopeCounter in 
             let val liveClause as Clause( head, body ) = 
-                    scopeClause( clause, scope ) in 
-            let val unification = unify unifier ( Binding( term, head ) )
-            in
-                scopeCounter := !scopeCounter + 1;
-                if ( first unification )
-                    then let fun m2() = worker clauses
-                         in findUnifiers body ( second unification ) k1 m2
-                         end
+                        scopeClause( clause, scope ) in 
+            let val incScope = ( scopeCounter := !scopeCounter + 1 ) in
+            (* If the term is an "is" term, evaluate its args. *)
+            if( functorIs( term ) ) then 
+                let val x as Term( _, [arg1, arg2] ) = term in
+                let val unification = unify unifier 
+                            ( Binding( evaluate( arg1 ), evaluate( arg2 ) ) )
+                in
+                    if( first unification ) then 
+                        k1 ( second unification ) k2
+                    else
+                        k2()
+                end end
+            (* Or in the general case, run the unification algorithm. *)
+            else
+                let val unification = unify unifier ( Binding( term, head ) )
+                in
+                    if ( first unification )
+                        then let fun m2() = worker clauses
+                             in 
+                                 findUnifiers body ( second unification ) k1 m2
+                             end
                     else
                         worker clauses
+                end 
             end end end in
     let fun getClauses ( Program(xs) ) = xs in
         worker ( getClauses program )
@@ -413,8 +494,13 @@ fun substitute ( Binding( Variable( _, _ ), Variable( _, _ ) ) ) b2 = b2
         substitute ( Binding( t1, Variable( v1, s1 ) ) ) b2
   | substitute b1 ( Binding( Variable( v2, s2 ), t2 ) ) = 
         substitute b1 ( Binding( t2, Variable( v2, s2 ) ) )
-(* Main version: *)
-  | substitute ( Binding( Term( f1, args1 ), Variable( v1, s1 ) ) ) 
+(* No substitution if the target is an IntTerm or a FloatTerm binding *)
+  | substitute b1 ( Binding( IntTerm(i), Variable(v,s) ) ) = 
+        Binding( IntTerm(i), Variable(v,s) )
+  | substitute b1 ( Binding( FloatTerm(f), Variable(v,s) ) ) = 
+        Binding( FloatTerm(f), Variable(v,s) )
+(* Main version when the target is a Term: *)
+  | substitute ( Binding( term, Variable( v1, s1 ) ) ) 
             ( Binding( Term( f2, args2 ), Variable( v2, s2 ) ) ) =
     let fun worker ( Term( f, args ) ) = 
             let fun iterateArgs [] = []
@@ -425,8 +511,10 @@ fun substitute ( Binding( Variable( _, _ ), Variable( _, _ ) ) ) b2 = b2
             end
           | worker ( Variable( v, s ) ) = 
                 if( eqTerm( Variable( v, s ), Variable( v1, s1 ) ) )
-                    then Term( f1, args1 )
+                    then term
                 else Variable( v, s )
+          | worker ( IntTerm(i) ) = IntTerm(i)
+          | worker ( FloatTerm(f) ) = FloatTerm(f)
     in
         Binding( ( worker ( Term( f2, args2 ) ) ), Variable( v2, s2 ) )
     end;
@@ -460,7 +548,9 @@ fun executeQueries( _, [] ) = true
     let fun m1 unifier = ( 
             printQuery x; 
             print "\n";
-            printUnifier ( substituteUnifier unifier ); 
+            let val subUnifier = substituteUnifier unifier in
+            printUnifier ( subUnifier ) 
+            end;
             executeQueries( program, xs) 
     ) in
     let fun m2() = ( 
