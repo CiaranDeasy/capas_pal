@@ -1,45 +1,4 @@
-datatype token = ATOM of string
-               | VARIABLE of string
-               | INT of int
-               | FLOAT of real
-               | LEFTPAREN
-               | RIGHTPAREN
-               | COMMA
-               | DOT
-               | LEFTSQ
-               | RIGHTSQ
-               | PIPE
-               | COLONMINUS
-               | IS
-               | PLUS
-               | MINUS
-               | MULT
-               | DIV
-               | MOD
-               | EOF;
-               
-fun eqToken( ATOM(a1), ATOM(a2) ) = ( a1 = a2 )
-  | eqToken( VARIABLE(v1), VARIABLE(v2) ) = ( v1 = v2 )
-  | eqToken( INT(i1), INT(i2) ) = ( i1 = i2 )
-  | eqToken( FLOAT(f1), FLOAT(f2) ) = ( Real.==( f1, f2 ) )
-  | eqToken( LEFTPAREN, LEFTPAREN ) = true
-  | eqToken( RIGHTPAREN, RIGHTPAREN ) = true
-  | eqToken( COMMA, COMMA ) = true
-  | eqToken( DOT, DOT ) = true
-  | eqToken( LEFTSQ, LEFTSQ ) = true
-  | eqToken( RIGHTSQ, RIGHTSQ ) = true
-  | eqToken( PIPE, PIPE ) = true
-  | eqToken( COLONMINUS, COLONMINUS ) = true
-  | eqToken( IS, IS ) = true
-  | eqToken( PLUS, PLUS ) = true
-  | eqToken( MINUS, MINUS ) = true
-  | eqToken( MULT, MULT ) = true
-  | eqToken( DIV, DIV ) = true
-  | eqToken( MOD, MOD ) = true
-  | eqToken( EOF, EOF ) = true
-  | eqToken( _, _ ) = false;
-
-val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile5.pl";
+val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile8.pl";
         
 fun printClauses [] = ()
   | printClauses ((Clause(head,body))::clauses) = (
@@ -288,8 +247,6 @@ and parseTerm( ATOM(a)::tokens ) =
   | parseTerm( INT(n)::tokens ) = parseArith( INT(n)::tokens )
   | parseTerm( FLOAT(f)::tokens ) = parseArith( FLOAT(f)::tokens )
   | parseTerm( LEFTPAREN::tokens ) = parseArith( LEFTPAREN::tokens )
-(*  | parseTerm( INT(n)::tokens ) = 
-        ( Term( Functor( Int.toString(n) ), [] ), tokens )*)
 
 (* Returns a term and a list of the remaining tokens *)
 and parseMoreList( RIGHTSQ::tokens ) = ( Term( Functor("[]"), [] ), tokens )
