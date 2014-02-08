@@ -1,25 +1,4 @@
         
-fun printClauses [] = ()
-  | printClauses ((Clause(head,body))::clauses) = (
-        printTerm( head );
-        print " :- ";
-        printTerms( body );
-        print "\n";
-        printClauses( clauses )
-    );
-    
-fun printQueries [] = ()
-  | printQueries (query::queries) = (
-        printQuery( query );
-        print "\n";
-        printQueries( queries )
-    );
-    
-fun printProgram( Program(xs) ) = printClauses(xs);
-    
-fun printParserOutput ( program, queries ) = 
-        ( printProgram(program); printQueries( queries ) );
-
 fun lexIdle [] inFile = 
     let val nextLine = TextIO.inputLine inFile
     in

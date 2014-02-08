@@ -88,3 +88,127 @@ fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedList eqBinding ( xs, ys 
 (* Equality test for Clauses *)
 fun eqClause( Clause(head1, body1), Clause(head2, body2) ) = 
         eqTerm( head1, head2 ) andalso eqOrderedList eqTerm ( body1, body2 );
+
+
+(*******************************************************************************
+The following are functions for printing out the datatypes above.
+*******************************************************************************)
+
+(* Helper function: takes a binding and returns another Binding with the 
+   elements in reverse order. *)
+fun flipBinding ( Binding( x, y ) ) = Binding( y, x );
+
+fun printTerm ( Variable(name, scope) ) = ( 
+        if( not(scope = 0) andalso not(scope = 1) )
+            then ( print ( Int.toString( scope ) ); print "_" )
+        else
+            ();
+        print name )
+  | printTerm ( Term( Functor( func ), terms ) ) = 
+    let fun printListTerm( Term(_, [term, Variable(v,s)] ) ) = 
+                ( printTerm( term ); print "|"; printTerm( Variable(v,s) ) )
+          | printListTerm( Term(_, [term, Term( Functor( f ), args )] ) ) = (
+                printTerm( term );
+                if( f = "." )
+                    then ( print ", "; 
+                           printListTerm( Term( Functor( f ), args ) ) )
+                else (*if( f = "[]" )*)
+                    ()
+                )
+    in
+        ( 
+            if( func = "." )
+                then ( print "["; 
+                       printListTerm( Term( Functor( func ), terms ) );
+                       print "]" )
+            else
+                ( print func; 
+                if( not( null terms ) )
+                    then ( 
+                        print "(";
+                        printTerms terms;
+                        print ")"
+                    )
+                else
+                    () )
+        )
+    end
+  | printTerm( IntTerm( i ) ) = print ( Int.toString( i ) )
+  | printTerm( FloatTerm( f ) ) = print ( Real.toString( f ) )
+
+and printTerms [] = ()
+  | printTerms [term] = printTerm term
+  | printTerms (term::terms) = ( 
+        printTerm term; 
+        print ", ";
+        printTerms terms
+    );
+        
+fun printQuery ( Query(terms) ) = 
+    let fun printTerms [] = ()
+          | printTerms [term] = printTerm term
+          | printTerms (term::terms) = ( 
+                printTerm ( term ); 
+                print ", ";
+                printTerms( terms ) 
+            ) in
+        printTerms terms 
+    end;
+    
+fun printAllBindings [] = ()
+  | printAllBindings (binding::bindings) = 
+    let fun printBinding ( Binding( Variable( name, scope ), term2 ) ) = (
+        printTerm ( Variable( name, scope ) );
+        print " = ";
+        printTerm term2
+       ) 
+         | printBinding binding = printBinding ( flipBinding binding ) 
+    in
+        (
+            printBinding binding;
+            print "\n";
+            printAllBindings bindings
+        )
+    end;
+    
+(* Only outputs variable-to-term Bindings, and only for variables in the 
+   original query, ie: scope "1". *)
+fun printCoreBindings [] = ()
+  | printCoreBindings (binding::bindings) = 
+    let fun printBinding( Binding( Variable( _, _ ), Variable( _, _ ) ) ) = ()
+          | printBinding( Binding( Variable( name, scope ), term ) ) =
+        if( scope = 1 ) then (
+            printTerm ( Variable( name, scope ) );
+            print " = ";
+            printTerm ( term );
+            print "\n"
+        )
+        else 
+            ()
+          | printBinding binding = printBinding ( flipBinding binding ) 
+    in
+        (
+            printBinding binding;
+            printCoreBindings bindings
+        )
+    end;
+    
+fun printUnifier ( Unifier(bindings) ) = printCoreBindings bindings;
+
+fun printClauses [] = ()
+  | printClauses ((Clause(head,body))::clauses) = (
+        printTerm( head );
+        print " :- ";
+        printTerms( body );
+        print "\n";
+        printClauses( clauses )
+    );
+    
+fun printQueries [] = ()
+  | printQueries (query::queries) = (
+        printQuery( query );
+        print "\n";
+        printQueries( queries )
+    );
+    
+fun printProgram( Program(xs) ) = printClauses(xs);
