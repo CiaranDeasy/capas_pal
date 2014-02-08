@@ -1,4 +1,3 @@
-val inStream = TextIO.openIn "C:\\Users\\Ciaran\\Source\\Repos\\capas_pal\\TestFile8.pl";
         
 fun printClauses [] = ()
   | printClauses ((Clause(head,body))::clauses) = (
@@ -21,22 +20,20 @@ fun printProgram( Program(xs) ) = printClauses(xs);
 fun printParserOutput ( program, queries ) = 
         ( printProgram(program); printQueries( queries ) );
 
-val firstLine = String.explode( valOf( TextIO.inputLine inStream ) );
-
-fun lexIdle [] = 
-    let val nextLine = TextIO.inputLine inStream
+fun lexIdle [] inFile = 
+    let val nextLine = TextIO.inputLine inFile
     in
         if( nextLine = NONE )
             then [EOF]
         else
-            lexIdle ( String.explode( valOf( nextLine ) ) )
+            lexIdle ( String.explode( valOf( nextLine ) ) ) inFile
     end
-  | lexIdle (x::xs) =
+  | lexIdle (x::xs) inFile =
     let fun lexVar( xs ) =
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
-                                valOf( TextIO.inputLine inStream ) ) )
+                                valOf( TextIO.inputLine inFile ) ) )
                   | worker (x::xs) = 
                         if( Char.isAlphaNum x ) 
                             then x :: ( worker xs )
@@ -45,13 +42,13 @@ fun lexIdle [] =
                             [] )
             in
                 ( VARIABLE( String.implode( worker xs ) ) ) 
-                        :: ( lexIdle( !remaining ) )
+                        :: ( lexIdle( !remaining ) inFile )
             end end in
     let fun lexAtom( xs ) =
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
-                                valOf( TextIO.inputLine inStream ) ) )
+                                valOf( TextIO.inputLine inFile ) ) )
                   | worker (x::xs) = 
                         if( Char.isAlphaNum x ) 
                             then x :: ( worker xs )
@@ -60,13 +57,13 @@ fun lexIdle [] =
                             [] )
             in
                 ( ATOM( String.implode( worker xs ) ) ) 
-                        :: ( lexIdle( !remaining ) )
+                        :: ( lexIdle( !remaining ) inFile )
             end end in
     let fun lexFloat( x::xs, digitList ) =
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
-                                valOf( TextIO.inputLine inStream ) ) )
+                                valOf( TextIO.inputLine inFile ) ) )
                   | worker (x::xs) = 
                         if( Char.isDigit x ) 
                             then x :: ( worker xs )
@@ -77,18 +74,18 @@ fun lexIdle [] =
                 if( Char.isDigit( hd xs ) )
                     then FLOAT( valOf( Real.fromString( 
                                 String.implode( worker xs ) ) ) )
-                                  :: ( lexIdle( !remaining ) )
+                                  :: ( lexIdle( !remaining ) inFile )
                 (* Catch the case where the dot was an end-of-line character. *)
                 else
                     ( INT( valOf( Int.fromString( 
                             String.implode( digitList ) ) ) ) ) 
-                              :: ( lexIdle( x::xs ) )
+                              :: ( lexIdle( x::xs ) inFile )
             end end in
     let fun lexInt( xs ) =
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
-                                valOf( TextIO.inputLine inStream ) ) )
+                                valOf( TextIO.inputLine inFile ) ) )
                   | worker (x::xs) = 
                         if( Char.isDigit x ) 
                             then x :: ( worker xs )
@@ -102,13 +99,13 @@ fun lexIdle [] =
                 else
                     ( INT( valOf( Int.fromString( 
                             String.implode( digitList ) ) ) ) ) 
-                              :: ( lexIdle( !remaining ) )
+                              :: ( lexIdle( !remaining ) inFile )
             end end end in
     let fun lexSingleQuoted( xs ) = 
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
-                                valOf( TextIO.inputLine inStream ) ) )
+                                valOf( TextIO.inputLine inFile ) ) )
                   | worker (x::xs) = 
                         if( x = #"\\" ) 
                             then x :: ( hd xs ) :: ( worker ( tl xs ) )
@@ -119,13 +116,13 @@ fun lexIdle [] =
                             x::( worker xs )
             in
                 ( ATOM( String.implode( #"'" :: ( worker xs ) ) ) )
-                        :: ( lexIdle( !remaining ) )
+                        :: ( lexIdle( !remaining ) inFile )
             end end in
     let fun lexDoubleQuoted( xs ) = 
             let val remaining = ref [] in
             let fun worker [] = 
                         worker ( String.explode( 
-                                valOf( TextIO.inputLine inStream ) ) )
+                                valOf( TextIO.inputLine inFile ) ) )
                   | worker (x::xs) = 
                         if( x = #"\\" ) 
                             then x :: ( hd xs ) :: ( worker ( tl xs ) )
@@ -136,18 +133,18 @@ fun lexIdle [] =
                             x::( worker xs )
             in
                 ( ATOM( String.implode( #"\"" :: ( worker xs ) ) ) )
-                        :: ( lexIdle( !remaining ) )
+                        :: ( lexIdle( !remaining ) inFile )
             end end in
     let fun lexIs( x::xs ) = 
             if( x = #"s" andalso Char.isSpace ( hd xs ) ) 
-                then IS :: ( lexIdle xs )
+                then IS :: ( lexIdle xs inFile )
             else
                 lexAtom( #"i"::x::xs )
     in    
     let fun lexMod( x::xs ) = 
             if( x = #"o" andalso ( hd xs ) = #"d" 
                     andalso Char.isSpace ( hd ( tl xs ) ) ) 
-                then MOD :: ( lexIdle ( tl xs ) )
+                then MOD :: ( lexIdle ( tl xs ) inFile )
             else
                 lexAtom( #"m"::x::xs )
     in    
@@ -156,27 +153,29 @@ fun lexIdle [] =
         else if( Char.isUpper x ) then lexVar( x::xs )
         else if( Char.isLower x ) then lexAtom( x::xs )
         else if( Char.isDigit x ) then lexInt( x::xs )
-        else if( Char.isSpace x ) then lexIdle( xs )
+        else if( Char.isSpace x ) then lexIdle( xs ) inFile
         else if( x = #":" andalso ( hd xs ) = #"-" ) 
-            then COLONMINUS :: lexIdle( tl xs )
-        else if( x = #"(" ) then LEFTPAREN :: ( lexIdle xs )
-        else if( x = #")" ) then RIGHTPAREN :: ( lexIdle xs )
-        else if( x = #"," ) then COMMA :: ( lexIdle xs )
-        else if( x = #"." ) then DOT :: ( lexIdle xs )
-        else if( x = #"[" ) then LEFTSQ :: ( lexIdle xs )
-        else if( x = #"]" ) then RIGHTSQ :: ( lexIdle xs )
-        else if( x = #"|" ) then PIPE :: ( lexIdle xs )
-        else if( x = #"+" ) then PLUS :: ( lexIdle xs )
-        else if( x = #"-" ) then MINUS :: ( lexIdle xs )
-        else if( x = #"*" ) then MULT :: ( lexIdle xs )
-        else if( x = #"/" ) then DIV :: ( lexIdle xs )
+            then COLONMINUS :: lexIdle( tl xs ) inFile
+        else if( x = #"(" ) then LEFTPAREN :: ( lexIdle xs ) inFile
+        else if( x = #")" ) then RIGHTPAREN :: ( lexIdle xs ) inFile
+        else if( x = #"," ) then COMMA :: ( lexIdle xs ) inFile
+        else if( x = #"." ) then DOT :: ( lexIdle xs ) inFile
+        else if( x = #"[" ) then LEFTSQ :: ( lexIdle xs ) inFile
+        else if( x = #"]" ) then RIGHTSQ :: ( lexIdle xs ) inFile
+        else if( x = #"|" ) then PIPE :: ( lexIdle xs ) inFile
+        else if( x = #"+" ) then PLUS :: ( lexIdle xs ) inFile
+        else if( x = #"-" ) then MINUS :: ( lexIdle xs ) inFile
+        else if( x = #"*" ) then MULT :: ( lexIdle xs ) inFile
+        else if( x = #"/" ) then DIV :: ( lexIdle xs ) inFile
         else if( x = #"'" ) then lexSingleQuoted( xs )
         else if( x = #"\"" ) then lexDoubleQuoted( xs )
         else []
     end end end end end end end end;
-        
-val something = lexIdle firstLine;
 
+(* Top-level function for the Prolog lexer. Takes an instream for a Prolog 
+   source file, and returns a list of tokens. *)
+fun lex( inFile ) = lexIdle [] inFile;
+    
 fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
   | printToken( VARIABLE(v) ) = ( print "VARIABLE( "; print v; print " )" )
   | printToken( INT(n) ) = 
@@ -202,8 +201,6 @@ fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
 fun printTokenStream( [] ) = ()
   | printTokenStream( token::tokens ) = 
         ( printToken token; print ", \n"; printTokenStream( tokens ) );
-        
-val somethingelse = printTokenStream( something );
 
 (* Returns a term and a list of the remaining tokens. *)
 fun parseTail( VARIABLE(v)::tokens ) = ( Variable( v, 0 ), tokens )
