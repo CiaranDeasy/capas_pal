@@ -1,3 +1,14 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file contains the functions that implement the finite state machine
+that lexes a Prolog program, converting it from a character stream to a list of 
+tokens.
+*******************************************************************************)
+
 fun lexIdle [] inFile = 
     let val nextLine = TextIO.inputLine inFile
     in

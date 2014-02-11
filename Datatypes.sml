@@ -83,7 +83,8 @@ fun eqBinding( Binding( term1A, term1B ), Binding( term2A, term2B ) ) =
           orelse ( eqTerm( term1A, term2B ) andalso eqTerm( term1B, term2A ) );
 
 (* Equality test for Unifiers *)
-fun eqUnifier ( Unifier(xs), Unifier(ys) ) = eqUnorderedList eqBinding ( xs, ys );
+fun eqUnifier ( Unifier(xs), Unifier(ys) ) = 
+        eqUnorderedList eqBinding ( xs, ys );
 
 (* Equality test for Clauses *)
 fun eqClause( Clause(head1, body1), Clause(head2, body2) ) = 

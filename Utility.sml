@@ -1,3 +1,13 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file contains some general-purpose functions used by the Prolog
+interpreter/compiler.
+*******************************************************************************)
+
 (* Takes a list, a value and an equality test. Returns true if the value is in 
    the list, according to the equality test. *)
 fun memberPoly x [] _ = false
@@ -38,7 +48,8 @@ fun eqOrderedList _ ( [], [] ) = true
   | eqOrderedList eqTest ( (x::xs), (y::ys) ) = 
         eqTest( x, y ) andalso eqOrderedList eqTest ( xs, ys );
 
-(*fun op=( Term( ( f1 : functor_t ), args1 ), Term( ( f2 : functor_t ), args2 ) ) = ( op=( f1, f2 ) ) andalso ( args1 = args2 );*)
+(*fun op=( Term( ( f1 : functor_t ), args1 ), Term( ( f2 : functor_t ), args2 ) 
+) = ( op=( f1, f2 ) ) andalso ( args1 = args2 );*)
 		  
 (* Polymorphic equality test for 2-tuples *)
 fun eqTwoTuple eqTestA eqTestB ( ( x1, y1 ), (x2, y2 ) ) = 

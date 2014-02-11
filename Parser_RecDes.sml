@@ -1,3 +1,14 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file contains the functions that implement a recursive-descent 
+parser, taking as input a list of tokens and returning an ML datastructure 
+representing the Prolog program.
+*******************************************************************************)
+
 fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
   | printToken( VARIABLE(v) ) = ( print "VARIABLE( "; print v; print " )" )
   | printToken( INT(n) ) = 
