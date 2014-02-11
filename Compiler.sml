@@ -79,9 +79,9 @@ and compilerPrintIndentation( outStream, depth ) =
 and compilerPrintTerm( outStream, Term( Functor( f ), args ), depth ) = (
         compilerPrintIndentation( outStream, depth );
         if( List.length( args ) = 0 ) then (
-            TextIO.output( outStream, "Term( Functor( " );
+            TextIO.output( outStream, "Term( Functor( \"" );
             TextIO.output( outStream, f );
-            TextIO.output( outStream, "), [] )" )
+            TextIO.output( outStream, "\" ), [] )" )
         )
         else (
             TextIO.output( outStream, "Term(\n" );
