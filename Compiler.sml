@@ -1,85 +1,115 @@
-fun compilerPrintProgram( Program(clauses) ) = (
-        print "val program = Program([\n";
-        compilerPrintClauseList( clauses );
-        print "\n";
-        print "]);\n"
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file contains the functions that take a Prolog program, represented
+as an ML datatype, and output a source ML program that, when run, gives the 
+result of running the Prolog program.
+*******************************************************************************)
+
+fun compile( inFilename, outFilename ) =
+    let val inFile = TextIO.openIn( inFilename ) in
+    let val outFile = TextIO.openOut( outFilename ) in
+    let val tokenStream = lex( inFile ) in
+    let val x as ( program, queries ) = parseStart( tokenStream )
+    in
+        compilerPrintProgram( outFile, program )
+    end end end end
+       
+
+and compilerPrintProgram( outStream, Program(clauses) ) = (
+        TextIO.output( outStream, "val program = Program([\n" );
+        compilerPrintClauseList( outStream, clauses );
+        TextIO.output( outStream, "\n" );
+        TextIO.output( outStream, "]);\n" );
+        TextIO.flushOut( outStream )
     )
 
-and compilerPrintClauseList( [] ) = ()
-  | compilerPrintClauseList( clause::clauses ) = (
-        compilerPrintClause( clause );
-        print ",\n";
-        compilerPrintClauseList( clauses )
+and compilerPrintClauseList( outStream, [] ) = ()
+  | compilerPrintClauseList( outStream, [clause] ) = (
+        compilerPrintClause( outStream, clause );
+        TextIO.output( outStream, "\n" )
+    )
+  | compilerPrintClauseList( outStream, clause::clauses ) = (
+        compilerPrintClause( outStream, clause );
+        TextIO.output( outStream, ",\n" );
+        compilerPrintClauseList( outStream, clauses )
     )
 
-and compilerPrintClause( Clause( head, body ) ) = (
-        print "Clause( \n";
-        compilerPrintTerm( head, 1 );
-        print ",\n";
-        compilerPrintIndentation( 1 );
-        print "[\n";
-        compilerPrintTermList( body, 2 );
-        print "\n";
-        compilerPrintIndentation( 1 );
-        print "]\n";
-        print ")"
+and compilerPrintClause( outStream, Clause( head, body ) ) = (
+        TextIO.output( outStream, "Clause( \n" );
+        compilerPrintTerm( outStream, head, 1 );
+        TextIO.output( outStream, ",\n" );
+        compilerPrintIndentation( outStream, 1 );
+        TextIO.output( outStream, "[\n" );
+        compilerPrintTermList( outStream, body, 2 );
+        TextIO.output( outStream, "\n" );
+        compilerPrintIndentation( outStream, 1 );
+        TextIO.output( outStream, "]\n" );
+        TextIO.output( outStream, ")" )
     )
     
-and compilerPrintIndentation( depth ) = 
+and compilerPrintIndentation( outStream, depth ) = 
         if( depth = 0 ) then
             ()
         else
             (
-              print "  ";
-              compilerPrintIndentation( depth - 1 )
+              TextIO.output( outStream, "  " );
+              compilerPrintIndentation( outStream, depth - 1 )
             )
 
-and compilerPrintTerm( Term( Functor( f ), args ), depth ) = (
-        compilerPrintIndentation( depth );
+and compilerPrintTerm( outStream, Term( Functor( f ), args ), depth ) = (
+        compilerPrintIndentation( outStream, depth );
         if( List.length( args ) = 0 ) then (
-            print "Term( Functor( ";
-            print f;
-            print "), [] )"
+            TextIO.output( outStream, "Term( Functor( " );
+            TextIO.output( outStream, f );
+            TextIO.output( outStream, "), [] )" )
         )
         else (
-            print "Term(\n";
-            compilerPrintIndentation( depth + 1 );
-            print "Functor( ";
-            print f;
-            print " ),\n";
-            compilerPrintIndentation( depth + 1 );
-            print "[\n";
-            compilerPrintTermList( args, depth + 2 );
-            compilerPrintIndentation( depth + 1 );
-            print "]\n";
-            compilerPrintIndentation( depth );
-            print ")"
+            TextIO.output( outStream, "Term(\n" );
+            compilerPrintIndentation( outStream, depth + 1 );
+            TextIO.output( outStream, "Functor( \"" );
+            TextIO.output( outStream, f );
+            TextIO.output( outStream, "\" ),\n" );
+            compilerPrintIndentation( outStream, depth + 1 );
+            TextIO.output( outStream, "[\n" );
+            compilerPrintTermList( outStream, args, depth + 2 );
+            compilerPrintIndentation( outStream, depth + 1 );
+            TextIO.output( outStream, "]\n" );
+            compilerPrintIndentation( outStream, depth );
+            TextIO.output( outStream, ")" )
         )
     )
-  | compilerPrintTerm( IntTerm( i ), depth ) = (
-        compilerPrintIndentation( depth );
-        print "IntTerm( ";
-        print ( Int.toString( i ) );
-        print " )"
+  | compilerPrintTerm( outStream, IntTerm( i ), depth ) = (
+        compilerPrintIndentation( outStream, depth );
+        TextIO.output( outStream, "IntTerm( " );
+        TextIO.output( outStream, ( Int.toString( i ) ) );
+        TextIO.output( outStream, " )" )
     )
-  | compilerPrintTerm( FloatTerm( f ), depth ) = (
-        compilerPrintIndentation( depth );
-        print "FloatTerm( ";
-        print ( Real.toString( f ) );
-        print " )"
+  | compilerPrintTerm( outStream, FloatTerm( f ), depth ) = (
+        compilerPrintIndentation( outStream, depth );
+        TextIO.output( outStream, "FloatTerm( " );
+        TextIO.output( outStream, ( Real.toString( f ) ) );
+        TextIO.output( outStream, " )" )
     )
-  | compilerPrintTerm( Variable( v, s ), depth ) = (
-        compilerPrintIndentation( depth );
-        print "Variable( ";
-        print v;
-        print ", ";
-        print ( Int.toString( s ) );
-        print " )"
+  | compilerPrintTerm( outStream, Variable( v, s ), depth ) = (
+        compilerPrintIndentation( outStream, depth );
+        TextIO.output( outStream, "Variable( \"" );
+        TextIO.output( outStream, v );
+        TextIO.output( outStream, "\", " );
+        TextIO.output( outStream, ( Int.toString( s ) ) );
+        TextIO.output( outStream, " )" )
     )
         
-and compilerPrintTermList( [], _ ) = ()
-  | compilerPrintTermList( term::terms, depth ) = (
-        compilerPrintTerm( term, depth );
-        print ",\n";
-        compilerPrintTermList( terms, depth )
+and compilerPrintTermList( outStream, [], _ ) = ()
+  | compilerPrintTermList( outStream, [term], depth ) = (
+        compilerPrintTerm( outStream, term, depth );
+        TextIO.output( outStream, "\n" )
+    )
+  | compilerPrintTermList( outStream, term::terms, depth ) = (
+        compilerPrintTerm( outStream, term, depth );
+        TextIO.output( outStream, ",\n" );
+        compilerPrintTermList( outStream, terms, depth )
     )
