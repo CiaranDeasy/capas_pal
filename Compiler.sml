@@ -10,21 +10,37 @@ result of running the Prolog program.
 *******************************************************************************)
 
 fun compile( inFilename, outFilename ) =
-    let val inFile = TextIO.openIn( inFilename ) in
-    let val outFile = TextIO.openOut( outFilename ) in
-    let val tokenStream = lex( inFile ) in
+    let val inStream = TextIO.openIn( inFilename ) in
+    let val outStream = TextIO.openOut( outFilename ) in
+    let val tokenStream = lex( inStream ) in
     let val x as ( program, queries ) = parseStart( tokenStream )
-    in
-        compilerPrintProgram( outFile, program )
+    in (
+        compilerPrintProgram( outStream, program );
+        TextIO.output( outStream, "\n\n\n" );
+        TextIO.output( outStream, "val queries = [\n" );
+        compilerPrintQueries( outStream, queries );
+        TextIO.output( outStream, "];\n" );
+        TextIO.flushOut( outStream )
+    )
     end end end end
        
 
 and compilerPrintProgram( outStream, Program(clauses) ) = (
         TextIO.output( outStream, "val program = Program([\n" );
         compilerPrintClauseList( outStream, clauses );
-        TextIO.output( outStream, "\n" );
-        TextIO.output( outStream, "]);\n" );
-        TextIO.flushOut( outStream )
+        TextIO.output( outStream, "]);\n" )
+    )
+    
+and compilerPrintQueries( _, [] ) = ()
+  | compilerPrintQueries( outStream, ( Query( terms ) )::queries ) = (
+        TextIO.output( outStream, "Query([" );
+        compilerPrintTermList( outStream, terms, 1 );
+        TextIO.output( outStream, "])" );
+        (* Don't add comma if this is the final query in the list. *)
+        if( List.null( queries ) ) then
+            TextIO.output( outStream, "\n" )
+        else
+            TextIO.output( outStream, ",\n" )
     )
 
 and compilerPrintClauseList( outStream, [] ) = ()
