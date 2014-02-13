@@ -38,10 +38,12 @@ structure UnitTester =
     
 val _ = (
     use "TopLevel.sml";
+    use "Utility_UnitTests.sml";
     use "Interpreter_UnitTests.sml"
 );
 
 fun unitTest() = (
+    unitTestUtility();
     unitTestInterpreter();
     UnitTester.conclude()
 );
