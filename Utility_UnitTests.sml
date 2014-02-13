@@ -1,3 +1,12 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file contains the unit tests for functions defined in Utility.sml.
+*******************************************************************************)
+
 fun unitTestUtility() = (
 
     UnitTester.printResult "member 1" ( member 1 [1,2,3] ) true;

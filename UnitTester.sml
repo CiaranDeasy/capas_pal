@@ -1,3 +1,14 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file defines the UnitTester structure, whose functions are used to 
+perform individual unit tests. It also provides a top-level unitTest() method to
+import and run all the unit test files.
+*******************************************************************************)
+
 structure UnitTester =
   struct
     val testsRun = ref 0;
@@ -39,11 +50,13 @@ structure UnitTester =
 val _ = (
     use "TopLevel.sml";
     use "Utility_UnitTests.sml";
+    use "Datatypes_UnitTests.sml";
     use "Interpreter_UnitTests.sml"
 );
 
 fun unitTest() = (
     unitTestUtility();
+    unitTestDatatypes();
     unitTestInterpreter();
     UnitTester.conclude()
 );
