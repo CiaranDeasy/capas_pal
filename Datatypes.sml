@@ -213,3 +213,30 @@ fun printQueries [] = ()
     );
     
 fun printProgram( Program(xs) ) = printClauses(xs);
+
+fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
+  | printToken( VARIABLE(v) ) = ( print "VARIABLE( "; print v; print " )" )
+  | printToken( INT(n) ) = 
+        ( print "INT( "; print ( Int.toString( n ) ); print " )" )
+  | printToken( FLOAT(f) ) = 
+        ( print "FLOAT( "; print ( Real.toString( f ) ); print " )" )
+  | printToken( LEFTPAREN ) = print "LEFTPAREN"
+  | printToken( RIGHTPAREN ) = print "RIGHTPAREN"
+  | printToken( COMMA ) = print "COMMA"
+  | printToken( DOT ) = print "DOT"
+  | printToken( LEFTSQ ) = print "LEFTSQ"
+  | printToken( RIGHTSQ ) = print "RIGHTSQ"
+  | printToken( PIPE ) = print "PIPE"
+  | printToken( COLONMINUS ) = print "COLONMINUS"
+  | printToken( IS ) = print "IS"
+  | printToken( PLUS ) = print "PLUS"
+  | printToken( MINUS ) = print "MINUS"
+  | printToken( MULT ) = print "MULT"
+  | printToken( DIV ) = print "DIV"
+  | printToken( MOD ) = print "MOD"
+  | printToken( EOF ) = print "EOF";
+
+fun printTokenStream( [] ) = ()
+  | printTokenStream( token::tokens ) = 
+        ( printToken token; print ", \n"; printTokenStream( tokens ) );
+
