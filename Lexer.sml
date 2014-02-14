@@ -80,27 +80,6 @@ and lexAtom( xs, inFile ) =
             :: ( lexIdle( ( !remaining ), inFile ) )
     end end
 
-(* The pre-decimal-point digits of a float will have been lexed by the "Int" 
-   state, so lexFloat() takes a digitList argument containing these digits. *)
-and lexFloat( x::xs, digitList, inFile ) =
-    let val remaining = ref [] in
-    let fun worker (x::xs) = 
-                if( Char.isDigit x ) 
-                    then x :: ( worker xs )
-                else ( 
-                    remaining := (x::xs);
-                    digitList
-                )
-    in
-        if( Char.isDigit( hd xs ) ) then 
-            FLOAT( valOf( Real.fromString( String.implode( worker xs ) ) ) )
-                    :: ( lexIdle( ( !remaining ), inFile ) )
-        (* Catch the case where the dot was an end-of-line character. *)
-        else 
-            ( INT( valOf( Int.fromString( String.implode( digitList ) ) ) ) ) 
-                    :: ( lexIdle( ( x::xs ), inFile ) )
-            end end
-
 and lexInt( xs, inFile ) =
     let val remaining = ref [] in
     let fun worker (x::xs) = 
@@ -121,6 +100,29 @@ and lexInt( xs, inFile ) =
                     :: ( lexIdle( ( !remaining ), inFile ) )
             end end end
 
+(* The pre-decimal-point digits of a float will have been lexed by the "Int" 
+   state, so lexFloat() takes a digitList argument containing these digits. *)
+and lexFloat( x::xs, digitList, inFile ) =
+    let val remaining = ref [] in
+    let fun worker (x::xs) = 
+                if( Char.isDigit x ) 
+                    then x :: ( worker xs )
+                else ( 
+                    remaining := (x::xs);
+                    []
+                )
+    in
+        if( Char.isDigit( hd xs ) ) then 
+            FLOAT( valOf( Real.fromString( String.implode( 
+                    digitList @ ( #"." :: ( worker xs ) ) 
+              ) ) ) ) 
+                :: ( lexIdle( ( !remaining ), inFile ) )
+        (* Catch the case where the dot was an end-of-line character. *)
+        else 
+            ( INT( valOf( Int.fromString( String.implode( digitList ) ) ) ) ) 
+                    :: ( lexIdle( ( x::xs ), inFile ) )
+            end end
+
 and lexSingleQuoted( xs, inFile ) = 
     let val remaining = ref [] in
     let fun worker (x::xs) = 
@@ -128,12 +130,13 @@ and lexSingleQuoted( xs, inFile ) =
                     x :: ( hd xs ) :: ( worker ( tl xs ) )
                 else if( x = #"'" ) then ( 
                     remaining := xs;
-                    [#"'"]
+                    (* Discard the quote character. *)
+                    []
                 )
                 else
                     x::( worker xs )
     in
-        ( ATOM( String.implode( #"'" :: ( worker xs ) ) ) )
+        ( ATOM( String.implode( worker xs ) ) )
                 :: ( lexIdle( ( !remaining ), inFile ) )
     end end
 
