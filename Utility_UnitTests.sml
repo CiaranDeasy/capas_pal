@@ -56,6 +56,39 @@ fun unitTestUtility() = (
     UnitTester.printResult "andList 1" ( andList [] ) true;
 
     UnitTester.printResult "flip" ( flip (1,2) ) (2,1);
+    
+    UnitTester.printResult "eqOrderedList 1" (
+      eqOrderedList ( eqTwoTuple op= op= ) ( 
+        [ (1,2), (3,4) ], 
+        [ (1,2), (3,4) ]
+      )
+    ) true;
+    
+    UnitTester.printResult "eqOrderedList 2" (
+      eqOrderedList ( eqTwoTuple op= op= ) ( 
+        [ (1,2), (3,4) ], 
+        [ (1,2) ]
+      )
+    ) false;
+    
+    UnitTester.printResult "eqOrderedList 3" (
+      eqOrderedList ( eqTwoTuple op= op= ) ( 
+        [ (1,2), (3,4) ], 
+        [ (1,2), (3,6) ]
+      )
+    ) false;
+    
+    UnitTester.printResult "eqOrderedList 4" (
+      eqOrderedList ( eqTwoTuple op= op= ) ( [], [] )
+    ) true;
+    
+    UnitTester.printResult "eqOrderedList 5" (
+      eqOrderedList op= ( [], [ 1, 2 ] )
+    ) false;
+    
+    UnitTester.printResult "eqOrderedList 6" (
+      eqOrderedList op= ( [ 1, 2 ], [ 2, 1 ] )
+    ) false;
 
 	UnitTester.printResult "eqTwoTuple 1" (
 	  eqTwoTuple op= eqBinding (
