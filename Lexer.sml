@@ -28,6 +28,7 @@ fun lexIdle( [], inFile ) =
         else
             lexIdle( ( String.explode( valOf( nextLine ) ) ), inFile )
     end
+  | lexIdle( (#"%"::xs), inFile ) = lexIdle( [], inFile )
   | lexIdle( (x::xs), inFile ) =
         if( x = #"i" ) then lexIs( xs, inFile )
         else if( x = #"m" ) then lexMod( xs, inFile )

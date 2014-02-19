@@ -197,8 +197,13 @@ fun unitTestLexer() = (
       ( lexIdle( [ #"|", #".", #",", #"\n" ], dummyStream ) )
       [ PIPE, DOT, COMMA, EOF ]
       ( eqOrderedList eqToken );
+    (* comment *)
+    UnitTester.printResultPoly "lexIdle 14"
+      ( lexIdle( [ #"|", #"%", #"\n" ], dummyStream ) )
+      [ PIPE, EOF ]
+      ( eqOrderedList eqToken );
     (* proper test file *)
-    UnitTester.printResultPoly "lexIdle 13"
+    UnitTester.printResultPoly "lexIdle 15"
       ( lexIdle( [ #"\n" ], 
         ( TextIO.openIn( "TestFiles/UnitTestFile1.pl" ) ) ) )
       [ ATOM( "ayla" ), LEFTPAREN, VARIABLE( "X" ), RIGHTPAREN, COLONMINUS, 
