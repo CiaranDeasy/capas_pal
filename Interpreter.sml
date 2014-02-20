@@ -63,34 +63,61 @@ fun getTransitiveClosure xs =
 (* Takes a list of Unifiers and returns a list of all the Bindings that occur 
    in them, potentially with duplicates. *)
 fun combineUnifiers [] = []
-  | combineUnifiers ((Unifier(xs))::ys) = xs @ ( combineUnifiers ys );
+  | combineUnifiers( ( Unifier(xs) )::ys ) = xs @ ( combineUnifiers( ys ) );
+  
+(* Takes a list of Bindings and returns true if the Bindings are consistent, 
+   along with the expanded list of Bindings which includes those Bindings which 
+   are necessary to make the input Bindings unify. *)
+fun consistentBindings [] = ( true, [] )
+  | consistentBindings( bindings ) = 
+    let fun worker( [], results ) = ( true, results )
+          | worker( (binding::bindings), results ) = 
+            let val x as (success, result) = unify ( Unifier([]) ) binding
+            in
+                if( success ) then 
+                    worker( bindings, (result::results) )
+                else
+                    ( false, [] )
+            end in
+    let val x as (success, unifierList) = worker( bindings, [] )
+    in
+        if( success ) then
+            ( true, ( combineUnifiers( unifierList ) ) )
+        else
+            ( false, [] )
+    end end
+  
+(* Takes a list of bindings and returns a (bool, Unifier) tuple. If the bindings
+   are consistent, then the first value is true and the second value is a 
+   Unifier containing the bindings. If the bindings are inconsistent, then the 
+   first value is false. *)
+and validateUnifier( bindings ) = 
+    (* Takes the transitive closure of the bindings *)
+    let val transitiveClosure = getTransitiveClosure( bindings ) in
+    (* Test whether the bindings are consistent, and generate the Unifier that 
+       makes them consistent. *)
+    let val x as (success, iteratedBindings) = 
+            consistentBindings( transitiveClosure )
+    in
+        if( success ) then
+            (* If no new Bindings were needed, we're done. *)
+            if( eqUnorderedListIgnoreDups eqBinding 
+                    ( iteratedBindings, bindings ) ) then
+                ( true, Unifier( transitiveClosure ) )
+            (* If new Bindings were needed, we need to validate them too. *)
+            else
+                validateUnifier( iteratedBindings )
+		else
+		    ( false, Unifier( [] ) )
+    end end
 
 (* Takes a Unifier and a Binding and returns a 2-tuple. If the binding is 
    consistent with itself and with the input Unifier, the first return value is 
    "true" and the second is an updated Unifier that satisfies the input Binding.
    If the binding is not consistent, the first return value is "false" and the 
    second return value is undefined. *)
-fun unify ( Unifier(defaultBindings) ) 
+and unify ( Unifier(defaultBindings) ) 
         ( Binding( Term( funcA, argsA ), Term( funcB, argsB ) ) ) = 
-		
-    (* Takes a list of Bindings and returns true if the Bindings are consistent.
-    *)
-    let fun consistentBindings [] = true
-          | consistentBindings (x::xs) = 
-                first ( unify (Unifier([])) x ) andalso consistentBindings xs in
-
-    (* Takes a list of bindings and returns a (bool, Unifier) tuple. If the 
-       bindings are consistent, then the first value is true and the second 
-	   value is a Unifier containing the bindings. If the bindings are 
-	   inconsistent, then the first value is false. *)
-    let fun validateUnifier xs = 
-        let val transitiveClosure = getTransitiveClosure xs in
-	        if( consistentBindings transitiveClosure )
-		        then ( true, Unifier( transitiveClosure ) )
-		    else
-		        ( false, Unifier( [] ) )
-	    end in
-
 	(* check that the functors and arities match *)
 	let val successOfThis = 
 	    ( funcA = funcB ) andalso 
@@ -110,7 +137,8 @@ fun unify ( Unifier(defaultBindings) )
 	    then ( true, ( second finalUnifier ) )
 	else
 	    ( false, Unifier([]) )
-	end end end end end end end
+	end end end end end
+    
   | unify ( Unifier(xs) ) ( Binding( IntTerm(i1), IntTerm(i2) ) ) =
         if( i1 = i2 )
             then ( true, Unifier(xs) )
@@ -121,6 +149,7 @@ fun unify ( Unifier(defaultBindings) )
             then ( true, Unifier(xs) )
         else
             ( false, Unifier([]) )
+
   (* Reject incompatible cross-combinations of terms. *)
   | unify _ ( Binding( Term(_), IntTerm(_) ) ) = ( false, Unifier([]) )
   | unify _ ( Binding( IntTerm(_), Term(_) ) ) = ( false, Unifier([]) )
@@ -129,29 +158,10 @@ fun unify ( Unifier(defaultBindings) )
   | unify _ ( Binding( IntTerm(_), FloatTerm(_) ) ) = ( false, Unifier([]) )
   | unify _ ( Binding( FloatTerm(_), IntTerm(_) ) ) = ( false, Unifier([]) )
   (* Remaining cases must involve a variable. *)
-  | unify ( Unifier([]) ) x = ( true, Unifier( [x] ) )
+  | unify ( Unifier([]) ) ( Binding( x, y ) ) = 
+        ( true, Unifier( [ Binding( x,y ) ] ) )
   | unify ( Unifier(defaultBindings) ) ( Binding( x, y ) ) = 
-    (* Takes a list of Bindings and returns true if the Bindings are consistent.
-    *)
-    let fun consistentBindings [] = true
-          | consistentBindings (x::xs) = 
-                first ( unify (Unifier([])) x ) andalso consistentBindings xs in
-
-    (* Takes a list of bindings and returns a (bool, Unifier) tuple. If the 
-       bindings are consistent, then the first value is true and the second 
-	   value is a Unifier containing the bindings. If the bindings are 
-	   inconsistent, then the first value is false. *)
-    let fun validateUnifier xs = 
-        let val transitiveClosure = getTransitiveClosure xs in
-	        if( consistentBindings transitiveClosure )
-		        then ( true, Unifier( transitiveClosure ) )
-		    else
-		        ( false, Unifier( [] ) )
-	    end 
-    in
-        validateUnifier( ( Binding( x, y ) ):: defaultBindings ) 
-        
-    end end;
+        validateUnifier( ( Binding( x, y ) ):: defaultBindings );
 
 (* Takes a Clause and a scope id. Returns a clause whose variables have the 
    given scope id. *)
@@ -352,6 +362,22 @@ fun substituteUnifier ( Unifier(xs) ) =
         worker xs []
     end end;
 
+(* Takes a Unifier and returns a Unifier containing the same Bindings, excluding
+   those which don't include a variable. *)
+fun cleanUnifier( Unifier(xs) ) =
+    let fun worker( [] ) = []
+          | worker( ( Binding( Term( _, _ ), Term( _, _ ) ) )::bindings ) = 
+                worker( bindings )
+          | worker( ( Binding( IntTerm( _ ), IntTerm( _ ) ) )::bindings ) = 
+                worker( bindings )
+          | worker( ( Binding( FloatTerm( _ ), FloatTerm( _ ) ) )::bindings ) = 
+                worker( bindings )
+          | worker( ( Binding( term1, term2 ) )::bindings ) = 
+                ( Binding( term1, term2 ) )::( worker( bindings ) )
+    in
+        Unifier( worker xs )
+    end;
+
 (* Takes a program and a list of queries. Returns true if all of the queries 
    can be satisfied by the program. *)
 fun executeQueries( _, [] ) = true
@@ -359,9 +385,13 @@ fun executeQueries( _, [] ) = true
     let fun m1 unifier = ( 
             printQuery x; 
             print "\n";
-            let val subUnifier = substituteUnifier unifier in
-            printUnifier ( subUnifier ) 
-            end;
+            (* Remove bindings which don't feature a variable. *)
+            let val reducedUnifier = cleanUnifier unifier in
+            (* Perform variable substitutions. *)
+            let val subUnifier = substituteUnifier reducedUnifier in
+                (* Print the Unifier. *)
+                printUnifier ( subUnifier ) 
+            end end;
             executeQueries( program, xs) 
     ) in
     let fun m2() = ( 
