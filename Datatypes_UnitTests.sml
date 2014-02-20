@@ -140,6 +140,11 @@ fun unitTestDatatypes() = (
       eqTerm( IntTerm(1), FloatTerm(1.0) )
     ) false;
     
+    (* Awkward float number *)
+    UnitTester.printResult "eqTerm 20" (
+      eqTerm( FloatTerm(12.45), FloatTerm(12.45) )
+    ) true;
+    
     (* ---------------------------------------------------------------------- *)
     
     UnitTester.printResult "eqBinding 1" (
