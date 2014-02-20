@@ -27,7 +27,8 @@ and parseLines( tokens ) =
     in
         if( eqToken( hd tokens2, DOT ) ) 
             then 
-                let val y as (clauses, queries, tokens3) = parseMoreLines( tl tokens2 )
+                let val y as (clauses, queries, tokens3) = 
+                        parseMoreLines( tl tokens2 )
                 in
                     if( List.null( clause ) )
                         then ( clauses, ( ( hd query ) :: queries ), tokens3 )
@@ -97,13 +98,50 @@ and parseQuery( COLONMINUS::tokens ) =
     end
 
 (* Returns a list of terms and a list of the remaining tokens *)
-and parseTermList( tokens ) = 
-    let val x as (term, tokens2) = parseTerm( tokens ) in
+and parseTermList( ATOM(a)::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( ATOM(a)::tokens ) in
     let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
     let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
     in
         ( (isTerm::terms), tokens4 )
     end end end
+  | parseTermList( VARIABLE(v)::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( VARIABLE(v)::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
+  | parseTermList( LEFTSQ::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( LEFTSQ::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
+  | parseTermList( INT(i)::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( INT(i)::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
+  | parseTermList( FLOAT(f)::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( FLOAT(f)::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
+  | parseTermList( LEFTPAREN::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( LEFTPAREN::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
+    (* TermList -> empty-string *)
+  | parseTermList( tokens ) = ( [], tokens )
 
 (* Returns a list of terms and a list of the remaining tokens *)
 and parseMoreTerms( COMMA::tokens ) = parseTermList( tokens )
@@ -203,6 +241,7 @@ and parseMoreArithTerms( PLUS::tokens, arithTerm ) =
     end
   | parseMoreArithTerms( tokens, arithTerm ) = ( arithTerm, tokens )
     
+(* Returns a term and the remaining tokens. *)
 and parseFactor( LEFTPAREN::tokens ) = 
     let val x as (arith, tokens2) = parseArith( tokens )
     in
@@ -214,6 +253,7 @@ and parseFactor( LEFTPAREN::tokens ) =
   | parseFactor( INT(i)::tokens ) = ( IntTerm( i ), tokens )
   | parseFactor( FLOAT(f)::tokens ) = ( FloatTerm( f ), tokens )
   
+
 and parseMoreFactors( MULT::tokens, prevFactor ) = 
     let val x as (nextFactor, tokens2) = parseFactor( tokens )
     in
