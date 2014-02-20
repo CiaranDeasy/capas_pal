@@ -154,5 +154,72 @@ fun unitTestUtility() = (
           ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
         [ ( Binding( Variable("1",0), Variable("2",0) ) ) ]
       )
+    ) false;
+    
+    (* Simple match *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 1" (
+      eqUnorderedListIgnoreDups eqBinding ( 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ]
+      )
+    ) true;
+    (* Unordered match *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 2" (
+      eqUnorderedListIgnoreDups eqBinding ( 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+        [ ( Binding( Variable("3",0), Variable("4",0) ) ), 
+          ( Binding( Variable("1",0), Variable("2",0) ) ) ]
+      )
+    ) true;
+    (* In-order non-matching *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 3" (
+      eqUnorderedListIgnoreDups eqBinding ( 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("6",0) ) ) ]
+      )
+    ) false;
+    (* Empty lists *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 4" (
+      eqUnorderedListIgnoreDups op= ( [], [] )
+    ) true;
+    (* One empty list *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 5" (
+      eqUnorderedListIgnoreDups eqBinding ( [], [ 
+        ( Binding( Variable("1",0), Variable("2",0) ) ) 
+      ] )
+    ) false;
+    (* Asymmetric lists *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 6" (
+      eqUnorderedListIgnoreDups eqBinding ( 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ), 
+          ( Binding( Variable("3",0), Variable("4",0) ) ) ], 
+        [ ( Binding( Variable("1",0), Variable("2",0) ) ) ]
+      )
+    ) false;
+    (* Duplicates in one list *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 7" (
+      eqUnorderedListIgnoreDups op= ( 
+        [ 1, 1, 2, 3, 2 ], 
+        [ 3, 2, 1 ]
+      )
+    ) true;
+    (* Duplicates in both lists *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 8" (
+      eqUnorderedListIgnoreDups op= ( 
+        [ 1, 1, 2, 3, 2 ], 
+        [ 3, 1, 2, 1, 3, 3 ]
+      )
+    ) true;
+    (* Non-matching with duplicates *)
+    UnitTester.printResult "eqUnorderedListIgnoreDups 9" (
+      eqUnorderedListIgnoreDups op= ( 
+        [ 1, 1, 2, 3, 2, 4 ], 
+        [ 3, 1, 2, 1, 3, 3 ]
+      )
     ) false
 );

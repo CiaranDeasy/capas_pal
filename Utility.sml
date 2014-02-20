@@ -75,4 +75,24 @@ fun eqUnorderedList _ ( [], [] ) = true
 	let val result = remove( x, ys ) in
         (first result) andalso eqUnorderedList eqTest ( xs, ( second result ) )
 	end end;
-
+		  
+(* Polymorphic equality test for unordered lists, ignoring duplicates. *)
+fun eqUnorderedListIgnoreDups _ ( [], [] ) = true
+  | eqUnorderedListIgnoreDups _ ( [], ys ) = false
+  | eqUnorderedListIgnoreDups _ ( xs, [] ) = false
+  | eqUnorderedListIgnoreDups eqTest ( (x::xs), ys ) = 
+    (* For each element of the first list, step through the second list and 
+	   match it to an equal element. Remove both elements and repeat. *)
+    let fun removeAll( x, [] ) = []
+	      | removeAll( x, (y::ys) ) = 
+		        if( eqTest(x, y) ) then 
+                    removeAll( x, ys )
+				else
+                    ( y::( removeAll( x, ys ) ) )
+    in
+        if( memberPoly x ys eqTest ) then
+            eqUnorderedListIgnoreDups eqTest 
+              ( ( removeAll( x, xs ) ), ( removeAll( x, ys ) ) )
+        else
+            false
+	end;
