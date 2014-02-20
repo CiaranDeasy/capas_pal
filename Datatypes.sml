@@ -145,6 +145,37 @@ and printTerms [] = ()
         printTerms terms
     );
         
+fun printTermRaw( Variable(name, scope) ) = ( 
+        if( not(scope = 0) andalso not(scope = 1) )
+            then ( print ( Int.toString( scope ) ); print "_" )
+        else
+            ();
+        print name )
+  | printTermRaw ( Term( Functor( func ), terms ) ) = 
+        ( 
+                ( print func; 
+                if( not( null terms ) )
+                    then ( 
+                        print "(";
+                        printTermsRaw terms;
+                        print ")"
+                    )
+                else
+                    () )
+        )
+  | printTermRaw( IntTerm( i ) ) = print ( Int.toString( i ) )
+  | printTermRaw( FloatTerm( f ) ) = print ( Real.toString( f ) )
+
+and printTermsRaw [] = ()
+  | printTermsRaw [term] = printTermRaw term
+  | printTermsRaw (term::terms) = ( 
+        printTermRaw term; 
+        print ", ";
+        printTermsRaw terms
+    );
+
+
+        
 fun printQuery ( Query(terms) ) = 
     let fun printTerms [] = ()
           | printTerms [term] = printTerm term
@@ -158,12 +189,11 @@ fun printQuery ( Query(terms) ) =
     
 fun printAllBindings [] = ()
   | printAllBindings (binding::bindings) = 
-    let fun printBinding ( Binding( Variable( name, scope ), term2 ) ) = (
-        printTerm ( Variable( name, scope ) );
+    let fun printBinding ( Binding( term1, term2 ) ) = (
+        printTerm ( term1 );
         print " = ";
         printTerm term2
-       ) 
-         | printBinding binding = printBinding ( flipBinding binding ) 
+       )
     in
         (
             printBinding binding;
@@ -195,6 +225,7 @@ fun printCoreBindings [] = ()
     end;
     
 fun printUnifier ( Unifier(bindings) ) = printCoreBindings bindings;
+fun printFullUnifier( Unifier(bindings) ) = printAllBindings bindings;
 
 fun printClauses [] = ()
   | printClauses ((Clause(head,body))::clauses) = (
