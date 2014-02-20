@@ -202,8 +202,24 @@ fun unitTestLexer() = (
       ( lexIdle( [ #"|", #"%", #"\n" ], dummyStream ) )
       [ PIPE, EOF ]
       ( eqOrderedList eqToken );
-    (* proper test file *)
+    (* wildcard *)
+    (* Need to define a special equality test that ignores the specific value of
+       the integer identifier. *)
+    let fun eqWildcard( VARIABLE( v1 ), VARIABLE( v2 ) ) = 
+            ( String.isPrefix "_" v1 ) andalso ( String.isPrefix "_" v2 ) 
+              andalso
+            ( isSome( Int.fromString( String.extract( v1, 1, NONE ) ) ) ) 
+              andalso
+            ( isSome( Int.fromString( String.extract( v2, 1, NONE ) ) ) )
+          | eqWildcard( t1, t2 ) = eqToken( t1, t2 )
+    in
     UnitTester.printResultPoly "lexIdle 15"
+      ( lexIdle( [ #"_", #"\n" ], dummyStream ) )
+      [ VARIABLE( "_5" ), EOF ]
+      ( eqOrderedList eqWildcard )
+    end;
+    (* proper test file *)
+    UnitTester.printResultPoly "lexIdle 16"
       ( lexIdle( [ #"\n" ], 
         ( TextIO.openIn( "TestFiles/UnitTestFile1.pl" ) ) ) )
       [ ATOM( "ayla" ), LEFTPAREN, VARIABLE( "X" ), RIGHTPAREN, COLONMINUS, 

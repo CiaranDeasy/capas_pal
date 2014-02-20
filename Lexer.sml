@@ -14,7 +14,9 @@ tokens.
    is called with the list of unlexed characters on the current line, and the 
    input stream that supplies subsequent lines. *)
 
-
+(* Each wildcard "_" needs a unique variable name, so this mutable value 
+   provides unique ascending integers. *)
+val wildcardCounter = ref 0;
 
 (* If the character list is empty, fetch a new line from the input stream. If 
    there is no new line, terminated with the EOF token. 
@@ -51,6 +53,12 @@ fun lexIdle( [], inFile ) =
         else if( x = #"/" ) then DIV :: ( lexIdle( xs, inFile ) )
         else if( x = #"'" ) then lexSingleQuoted( xs, inFile )
         else if( x = #"\"" ) then lexDoubleQuoted( xs, inFile )
+        else if( x = #"_" ) then (
+            wildcardCounter := !wildcardCounter + 1;
+            VARIABLE( String.concat([ 
+                "_", ( Int.toString( !wildcardCounter ) ) 
+              ]) ) :: ( lexIdle( xs, inFile ) )
+        )
         else []
 
 and lexVar( xs, inFile ) =
