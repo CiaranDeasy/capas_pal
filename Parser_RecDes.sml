@@ -149,6 +149,7 @@ and parseMoreTerms( COMMA::tokens ) = parseTermList( tokens )
   | parseMoreTerms( RIGHTPAREN::tokens ) = ( [], RIGHTPAREN::tokens )
   | parseMoreTerms( RIGHTSQ::tokens ) = ( [], RIGHTSQ::tokens )
   | parseMoreTerms( PIPE::tokens ) = ( [], PIPE::tokens )
+  | parseMoreTerms( tokens ) = ( printTokenStream( tokens ); ( [], [] ) )
 
 (* Returns a term and a list of the remaining tokens. *)
 and parseTerm( ATOM(a)::tokens ) = 
@@ -165,7 +166,7 @@ and parseTerm( ATOM(a)::tokens ) =
     in
         ( ( buildList terms ), tokens3 )
     end end end
-  | parseTerm( VARIABLE(v)::tokens ) = ( Variable(v, 0), tokens )
+  | parseTerm( VARIABLE(v)::tokens ) = parseArith( VARIABLE(v)::tokens )
   | parseTerm( INT(n)::tokens ) = parseArith( INT(n)::tokens )
   | parseTerm( FLOAT(f)::tokens ) = parseArith( FLOAT(f)::tokens )
   | parseTerm( LEFTPAREN::tokens ) = parseArith( LEFTPAREN::tokens )
@@ -252,6 +253,7 @@ and parseFactor( LEFTPAREN::tokens ) =
     end
   | parseFactor( INT(i)::tokens ) = ( IntTerm( i ), tokens )
   | parseFactor( FLOAT(f)::tokens ) = ( FloatTerm( f ), tokens )
+  | parseFactor( VARIABLE(v)::tokens ) = ( Variable(v, 0), tokens )
   
 
 and parseMoreFactors( MULT::tokens, prevFactor ) = 
