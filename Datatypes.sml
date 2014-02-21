@@ -27,6 +27,9 @@ datatype token = ATOM of string
                | MULT
                | DIV
                | MOD
+               | LESS
+               | GREATER
+               | EQUALS
                | EOF;
 
 (* The following datatypes represent a parsed Prolog program. *)
@@ -65,6 +68,9 @@ fun eqToken( ATOM(a1), ATOM(a2) ) = ( a1 = a2 )
   | eqToken( MULT, MULT ) = true
   | eqToken( DIV, DIV ) = true
   | eqToken( MOD, MOD ) = true
+  | eqToken( LESS, LESS ) = true
+  | eqToken( GREATER, GREATER ) = true
+  | eqToken( EQUALS, EQUALS ) = true
   | eqToken( EOF, EOF ) = true
   | eqToken( _, _ ) = false;
 
