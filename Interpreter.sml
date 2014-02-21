@@ -198,10 +198,38 @@ fun scopeQuery( Query(xs) ) =
         Query( scopeTerms( xs ) )                        
     end;
     
-fun evaluate( Variable(v) ) = Variable(v)
-  | evaluate( IntTerm(i) ) = IntTerm(i)
-  | evaluate( FloatTerm(f) ) = FloatTerm(f)
-  | evaluate( Term( Functor(f), [arg1, arg2] ) ) = 
+exception UninstantiatedVariable;
+    
+(* Takes a variable and a unifier. Scans the unifier and returns the term to 
+   which the variable is bound. Raises an expression if no binding is found. *)
+fun subVarForTerm( var, unifier ) = 
+    let fun getBindings( Unifier(xs) ) = xs in
+    let fun worker( [] ) = raise UninstantiatedVariable
+            (* Variable-variable bindings are definitely not helpful. *)
+          | worker( Binding( Variable(_, _), Variable(_, _) )::bindings ) =
+                worker( bindings )
+            (* If we find a binding for the variable we want to sub, then sub 
+               it! *)
+          | worker( Binding( Variable( v, s ), term )::bindings ) = 
+                if( eqTerm( Variable( v, s ), var ) ) then
+                    term
+                else
+                    worker( bindings )
+            (* If the binding is backwards, flip it. *)
+          | worker( Binding( term, Variable( v, s ) )::bindings ) = 
+                worker( Binding( Variable( v, s ), term )::bindings )
+            (* Any other binding should be skipped. *)
+          | worker( binding::bindings ) = worker( bindings )
+    in
+        worker( getBindings( unifier ) )
+    end end;
+
+(* Takes a term and arithmetically evaluates it. *)
+fun evaluate( Variable(v, s), unifier ) = 
+        evaluate( subVarForTerm( Variable( v, s ), unifier ), unifier )
+  | evaluate( IntTerm(i), _ ) = IntTerm(i)
+  | evaluate( FloatTerm(f), _ ) = FloatTerm(f)
+  | evaluate( Term( Functor(f), [arg1, arg2] ), unifier ) = 
     let fun addTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 + i2 )
           | addTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) + f2 )
           | addTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 + real(i2) )
@@ -225,23 +253,63 @@ fun evaluate( Variable(v) ) = Variable(v)
     let fun modTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 mod i2 )
     in
     if( f = "+" )
-        then addTerms( evaluate( arg1 ), evaluate( arg2 ) )
+        then addTerms( evaluate( arg1, unifier ), evaluate( arg2, unifier ) )
     else if( f = "-" )
-        then subTerms( evaluate( arg1 ), evaluate( arg2 ) )
+        then subTerms( evaluate( arg1, unifier ), evaluate( arg2, unifier ) )
     else if( f = "*" )
-        then mulTerms( evaluate( arg1 ), evaluate( arg2 ) )
+        then mulTerms( evaluate( arg1, unifier ), evaluate( arg2, unifier ) )
     else if( f = "/" )
-        then divTerms( evaluate( arg1 ), evaluate( arg2 ) )
+        then divTerms( evaluate( arg1, unifier ), evaluate( arg2, unifier ) )
     else if( f = "%" )
-        then modTerms( evaluate( arg1 ), evaluate( arg2 ) )
+        then modTerms( evaluate( arg1, unifier ), evaluate( arg2, unifier ) )
     else Term( Functor(f), [arg1, arg2] )
     end end end end end
-  | evaluate( Term( f, args ) ) = Term( f, args );
-  
-(* Returns true if the input is a Term with functor "is", false otherwise. *)
-fun functorIs( Term( Functor( f ), [arg1, arg2] ) ) = ( f = "is" )
-  | functorIs( term ) = false;
+  | evaluate( Term( f, args ), _ ) = Term( f, args );
     
+fun specialPredicateAtomic( Term( _, [ Term( _, [] ) ] ), unifier, k1, k2 ) = 
+        k1 unifier k2
+  | specialPredicateAtomic( Term( _, [ IntTerm(_) ] ), unifier, k1, k2 ) = 
+        k1 unifier k2
+  | specialPredicateAtomic( Term( _, [ FloatTerm(_) ] ), unifier, k1, k2 ) = 
+        k1 unifier k2
+  | specialPredicateAtomic( Term( t, [ Variable( v,s ) ] ), unifier, k1, k2 ) = 
+        let val result = ( specialPredicateAtomic( 
+          Term( t, [ subVarForTerm( Variable( v, s ), unifier ) ] ), 
+            unifier, k1, k2 ) )
+          handle UninstantiatedVariable => ( k2() ) 
+        in 
+            result
+        end
+  | specialPredicateAtomic( term, _, _, k2 ) = k2();
+    
+fun specialPredicateIs( Term( _, [ t1, t2 ] ), unifier, k1, k2 ) = 
+    let val evaluation = evaluate( t2, unifier ) in
+    let val x as (success, newUnifier) = 
+            unify unifier ( Binding( t1, evaluation ) )
+    in
+        if( success ) then
+            k1 newUnifier k2
+        else
+            k2()
+    end end;
+    
+(* Takes a term, a unifier and three continuations. If the term is one of the 
+   special built-in predicates, then it is evaluated by a special-purpose 
+   function. If it succeeds, k1 is called with the new unifier and with k3 as a 
+   backtracking continuation. If it fails, then the backtracking continuation k3
+   is called. If the term is not a special predicate, then k2 is called to 
+   evaluate it the normal way. *)
+fun specialPredicate ( IntTerm(i) ) _ _ k2 _ = k2()
+  | specialPredicate ( FloatTerm(i) ) _ _ k2 _ = k2()
+  | specialPredicate ( Variable(i) ) _ _ k2 _ = k2()
+  | specialPredicate ( Term( Functor( f ), args ) ) unifier k1 k2 k3 = 
+        if( ( f = "atomic" ) andalso ( List.length( args ) = 1 ) ) then
+            specialPredicateAtomic( Term( Functor(f), args ), unifier, k1, k3 )
+        else if( ( f = "is" ) andalso ( List.length( args ) = 2 ) ) then
+            specialPredicateIs( Term( Functor(f), args ), unifier, k1, k3 )
+        else
+            k2();
+        
 (* Takes a term, an input Unifier and two continuations. If the term is 
    satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
    with the input Unifier, then the first continuation is called with the 
@@ -260,34 +328,24 @@ fun findUnifier program term unifier k1 k2 =
             let val liveClause as Clause( head, body ) = 
                         scopeClause( clause, scope ) in 
             let val incScope = ( scopeCounter := !scopeCounter + 1 ) in
-            (* If the term is an "is" term, evaluate its args. *)
-            if( functorIs( term ) ) then 
-                let val x as Term( _, [arg1, arg2] ) = term in
-                let val unification = unify unifier 
-                            ( Binding( evaluate( arg1 ), evaluate( arg2 ) ) )
-                in
-                    if( first unification ) then 
-                        k1 ( second unification ) k2
-                    else
-                        k2()
-                end end
-            (* Or in the general case, run the unification algorithm. *)
-            else
-                let val unification = unify unifier ( Binding( term, head ) )
-                in
-                    if ( first unification )
-                        then let fun m2() = worker clauses
-                             in 
-                                 findUnifiers body ( second unification ) k1 m2
-                             end
-                    else
-                        worker clauses
-                end 
-            end end end in
+            let val unification = unify unifier ( Binding( term, head ) )
+            in
+                if ( first unification ) then 
+                    let fun m2() = worker clauses
+                        in 
+                            findUnifiers body ( second unification ) k1 m2
+                        end
+                else
+                    worker clauses
+            end end end end in
     let fun getClauses ( Program(xs) ) = xs in
-        worker ( getClauses program )
-    end end end;
-
+    (* Make a continuation for running through the clauses. *)
+    let fun m1() = worker ( getClauses program )
+    in
+        (* But first check if we're dealing with a special predicate. *)
+        specialPredicate term unifier k1 m1 k2
+    end end end end;
+    
 (* Takes a program, a query and two continuations. If the query is satisfiable 
    by the program, then the first continuation is called with the most general 
    unifier that satisfies it. If not, then the second continuation is called 
@@ -295,6 +353,7 @@ fun findUnifier program term unifier k1 k2 =
 fun executeQuery program (Query(xs)) k1 k2 = 
     let fun executeQueryTerms [] unifier k1 _ = k1 unifier
           | executeQueryTerms (x::xs) unifier k1 k2 = 
+            (* Executes the next term. *)
             let fun m1 newUnifier k = executeQueryTerms xs newUnifier k1 k
             in
                 findUnifier program x unifier m1 k2
@@ -396,7 +455,7 @@ fun executeQueries( _, [] ) = true
     ) in
     let fun m2() = ( 
             printQuery x; 
-            print "\nQuery not satisfiable."; 
+            print "\nQuery not satisfiable.\n"; 
             false 
     ) in
         executeQuery program (scopeQuery x) m1 m2
