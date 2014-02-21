@@ -166,10 +166,26 @@ and parseTerm( ATOM(a)::tokens ) =
     in
         ( ( buildList terms ), tokens3 )
     end end end
-  | parseTerm( VARIABLE(v)::tokens ) = parseArith( VARIABLE(v)::tokens )
-  | parseTerm( INT(n)::tokens ) = parseArith( INT(n)::tokens )
-  | parseTerm( FLOAT(f)::tokens ) = parseArith( FLOAT(f)::tokens )
-  | parseTerm( LEFTPAREN::tokens ) = parseArith( LEFTPAREN::tokens )
+  | parseTerm( VARIABLE(v)::tokens ) = 
+    let val x as (arith, tokens2) = parseArith( VARIABLE(v)::tokens )
+    in
+        parseMoreArith( tokens2, arith )
+    end
+  | parseTerm( INT(n)::tokens ) = 
+    let val x as (arith, tokens2) = parseArith( INT(n)::tokens )
+    in
+        parseMoreArith( tokens2, arith )
+    end
+  | parseTerm( FLOAT(f)::tokens ) =
+    let val x as (arith, tokens2) = parseArith( FLOAT(f)::tokens )
+    in
+        parseMoreArith( tokens2, arith )
+    end
+  | parseTerm( LEFTPAREN::tokens ) = 
+    let val x as (arith, tokens2) = parseArith( LEFTPAREN::tokens )
+    in
+        parseMoreArith( tokens2, arith )
+    end
 
 (* Returns a list of terms and a list of the remaining tokens. *)
 and parseArgs( LEFTPAREN::tokens ) =
@@ -220,6 +236,23 @@ and parseArith( tokens ) =
     in
         parseMoreArithTerms( tokens2, arithTerm )
     end
+    
+(* Takes the current tokens and an already-parsed arithmetic expression.
+   Returns a Term and a list of the remaining tokens. *)
+and parseMoreArith( LESS::tokens, prevArith ) = 
+    let val x as (nextArith, tokens2) = parseArith( tokens ) in
+        ( Term( Functor("<"), [ prevArith, nextArith ] ), tokens2 )
+    end
+  | parseMoreArith( GREATER::tokens, prevArith ) = 
+    let val x as (nextArith, tokens2) = parseArith( tokens ) in
+        ( Term( Functor(">"), [ prevArith, nextArith ] ), tokens2 )
+    end
+  | parseMoreArith( EQUALS::tokens, prevArith ) = 
+    let val x as (nextArith, tokens2) = parseArith( tokens ) in
+        ( Term( Functor("="), [ prevArith, nextArith ] ), tokens2 )
+    end
+    (* MoreArith -> empty-string *)
+  | parseMoreArith( tokens, prevArith ) = ( prevArith, tokens )
     
 (* Returns a Term and the remaining tokens. *)
 and parseArithTerm( tokens ) = 

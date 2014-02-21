@@ -51,6 +51,9 @@ fun lexIdle( [], inFile ) =
         else if( x = #"-" ) then MINUS :: ( lexIdle( xs, inFile ) )
         else if( x = #"*" ) then MULT :: ( lexIdle( xs, inFile ) )
         else if( x = #"/" ) then DIV :: ( lexIdle( xs, inFile ) )
+        else if( x = #"<" ) then LESS :: ( lexIdle( xs, inFile ) )
+        else if( x = #">" ) then GREATER :: ( lexIdle( xs, inFile ) )
+        else if( x = #"=" ) then EQUALS :: ( lexIdle( xs, inFile ) )
         else if( x = #"'" ) then lexSingleQuoted( xs, inFile )
         else if( x = #"\"" ) then lexDoubleQuoted( xs, inFile )
         else if( x = #"_" ) then (
