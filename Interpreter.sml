@@ -293,6 +293,77 @@ fun specialPredicateIs( Term( _, [ t1, t2 ] ), unifier, k1, k2 ) =
             k2()
     end end;
     
+fun specialPredicateGreater( 
+      Term( _, [ IntTerm(i1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+        if( i1 > i2 ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateGreater( 
+      Term( _, [ IntTerm(i1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+        if( real(i1) > f2 ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateGreater( 
+      Term( _, [ FloatTerm(f1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+        if( f1 > real(i2) ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateGreater( 
+      Term( _, [ FloatTerm(f1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+        if( f1 > f2 ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateGreater( 
+      Term( f, [ Variable( v, s ), term ] ), unifier, k1, k2 ) =
+        specialPredicateGreater( 
+          Term( f, [ subVarForTerm( Variable( v, s ), unifier ), term ] ), 
+            unifier, k1, k2 )
+  | specialPredicateGreater( 
+      Term( f, [ term, Variable( v, s ) ] ), unifier, k1, k2 ) =
+        specialPredicateGreater( 
+          Term( f, [ term, subVarForTerm( Variable( v, s ), unifier ) ] ), 
+            unifier, k1, k2 );
+    
+fun specialPredicateLess( 
+      Term( _, [ IntTerm(i1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+        if( i1 < i2 ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateLess( 
+      Term( _, [ IntTerm(i1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+        if( real(i1) < f2 ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateLess( 
+      Term( _, [ FloatTerm(f1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+        if( f1 < real(i2) ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateLess( 
+      Term( _, [ FloatTerm(f1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+        if( f1 < f2 ) then
+            k1 unifier k2
+        else
+            k2()
+  | specialPredicateLess( 
+      Term( f, [ Variable( v, s ), term ] ), unifier, k1, k2 ) =
+        specialPredicateLess( 
+          Term( f, [ subVarForTerm( Variable( v, s ), unifier ), term ] ), 
+            unifier, k1, k2 )
+  | specialPredicateLess( 
+      Term( f, [ term, Variable( v, s ) ] ), unifier, k1, k2 ) =
+        specialPredicateLess( 
+          Term( f, [ term, subVarForTerm( Variable( v, s ), unifier ) ] ), 
+            unifier, k1, k2 );
+          
+    
 (* Takes a term, a unifier and three continuations. If the term is one of the 
    special built-in predicates, then it is evaluated by a special-purpose 
    function. If it succeeds, k1 is called with the new unifier and with k3 as a 
@@ -307,6 +378,10 @@ fun specialPredicate ( IntTerm(i) ) _ _ k2 _ = k2()
             specialPredicateAtomic( Term( Functor(f), args ), unifier, k1, k3 )
         else if( ( f = "is" ) andalso ( List.length( args ) = 2 ) ) then
             specialPredicateIs( Term( Functor(f), args ), unifier, k1, k3 )
+        else if( ( f = ">" ) andalso ( List.length( args ) = 2 ) ) then
+            specialPredicateGreater( Term( Functor(f), args ), unifier, k1, k3 )
+        else if( ( f = "<" ) andalso ( List.length( args ) = 2 ) ) then
+            specialPredicateLess( Term( Functor(f), args ), unifier, k1, k3 )
         else
             k2();
         
