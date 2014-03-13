@@ -180,8 +180,6 @@ and printTermsRaw [] = ()
         printTermsRaw terms
     );
 
-
-        
 fun printQuery ( Query(terms) ) = 
     let fun printTerms [] = ()
           | printTerms [term] = printTerm term
@@ -277,3 +275,19 @@ fun printTokenStream( [] ) = ()
   | printTokenStream( token::tokens ) = 
         ( printToken token; print ", \n"; printTokenStream( tokens ) );
 
+(* Takes a Query and updates all variables occurring in it to have scope "1". *)
+fun scopeQuery( Query(xs) ) = 
+    let fun scopeTerms [] = []
+          | scopeTerms (term::terms) = 
+            let fun scopeTerm ( Term( f, args ) ) = 
+                        Term( f, ( scopeTerms args ) )
+                  | scopeTerm ( Variable( v, _ ) ) = 
+                        Variable( v, 1 )
+                  | scopeTerm ( IntTerm(i) ) = IntTerm(i)
+                  | scopeTerm ( FloatTerm(f) ) = FloatTerm(f)
+            in
+                ( scopeTerm( term ) ) :: ( scopeTerms( terms ) )
+            end
+    in
+        Query( scopeTerms( xs ) )                        
+    end;

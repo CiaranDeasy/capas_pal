@@ -181,23 +181,6 @@ fun scopeClause( Clause( head, body ), scope ) =
         Clause( ( hd( scopeTerms( [ head ] ) ) ), scopeTerms( body ) )                        
     end;
 
-(* Takes a Query and updates all variables occurring in it to have scope "1". *)
-fun scopeQuery( Query(xs) ) = 
-    let fun scopeTerms [] = []
-          | scopeTerms (term::terms) = 
-            let fun scopeTerm ( Term( f, args ) ) = 
-                        Term( f, ( scopeTerms args ) )
-                  | scopeTerm ( Variable( v, _ ) ) = 
-                        Variable( v, 1 )
-                  | scopeTerm ( IntTerm(i) ) = IntTerm(i)
-                  | scopeTerm ( FloatTerm(f) ) = FloatTerm(f)
-            in
-                ( scopeTerm( term ) ) :: ( scopeTerms( terms ) )
-            end
-    in
-        Query( scopeTerms( xs ) )                        
-    end;
-    
 exception UninstantiatedVariable;
     
 (* Takes a variable and a unifier. Scans the unifier and returns the term to 
@@ -533,5 +516,5 @@ fun executeQueries( _, [] ) = true
             print "\nQuery not satisfiable.\n"; 
             false 
     ) in
-        executeQuery program (scopeQuery x) m1 m2
+        executeQuery program x m1 m2
     end end;

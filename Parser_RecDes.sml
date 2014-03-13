@@ -94,7 +94,7 @@ and parseBody( COLONMINUS::tokens ) = parseTermList( tokens )
 and parseQuery( COLONMINUS::tokens ) = 
     let val x as (terms, tokens2) = parseTermList( tokens )
     in
-        ( Query( terms ), tokens2 )
+        ( scopeQuery( Query( terms ) ), tokens2 )
     end
 
 (* Returns a list of terms and a list of the remaining tokens *)
