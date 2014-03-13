@@ -26,3 +26,12 @@ fun interpret( filename ) =
     in
         executeQueries( parsed )
     end end;
+
+(* Single top-level function to compile a Prolog source file. *)
+fun compile( inFilename, outFilename ) = 
+    let val tokenStream = lex( TextIO.openIn( inFilename ) ) in
+    let val parsed as ( program, queries ) = parseStart( tokenStream )
+    in
+        compileProgram( outFilename, program, queries )
+    end end;
+
