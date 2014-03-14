@@ -10,32 +10,34 @@ interpreter/compiler.
 
 (* Takes a list, a value and an equality test. Returns true if the value is in 
    the list, according to the equality test. *)
-fun memberPoly x [] _ = false
-  | memberPoly x (y::ys) eqTest = eqTest(x, y) orelse memberPoly x ys eqTest;
+fun memberPoly( x, [], _ ) = false
+  | memberPoly( x, (y::ys), eqTest ) = 
+        eqTest(x, y) orelse memberPoly( x, ys, eqTest );
 
 (* Takes a list and a value. Returns true if the value is in the list. *)
-fun member x ys = memberPoly x ys op=;
+fun member( x, ys ) = memberPoly( x, ys, op= );
   
 (* Takes two lists, and removes from the first any elements that occur in the 
    second. *)
-fun removeWithBlacklist [] ys = []
-  | removeWithBlacklist (x::xs) ys = 
-        if ( member x ys ) 
-		    then removeWithBlacklist xs ys 
-	    else (x::( removeWithBlacklist xs ys ));
+fun removeWithBlacklist( [], ys ) = []
+  | removeWithBlacklist( (x::xs), ys ) = 
+        if ( member( x, ys ) ) then 
+            removeWithBlacklist( xs, ys ) 
+	    else 
+            x::( removeWithBlacklist( xs, ys ) );
 
 (* Takes two lists of equal length, and returns a list of 2-tuples, where the 
    i'th tuple contains the i'th element of each input list. *)
-fun zip [] [] = []
-  | zip (x::xs) (y::ys) = (x,y) :: (zip xs ys);
+fun zip( [], [] ) = []
+  | zip( (x::xs), (y::ys) ) = ( x, y )::( zip( xs, ys ) );
 
 (* Return the first and second elements of an input 2-tuple, respectively. *)
-fun first (a, b) = a;
-fun second (a, b) = b;
+fun first(a, b) = a;
+fun second(a, b) = b;
 
 (* Takes a list of bools and returns the result of ANDing them all together. *)
-fun andList [] = true
-  | andList (x::xs) = x andalso andList xs;
+fun andList( [] ) = true
+  | andList( x::xs ) = x andalso andList( xs );
 
 (* Takes a 2-tuple and returns the a 2-tuple with the same elements in reverse 
    order. *)
@@ -90,7 +92,7 @@ fun eqUnorderedListIgnoreDups _ ( [], [] ) = true
 				else
                     ( y::( removeAll( x, ys ) ) )
     in
-        if( memberPoly x ys eqTest ) then
+        if( memberPoly( x, ys, eqTest ) ) then
             eqUnorderedListIgnoreDups eqTest 
               ( ( removeAll( x, xs ) ), ( removeAll( x, ys ) ) )
         else

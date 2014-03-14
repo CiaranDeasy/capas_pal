@@ -66,12 +66,9 @@ fun evaluate( Variable(v, s), unifier ) =
     end end end end end
   | evaluate( Term( f, args ), _ ) = Term( f, args );
     
-fun atomic_1( unifier, Term( _, [] ), k1, k2 ) = 
-        k1 unifier k2
-  | atomic_1( unifier, IntTerm(_), k1, k2 ) = 
-        k1 unifier k2
-  | atomic_1( unifier, FloatTerm(_), k1, k2 ) = 
-        k1 unifier k2
+fun atomic_1( unifier, Term( _, [] ), k1, k2 ) = k1( unifier, k2 )
+  | atomic_1( unifier, IntTerm(_), k1, k2 ) = k1( unifier, k2 )
+  | atomic_1( unifier, FloatTerm(_), k1, k2 ) = k1( unifier, k2 )
   | atomic_1( unifier, Variable( v,s ), k1, k2 ) = 
         let val result = ( atomic_1( 
           unifier, ( subVarForTerm( Variable( v, s ), unifier ) ), k1, k2 ) )
@@ -84,10 +81,10 @@ fun atomic_1( unifier, Term( _, [] ), k1, k2 ) =
 fun is_2( unifier, arg1, arg2, k1, k2 ) = 
     let val evaluation = evaluate( arg2, unifier ) in
     let val x as (success, newUnifier) = 
-            unify unifier ( Binding( arg1, evaluation ) )
+            unify( unifier, Binding( arg1, evaluation ) )
     in
         if( success ) then
-            k1 newUnifier k2
+            k1( newUnifier, k2 )
         else
             k2()
     end end;
@@ -95,25 +92,25 @@ fun is_2( unifier, arg1, arg2, k1, k2 ) =
 fun specialPredicateGreater( 
       Term( _, [ IntTerm(i1), IntTerm(i2) ] ), unifier, k1, k2 ) =
         if( i1 > i2 ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateGreater( 
       Term( _, [ IntTerm(i1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
         if( real(i1) > f2 ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateGreater( 
       Term( _, [ FloatTerm(f1), IntTerm(i2) ] ), unifier, k1, k2 ) =
         if( f1 > real(i2) ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateGreater( 
       Term( _, [ FloatTerm(f1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
         if( f1 > f2 ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateGreater( 
@@ -130,25 +127,25 @@ fun specialPredicateGreater(
 fun specialPredicateLess( 
       Term( _, [ IntTerm(i1), IntTerm(i2) ] ), unifier, k1, k2 ) =
         if( i1 < i2 ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateLess( 
       Term( _, [ IntTerm(i1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
         if( real(i1) < f2 ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateLess( 
       Term( _, [ FloatTerm(f1), IntTerm(i2) ] ), unifier, k1, k2 ) =
         if( f1 < real(i2) ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateLess( 
       Term( _, [ FloatTerm(f1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
         if( f1 < f2 ) then
-            k1 unifier k2
+            k1( unifier, k2 )
         else
             k2()
   | specialPredicateLess( 

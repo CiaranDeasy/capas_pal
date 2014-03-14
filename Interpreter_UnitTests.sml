@@ -61,8 +61,8 @@ fun unitTestInterpreter() =
   in ( 
   
     UnitTester.printResultPoly "getTransitiveBinding 1" (
-      getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
-      ( Binding( Variable("2",0), Variable("3",0) ) ) 
+      getTransitiveBinding( Binding( Variable("1",0), Variable("2",0) ),
+        Binding( Variable("2",0), Variable("3",0) ) ) 
     ) 
     ( 
       true, ( Binding( Variable("1",0), Variable("3",0) ) ) 
@@ -70,64 +70,68 @@ fun unitTestInterpreter() =
     ( eqTwoTuple op= eqBinding );
     
     UnitTester.printResultPoly "getTransitiveBinding 2" (
-      getTransitiveBinding ( Binding( Variable("2",0), Variable("1",0) ) )
-        ( Binding( Variable("2",0), Variable("3",0) ) )
+      getTransitiveBinding( Binding( Variable("2",0), Variable("1",0) ),
+        Binding( Variable("2",0), Variable("3",0) ) )
     ) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) )
     ( eqTwoTuple op= eqBinding );
     
     UnitTester.printResultPoly "getTransitiveBinding 3" (
-      getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
-        ( Binding( Variable("3",0), Variable("2",0) ) ) 
+      getTransitiveBinding( Binding( Variable("1",0), Variable("2",0) ),
+        Binding( Variable("3",0), Variable("2",0) ) ) 
     ) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) )
     ( eqTwoTuple op= eqBinding );
     
     UnitTester.printResultPoly "getTransitiveBinding 4" (
-      getTransitiveBinding ( Binding( Variable("2",0), Variable("1",0) ) )
-        ( Binding( Variable("3",0), Variable("2",0) ) )
+      getTransitiveBinding( Binding( Variable("2",0), Variable("1",0) ),
+        Binding( Variable("3",0), Variable("2",0) ) )
     ) ( true, ( Binding( Variable("1",0), Variable("3",0) ) ) )
     ( eqTwoTuple op= eqBinding );
     
     UnitTester.printResult "getTransitiveBinding 5" (
       first( 
-        getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
-          ( Binding( Variable("3",0), Variable("4",0) ) )
+        getTransitiveBinding( Binding( Variable("1",0), Variable("2",0) ),
+          Binding( Variable("3",0), Variable("4",0) ) )
       )
     ) false;
     
     UnitTester.printResult "getTransitiveBinding 6" (
       first( 
-        getTransitiveBinding ( Binding( Variable("1",0), Variable("2",0) ) )
-          ( Binding( Variable("2",0), Variable("1",0) ) )
+        getTransitiveBinding( Binding( Variable("1",0), Variable("2",0) ),
+          Binding( Variable("2",0), Variable("1",0) ) )
       )
     ) false;
     
     UnitTester.printResultPoly "getAllTransitiveBindings 1" (
-      getAllTransitiveBindings ( Binding( Variable("1",0), Variable("2",0) ) )
+      getAllTransitiveBindings( Binding( Variable("1",0), Variable("2",0) ),
           [ ( Binding( Variable("2",0), Variable("3",0) ) ),
             ( Binding( Variable("3",0), Variable("4",0) ) ),
             ( Binding( Variable("4",0), Variable("2",0) ) ) ]
+      )
     ) [ ( Binding( Variable("1",0), Variable("3",0) ) ), 
         ( Binding( Variable("1",0), Variable("4",0) ) ) 
       ] ( eqUnorderedList eqBinding );
       
     UnitTester.printResultPoly "getAllTransitiveBindings 2" (
-      getAllTransitiveBindings ( Binding( Variable("1",0), Variable("2",0) ) )
+      getAllTransitiveBindings( Binding( Variable("1",0), Variable("2",0) ),
           []
+      )
     ) [] ( eqUnorderedList eqBinding );
     
     UnitTester.printResultPoly "getAllTransitiveBindings 3" (
-      getAllTransitiveBindings ( Binding( Variable("1",0), Variable("5",0) ) )
+      getAllTransitiveBindings( Binding( Variable("1",0), Variable("5",0) ),
           [ ( Binding( Variable("2",0), Variable("3",0) ) ),
             ( Binding( Variable("3",0), Variable("4",0) ) ),
             ( Binding( Variable("4",0), Variable("2",0) ) ) ]
+      )
     ) [] ( eqUnorderedList eqBinding );
     
     UnitTester.printResultPoly "getTransitiveClosure 1" (
-      getTransitiveClosure [ ( Binding( Variable("1",0), Variable("2",0) ) ),
+      getTransitiveClosure( [ ( Binding( Variable("1",0), Variable("2",0) ) ),
                              ( Binding( Variable("3",0), Variable("2",0) ) ),
                              ( Binding( Variable("2",0), Variable("4",0) ) ),
                              ( Binding( Variable("5",0), Variable("7",0) ) ),
                              ( Binding( Variable("7",0), Variable("6",0) ) ) ]
+      )
     ) [ ( Binding( Variable("1",0), Variable("2",0) ) ),
         ( Binding( Variable("1",0), Variable("3",0) ) ),
         ( Binding( Variable("1",0), Variable("4",0) ) ),
@@ -140,7 +144,7 @@ fun unitTestInterpreter() =
           ( eqUnorderedList eqBinding );
           
     UnitTester.printResultPoly "getTransitiveClosure 2" (
-      getTransitiveClosure [ ( Binding( Variable("1",0), Variable("2",0) ) ),
+      getTransitiveClosure( [ ( Binding( Variable("1",0), Variable("2",0) ) ),
                              ( Binding( Variable("1",0), Variable("3",0) ) ),
                              ( Binding( Variable("1",0), Variable("4",0) ) ),
                              ( Binding( Variable("2",0), Variable("3",0) ) ),
@@ -149,6 +153,7 @@ fun unitTestInterpreter() =
                              ( Binding( Variable("5",0), Variable("6",0) ) ),
                              ( Binding( Variable("5",0), Variable("7",0) ) ),
                              ( Binding( Variable("6",0), Variable("7",0) ) ) ]
+      )
     ) [ ( Binding( Variable("1",0), Variable("2",0) ) ),
         ( Binding( Variable("1",0), Variable("3",0) ) ),
         ( Binding( Variable("1",0), Variable("4",0) ) ),
@@ -161,45 +166,45 @@ fun unitTestInterpreter() =
           ( eqUnorderedList eqBinding );
           
     UnitTester.printResultPoly "getTransitiveClosure 3" (
-      getTransitiveClosure []
+      getTransitiveClosure( [] )
     ) [] ( eqUnorderedList eqBinding );
     
     UnitTester.printResultPoly "combineUnifiers 1" 
-      ( combineUnifiers [] ) [] ( eqUnorderedList eqBinding );
+      ( combineUnifiers( [] ) ) [] ( eqUnorderedList eqBinding );
     
     UnitTester.printResultPoly "combineUnifiers 2" ( 
-      combineUnifiers [ 
+      combineUnifiers( [ 
         Unifier([ Binding( Variable("1",0), Variable("2",0) ) ]) 
-      ] 
+      ] )
     ) [ 
       Binding( Variable("1",0), Variable("2",0) ) 
     ] ( eqUnorderedList eqBinding );
     
     UnitTester.printResultPoly "combineUnifiers 3" ( 
-      combineUnifiers [ 
+      combineUnifiers( [ 
         Unifier([ Binding( Variable("1",0), Variable("2",0) ), 
                   Binding( Variable("3",0), Variable("4",0) ) ]),
         Unifier([ Binding( Variable("2",0), Variable("3",0) ) ])
-      ]
+      ] )
     ) [ Binding( Variable("1",0), Variable("2",0) ), 
         Binding( Variable("3",0), Variable("4",0) ),
         Binding( Variable("2",0), Variable("3",0) ) ]
       ( eqUnorderedList eqBinding );
     
     UnitTester.printResultPoly "unify 1" (
-      unify (Unifier([])) ( Binding( Variable("1",0), Variable("2",0) ) )
+      unify( Unifier([]), Binding( Variable("1",0), Variable("2",0) ) )
     ) ( true, Unifier([ Binding( Variable("1",0), Variable("2",0) ) ]) ) 
     ( eqTwoTuple op= eqUnifier );
     
     UnitTester.printResultPoly "unify 2" (
-      unify (Unifier([])) 
-        ( Binding( Term( Functor("1"), [] ), Variable("2",0) ) )
+      unify( Unifier([]), 
+        Binding( Term( Functor("1"), [] ), Variable("2",0) ) )
     ) 
     ( true, Unifier([ Binding( Term( Functor("1"), [] ), Variable("2",0) ) ]) )
     ( eqTwoTuple op= eqUnifier );
     
     UnitTester.printResultPoly "unify 3" (
-      unify (Unifier([])) ( Binding( 
+      unify( Unifier([]), Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ), 
         Variable("2",0) 
@@ -212,7 +217,7 @@ fun unitTestInterpreter() =
     ( eqTwoTuple op= eqUnifier );
     
     UnitTester.printResultPoly "unify 4" (
-      unify (Unifier([])) ( Binding( 
+      unify( Unifier([]), Binding( 
         Variable("2",0), 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] )
@@ -225,7 +230,7 @@ fun unitTestInterpreter() =
     ( eqTwoTuple op= eqUnifier );
     
     UnitTester.printResultPoly "unify 5" (
-      unify (Unifier([])) ( Binding( 
+      unify( Unifier([]), Binding( 
         Term( Functor("1"), [] ),
         Term( Functor("1"), [] )
       ) )
@@ -233,14 +238,14 @@ fun unitTestInterpreter() =
     ( eqTwoTuple op= eqUnifier );
     
     UnitTester.printResult "unify 6" (
-      first( unify (Unifier([])) ( Binding( 
+      first( unify( Unifier([]), Binding( 
         Term( Functor("1"), [] ),
         Term( Functor("2"), [] )
       ) ) )
     ) false;
     
     UnitTester.printResultPoly "unify 7" (
-      unify (Unifier([])) ( Binding( 
+      unify( Unifier([]), Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ),
         Term( Functor("1"), 
@@ -250,7 +255,7 @@ fun unitTestInterpreter() =
     ( eqTwoTuple op= eqUnifier );
     
     UnitTester.printResult "unify 8" (
-      first( unify (Unifier([])) ( Binding( 
+      first( unify( Unifier([]), Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), [] ), Term( Functor("3"), [] ) ] ),
         Term( Functor("1"), 
@@ -259,7 +264,7 @@ fun unitTestInterpreter() =
     ) false;
     
     UnitTester.printResultPoly "unify 9" (
-      unify (Unifier([])) ( Binding( 
+      unify( Unifier([]), Binding( 
         Term( Functor("1"), 
           [ Term( Functor("2"), 
             [ Variable("5",0) ] ), 
@@ -281,15 +286,13 @@ fun unitTestInterpreter() =
     UnitTester.printResultPoly "unify 10" 
     (* Test *)
     (
-      unify (
+      unify(
         Unifier([ 
           Binding( 
             Term( Functor("6"), [] ), 
             Variable("5",0) 
           ) 
-        ])
-      ) 
-      ( 
+        ]),
         Binding( 
           Term( 
             Functor("1"), 
@@ -335,15 +338,13 @@ fun unitTestInterpreter() =
     UnitTester.printResultPoly "unify 11" 
     (* Test *)
     (
-      unify (
+      unify(
         Unifier([ 
           Binding( 
             Term( Functor("8"), [] ), 
             Variable("9",0) 
           ) 
-        ])
-      ) 
-      ( 
+        ]),
         Binding( 
           Term( 
             Functor("1"), 
@@ -393,14 +394,12 @@ fun unitTestInterpreter() =
     UnitTester.printResultPoly "unify 12" 
     (* Test *)
     (
-      unify ( 
+      unify( 
         Unifier([ 
           Binding( 
             Term( Functor("8"), [] ), 
             Variable("9",0) ) 
-        ])
-      ) 
-      ( 
+        ]),
         Binding( 
           Variable("1",0), 
           Variable("2",0) 
@@ -477,120 +476,131 @@ fun unitTestInterpreter() =
 
     (* Single term, empty unifier, successful unification *)
     UnitTester.printResult "findUnifier 1" ( 
-      findUnifier 
-        testProgram 
-        ( Term( Functor( "green" ), [] ) )
-        ( Unifier([]) ) 
-        ( fn x => fn y => eqUnifier ( Unifier([]), x ) ) 
+      findUnifier( 
+        testProgram,
+        Term( Functor( "green" ), [] ),
+        Unifier([]),
+        ( fn( x, y ) => eqUnifier( Unifier([]), x ) ),
         ( fn () => false ) 
+      )
     ) true;
     
     (* Single term, empty unifier, failed unification *)
     UnitTester.printResult "findUnifier 2" ( 
-      findUnifier 
-        testProgram 
-        ( Term( Functor( "blue" ), [] ) )
-        ( Unifier([]) ) 
-        ( fn x => fn y => false ) 
+      findUnifier( 
+        testProgram, 
+        Term( Functor( "blue" ), [] ),
+        Unifier([]),
+        ( fn( x, y ) => false ), 
         ( fn () => true ) 
+      )
     ) true;
     
     (* Single term, non-empty unifier *)
-    UnitTester.printResult "findUnifier 3" ( findUnifier testProgram ( Term( Functor( "green" ), [] ) )
-            ( Unifier([ 
-              Binding(
-                Variable("2",0), 
-                Variable("3",0)
-              )
-            ]) )
-            ( fn x => fn y => ( eqUnifier ( Unifier( [ 
-              Binding(
-                Variable("2",0), 
-                Variable("3",0)
-              ) ] ), x ) ) ) 
-            ( fn () => true ) ) true;
+    UnitTester.printResult "findUnifier 3" ( 
+      findUnifier( 
+        testProgram, 
+        Term( Functor( "green" ), [] ),
+        Unifier([ 
+          Binding(
+            Variable("2",0), 
+            Variable("3",0)
+          )
+        ]),
+        ( fn( x, y ) => ( eqUnifier ( Unifier( [ 
+          Binding(
+            Variable("2",0), 
+            Variable("3",0)
+          ) ] ), x ) ) ), 
+        ( fn () => true ) ) 
+      ) true;
     
     (* Variable, empty unifier *)
-    UnitTester.printResult "findUnifier 4" ( findUnifier 
-            testProgram 
-            ( Variable("1",0) )
-            ( Unifier([]) ) 
-            ( fn x => fn y => ( eqUnifier ( Unifier( [ Binding(
-              Variable("1",0), 
-              Term( Functor( "green" ), [] )
-            ) ] ), x ) ) ) 
-            ( fn () => false ) ) true;
+    UnitTester.printResult "findUnifier 4" ( findUnifier( 
+      testProgram, 
+      Variable("1",0),
+      Unifier([]),
+      ( fn( x, y ) => ( eqUnifier ( Unifier( [ Binding(
+        Variable("1",0), 
+        Term( Functor( "green" ), [] )
+      ) ] ), x ) ) ), 
+      ( fn () => false ) )
+    ) true;
     
     (* Variable, non-empty unifier *)
-    UnitTester.printResult "findUnifier 5" ( findUnifier 
-            testProgram 
-            ( Variable("1",0) )
-            ( Unifier([ 
-              Binding(
-                Variable("2",0), 
-                Variable("3",0)
-              )
-            ]) ) 
-            (* k1 *)
-            ( fn x => fn y => ( eqUnifier ( Unifier( [ 
-              Binding(
-                Variable("2",0), 
-                Variable("3",0)
-              ), 
-              Binding(
-                Variable("1",0), 
-                Term( Functor( "green" ), [] )
-              ) ] ), x ) ) ) 
-            (* k2 *)
-            ( fn () => false ) ) true;
+    UnitTester.printResult "findUnifier 5" ( findUnifier( 
+      testProgram, 
+      Variable("1",0),
+      Unifier([ 
+        Binding(
+          Variable("2",0), 
+          Variable("3",0)
+        )
+      ]),
+      (* k1 *)
+      ( fn( x, y ) => ( eqUnifier ( Unifier( [ 
+        Binding(
+          Variable("2",0), 
+          Variable("3",0)
+        ), 
+        Binding(
+          Variable("1",0), 
+          Term( Functor( "green" ), [] )
+        ) ] ), x ) ) ), 
+      (* k2 *)
+      ( fn () => false ) )
+    ) true;
     
     (* Variable, reject and retry *)
-    UnitTester.printResult "findUnifier 6" ( findUnifier 
-            testProgram 
-            ( Variable("1",0) )
-            ( Unifier([]) ) 
-            ( fn x => fn y => ( 
-              if eqUnifier ( 
-                Unifier([ 
-                  Binding(
-                    Variable("1",0), 
-                    Term( Functor( "green" ), [] )
-                  ) 
-                ]), 
-                x 
-              ) 
-                then y() 
-              else eqUnifier ( 
-                Unifier([ 
-                  Binding(
-                    Variable("1",0), 
-                    Term( Functor( "red" ), [] )
-                  ) 
-                ]), 
-                x 
-              )
-            ) ) 
-            ( fn () => false ) ) true;
+    UnitTester.printResult "findUnifier 6" ( findUnifier( 
+      testProgram, 
+      Variable("1",0),
+      Unifier([]), 
+      ( fn( x, y ) => ( 
+        if eqUnifier ( 
+          Unifier([ 
+            Binding(
+              Variable("1",0), 
+              Term( Functor( "green" ), [] )
+            ) 
+          ]), 
+          x 
+        ) 
+          then y() 
+        else eqUnifier ( 
+          Unifier([ 
+            Binding(
+              Variable("1",0), 
+              Term( Functor( "red" ), [] )
+            ) 
+          ]), 
+          x 
+        )
+      ) ), 
+      ( fn () => false ) )
+    ) true;
     
     (* Clause with condition, direct input *)
-    UnitTester.printResult "findUnifier 7" ( findUnifier 
-            testProgram 
+    UnitTester.printResult "findUnifier 7" ( findUnifier( 
+            testProgram, 
             ( Term( Functor( "likes" ), [
               Term( Functor( "pooh" ), [] ), 
               Term( Functor( "honey" ), [] )
-            ] ) )
-            ( Unifier([]) ) ( fn x => fn y => eqUnifier ( Unifier([]), x ) ) 
-            ( fn () => false ) ) true;
+            ] ) ),
+            Unifier([]), 
+            ( fn( x, y ) => eqUnifier ( Unifier([]), x ) ), 
+            ( fn () => false ) )
+    ) true;
     
     (* Clause with condition, variable input, success *)
-    UnitTester.printResult "findUnifier 8" ( findUnifier 
-            testProgram 
-            ( Term( Functor( "likes" ), [
+    UnitTester.printResult "findUnifier 8" ( findUnifier( 
+            testProgram, 
+            Term( Functor( "likes" ), [
               Variable("1",0), 
               Variable("2",0)
-            ] ) )
-            ( Unifier([]) ) 
-            ( fn x => fn y => eqUnifier( Unifier([
+            ] ),
+            Unifier([]), 
+            ( fn( x, y ) => eqUnifier( Unifier([
               Binding(
                 Variable("1",0),
                 Term( Functor( "pooh" ), [] )
@@ -599,66 +609,69 @@ fun unitTestInterpreter() =
                 Variable("2",0),
                 Term( Functor( "honey" ), [] )
               )
-            ]), x ) ) 
-            ( fn () => false ) ) true;
+            ]), x ) ), 
+            ( fn () => false ) )
+    ) true;
     
     (* Clause with condition, direct input, failure on second term of clause 
        body *)
-    UnitTester.printResult "findUnifier 9" ( findUnifier 
-            testProgram 
-            ( Term( Functor( "purple" ), [] ) )
-            ( Unifier([]) ) 
-            ( fn x => fn y => false) 
-            ( fn () => true ) ) true;
+    UnitTester.printResult "findUnifier 9" ( findUnifier( 
+            testProgram, 
+            Term( Functor( "purple" ), [] ),
+            Unifier([]), 
+            ( fn( x, y ) => false), 
+            ( fn () => true ) )
+    ) true;
     
     (* Two query terms, both succeed. *)
     UnitTester.printResult "executeQuery 1" ( 
-      executeQuery testProgram ( 
+      executeQuery( testProgram, ( 
         Query([ 
           Term( Functor( "green" ), [] ), 
           Term( Functor( "red" ), [] ) 
         ]) 
-      )
-      ( fn x => eqUnifier ( Unifier([]), x ) )
+      ),
+      ( fn x => eqUnifier ( Unifier([]), x ) ),
       ( fn() => false )
+      )
     ) true;
     
     (* Two query terms, second fails. *)
     UnitTester.printResult "executeQuery 2" ( 
-      executeQuery testProgram ( 
+      executeQuery( testProgram, ( 
         Query([ 
           Term( Functor( "green" ), [] ), 
           Term( Functor( "blue" ), [] ) 
         ]) 
-      )
-      ( fn x => false )
+      ),
+      ( fn x => false ),
       ( fn() => true )
+      )
     ) true;
     
     (* Variable query term. *)
     UnitTester.printResult "executeQuery 3" ( 
-      executeQuery testProgram ( 
+      executeQuery( testProgram, ( 
         Query([ 
           Term( Functor( "bear" ), [ Variable("1",0) ] )
         ]) 
-      )
+      ),
       ( fn x => eqUnifier ( Unifier([
         Binding(
           Variable("1",0),
           Term( Functor( "pooh" ), [] )
         )
-      ]), x ) )
+      ]), x ) ),
       ( fn() => false )
+      )
     ) true;
     
     (* ---------------------------------------------------------------------- *)
     
     (* B1( V, V ), B2( V, V ) *)
     UnitTester.printResultPoly "substitute 1" ( 
-      substitute (
-        Binding( Variable("1",0), Variable("2",0) )
-      )
-      (
+      substitute(
+        Binding( Variable("1",0), Variable("2",0) ),
         Binding( Variable("3",0), Variable("4",0) )
       )
     )
@@ -669,10 +682,8 @@ fun unitTestInterpreter() =
     
     (* B1( T, V ), B2( V, V ) *)
     UnitTester.printResultPoly "substitute 2" ( 
-      substitute (
-        Binding( Term( Functor("1"), [] ), Variable("2",0) )
-      )
-      (
+      substitute(
+        Binding( Term( Functor("1"), [] ), Variable("2",0) ),
         Binding( Variable("3",0), Variable("4",0) )
       )
     )
@@ -683,10 +694,8 @@ fun unitTestInterpreter() =
     
     (* B1( V, V ), B2( T, V ) *)
     UnitTester.printResultPoly "substitute 3" ( 
-      substitute (
-        Binding( Variable("1",0), Variable("2",0) )
-      )
-      (
+      substitute(
+        Binding( Variable("1",0), Variable("2",0) ),
         Binding( Term( Functor("3"), [] ), Variable("4",0) )
       )
     )
@@ -697,10 +706,8 @@ fun unitTestInterpreter() =
     
     (* No substitution *)
     UnitTester.printResultPoly "substitute 4" ( 
-      substitute (
-        Binding( Term( Functor("1"), [] ), Variable("2",0) )
-      )
-      (
+      substitute(
+        Binding( Term( Functor("1"), [] ), Variable("2",0) ),
         Binding( Term( Functor("3"), [] ), Variable("4",0) )
       )
     )
@@ -711,10 +718,8 @@ fun unitTestInterpreter() =
     
     (* Substitutions *)
     UnitTester.printResultPoly "substitute 5" ( 
-      substitute (
-        Binding( Term( Functor("1"), [] ), Variable("2",0) )
-      )
-      (
+      substitute(
+        Binding( Term( Functor("1"), [] ), Variable("2",0) ),
         Binding( 
           Term( 
             Functor("3"), 
@@ -745,7 +750,7 @@ fun unitTestInterpreter() =
     
     (* Potential (incorrect) reverse substitution *)
     UnitTester.printResultPoly "substitute 6" ( 
-      substitute (
+      substitute(
         Binding( 
           Term( 
             Functor("1"), 
@@ -756,9 +761,7 @@ fun unitTestInterpreter() =
             ]
           ), 
           Variable("2",0) 
-        )
-      )
-      (
+        ),
         Binding( Term( Functor("3"), [] ), Variable("4",0) )
       )
     )
@@ -771,7 +774,7 @@ fun unitTestInterpreter() =
     
     (* Empty Unifier *)
     UnitTester.printResultPoly "substituteUnifier 1" (
-      substituteUnifier ( Unifier([]) )
+      substituteUnifier( Unifier([]) )
     )
     (
       Unifier([])
@@ -780,7 +783,7 @@ fun unitTestInterpreter() =
     
     (* Single Binding *)
     UnitTester.printResultPoly "substituteUnifier 2" (
-      substituteUnifier ( Unifier([
+      substituteUnifier( Unifier([
         Binding( Variable("1",0), Variable("2",0) ) 
       ]) )
     )
@@ -791,7 +794,7 @@ fun unitTestInterpreter() =
     
     (* Two independent Bindings *)
     UnitTester.printResultPoly "substituteUnifier 3" (
-      substituteUnifier ( Unifier([
+      substituteUnifier( Unifier([
         Binding( Variable("1",0), Variable("2",0) ) ,
         Binding( Variable("3",0), Variable("4",0) )
       ]) )
@@ -806,7 +809,7 @@ fun unitTestInterpreter() =
     
     (* Two dependent Bindings *)
     UnitTester.printResultPoly "substituteUnifier 4" (
-      substituteUnifier ( Unifier([
+      substituteUnifier( Unifier([
         Binding( Term( Functor("1"), [ Variable("2",0) ] ), Variable("3",0) ) ,
         Binding( Term( Functor("4"), [] ), Variable("2",0) )
       ]) )
