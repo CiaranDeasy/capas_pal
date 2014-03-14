@@ -42,7 +42,20 @@ and outputTermListDatatypeFlat( out, [] ) = ()
         outputTermDatatypeFlat( out, term );
         TextIO.output( out, ", " );
         outputTermListDatatypeFlat( out, terms )
-    )
+    );
+    
+(* Takes a term and outputs the name of a predicate to call to execute that 
+   function. Needs to detect special predicates. *)
+fun outputPredicateCall( out, name, arity ) = 
+        if( name = "<" andalso arity = 2 ) then
+            TextIO.output( out, "specialPredicateLess" )
+        else if( name = ">" andalso arity = 2 ) then
+            TextIO.output( out, "specialPredicateGreater" )
+        else (
+            TextIO.output( out, name );
+            TextIO.output( out, "_" );
+            TextIO.output( out, Int.toString( arity ) )
+        );
 
 (* Outputs code that imports the necessary source files, and defines a scope 
    counter. Every output program needs this preamble. *)
@@ -50,7 +63,8 @@ fun outputPreamble( out ) = (
         TextIO.output( out, "val _ = (\n" );
         TextIO.output( out, "    use \"Utility.sml\";\n" );
         TextIO.output( out, "    use \"Datatypes.sml\";\n" );
-        TextIO.output( out, "    use \"Interpreter.sml\"\n" );
+        TextIO.output( out, "    use \"Unification.sml\";\n" );
+        TextIO.output( out, "    use \"SpecialPredicates.sml\"\n" );
         TextIO.output( out, ")\n" );
         TextIO.output( out, "\n" );
         TextIO.output( out, "val scopeCounter = ref 2;\n" );
@@ -221,10 +235,7 @@ and compilePattern( out, clause, pattNum ) =
                         TextIO.output( out, "( uni, fail" );
                         TextIO.output( out, Int.toString( num ) );
                         TextIO.output( out, " ) = " );
-                        TextIO.output( out, f );
-                        TextIO.output( out, "_" );
-                        TextIO.output( out, 
-                                Int.toString( List.length( args ) ) );
+                        outputPredicateCall( out, f, ( List.length( args ) ) );
                         TextIO.output( out, "( uni, " );
                         outputTermListDatatypeFlat( out, args );
                         TextIO.output( out, ", " );
@@ -235,7 +246,7 @@ and compilePattern( out, clause, pattNum ) =
                             TextIO.output( out, Int.toString( num+1 ) );
                             TextIO.output( out, ", fail" );
                             TextIO.output( out, Int.toString( num ) );
-                            TextIO.output( out, ")\n" );
+                            TextIO.output( out, " )\n" );
                             TextIO.output( out, "            and " );
                             worker( terms, num+1 )
                         )
@@ -290,9 +301,7 @@ fun compileQuery( out, Query( terms ), num ) =
                 TextIO.output( out, "( uni, fail" );
                 TextIO.output( out, Int.toString( termNum ) );
                 TextIO.output( out, " ) = " );
-                TextIO.output( out, f );
-                TextIO.output( out, "_" );
-                TextIO.output( out, Int.toString( List.length( args ) ) );
+                outputPredicateCall( out, f, ( List.length( args ) ) );
                 TextIO.output( out, "( uni, " );
                 outputTermListDatatypeFlat( out, args );
                 TextIO.output( out, ", " );
@@ -325,7 +334,7 @@ fun compileQuery( out, Query( terms ), num ) =
         TextIO.output( out, "        fun " );
         outputContinuations( terms, 1 );
         TextIO.output( out, "        m1( Unifier([]), fail )\n" );
-        TextIO.output( out, "    end;" )
+        TextIO.output( out, "    end;\n\n" )
     end;
 
 fun compileQueries( out, queries ) = 
@@ -338,6 +347,28 @@ fun compileQueries( out, queries ) =
         worker( queries, 1 )
     end;
     
+(* Outputs the execute() function that executes the queries in the program, and 
+   a call to the execute function. Outputs nothing if there are no queries. *)
+fun outputPostamble( out, [] ) = ()
+fun outputPostamble( out, queries ) = 
+    let fun outputQueries( query::queries, num ) = (
+                TextIO.output( out, "        query_" );
+                TextIO.output( out, Int.toString( num ) );
+                TextIO.output( out, "()" );
+                if( List.null( queries ) ) then
+                    TextIO.output( out, "\n" )
+                else (
+                    TextIO.output( out, ";\n" );
+                    outputQueries( queries, num+1 )
+                )
+        )
+    in
+        TextIO.output( out, "fun execute() = (\n" );
+        outputQueries( queries, 1 );
+        TextIO.output( out, ")\n\n" );
+        TextIO.output( out, "val _ = execute()\n" )
+    end
+    
 fun compileProgram( outFilename, Program( clauses ), queries ) = 
     let val out = TextIO.openOut( outFilename )
     in (
@@ -346,6 +377,8 @@ fun compileProgram( outFilename, Program( clauses ), queries ) =
         compilePredicates( out, clauses );
         TextIO.flushOut( out );
         compileQueries( out, queries );
+        TextIO.flushOut( out );
+        outputPostamble( out, queries );
         TextIO.flushOut( out );
         TextIO.closeOut( out )
     )
