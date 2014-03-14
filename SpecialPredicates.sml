@@ -89,74 +89,58 @@ fun is_2( unifier, arg1, arg2, k1, k2 ) =
             k2()
     end end;
     
-fun specialPredicateGreater( 
-      Term( _, [ IntTerm(i1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+fun specialPredicateGreater( unifier, IntTerm(i1), IntTerm(i2), k1, k2 ) =
         if( i1 > i2 ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateGreater( 
-      Term( _, [ IntTerm(i1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+  | specialPredicateGreater( unifier, IntTerm(i1), FloatTerm(f2), k1, k2 ) =
         if( real(i1) > f2 ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateGreater( 
-      Term( _, [ FloatTerm(f1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+  | specialPredicateGreater( unifier, FloatTerm(f1), IntTerm(i2), k1, k2 ) =
         if( f1 > real(i2) ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateGreater( 
-      Term( _, [ FloatTerm(f1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+  | specialPredicateGreater( unifier, FloatTerm(f1), FloatTerm(f2), k1, k2 ) =
         if( f1 > f2 ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateGreater( 
-      Term( f, [ Variable( v, s ), term ] ), unifier, k1, k2 ) =
-        specialPredicateGreater( 
-          Term( f, [ subVarForTerm( Variable( v, s ), unifier ), term ] ), 
-            unifier, k1, k2 )
-  | specialPredicateGreater( 
-      Term( f, [ term, Variable( v, s ) ] ), unifier, k1, k2 ) =
-        specialPredicateGreater( 
-          Term( f, [ term, subVarForTerm( Variable( v, s ), unifier ) ] ), 
-            unifier, k1, k2 );
+  | specialPredicateGreater( unifier, Variable( v, s ), arg2, k1, k2 ) =
+        specialPredicateGreater( unifier, 
+                subVarForTerm( Variable( v, s ), unifier ), arg2, k1, k2 )
+  | specialPredicateGreater( unifier, arg1, Variable( v, s ), k1, k2 ) =
+        specialPredicateGreater( unifier, arg1, 
+                subVarForTerm( Variable( v, s ), unifier ), k1, k2 );
     
-fun specialPredicateLess( 
-      Term( _, [ IntTerm(i1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+fun specialPredicateLess( unifier, IntTerm(i1), IntTerm(i2), k1, k2 ) =
         if( i1 < i2 ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateLess( 
-      Term( _, [ IntTerm(i1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+  | specialPredicateLess( unifier, IntTerm(i1), FloatTerm(f2), k1, k2 ) =
         if( real(i1) < f2 ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateLess( 
-      Term( _, [ FloatTerm(f1), IntTerm(i2) ] ), unifier, k1, k2 ) =
+  | specialPredicateLess( unifier, FloatTerm(f1), IntTerm(i2), k1, k2 ) =
         if( f1 < real(i2) ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateLess( 
-      Term( _, [ FloatTerm(f1), FloatTerm(f2) ] ), unifier, k1, k2 ) =
+  | specialPredicateLess( unifier, FloatTerm(f1), FloatTerm(f2), k1, k2 ) =
         if( f1 < f2 ) then
             k1( unifier, k2 )
         else
             k2()
-  | specialPredicateLess( 
-      Term( f, [ Variable( v, s ), term ] ), unifier, k1, k2 ) =
-        specialPredicateLess( 
-          Term( f, [ subVarForTerm( Variable( v, s ), unifier ), term ] ), 
-            unifier, k1, k2 )
-  | specialPredicateLess( 
-      Term( f, [ term, Variable( v, s ) ] ), unifier, k1, k2 ) =
-        specialPredicateLess( 
-          Term( f, [ term, subVarForTerm( Variable( v, s ), unifier ) ] ), 
-            unifier, k1, k2 );
+  | specialPredicateLess( unifier, Variable( v, s ), arg2, k1, k2 ) =
+        specialPredicateLess( unifier, 
+                subVarForTerm( Variable( v, s ), unifier ), arg2, k1, k2 )
+  | specialPredicateLess( unifier, arg1, Variable( v, s ), k1, k2 ) =
+        specialPredicateLess( unifier, arg1, 
+                subVarForTerm( Variable( v, s ), unifier ), k1, k2 );
           
     
