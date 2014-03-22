@@ -1,0 +1,195 @@
+%%%%%%%%%%%%%%% Updated by MR March 2007 %%%%%%%%%%%%%%%%
+\documentclass[12pt]{article}
+\usepackage{a4wide}
+
+\newcommand{\al}{$<$}
+\newcommand{\ar}{$>$}
+
+\parindent 0pt
+\parskip 6pt
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\rightline{\large{Ciaran Deasy}}
+\medskip
+\rightline{\large{Churchill College}}
+\medskip
+\rightline{\large{cfd27}}
+
+\vfil
+
+\centerline{\large Computer Science Part II Project Proposal}
+\vspace{0.4in}
+\centerline{\Large\bf A Prolog Compiler with Continuations}
+\vspace{0.3in}
+\centerline{\large October 25th, 2013}
+
+\vfil
+
+{\bf Project Originator:} Alan Mycroft
+
+\vspace{0.1in}
+
+{\bf Resources Required:} See appropriate section.
+
+\vspace{0.5in}
+
+{\bf Project Supervisor:} Alan Mycroft
+
+\vspace{0.2in}
+
+{\bf Signature:}
+
+\vspace{0.5in}
+
+{\bf Director of Studies:} John Fawcett
+
+\vspace{0.2in}
+
+{\bf Signature:}
+
+\vspace{0.5in}
+
+{\bf Overseers:} Marcelo Fiore and Ian Leslie
+
+\vspace{0.2in}
+
+{\bf Signatures:} 
+
+\vfil
+\eject
+
+
+\section*{Introduction and Description of the Work}
+
+Prolog is a declarative programming language. Unlike imperative languages like Java, or functional languages like ML, programs written in Prolog do not define algorithms by specifying a list of operations. Instead, constraints are placed on variables, and it is left to the Prolog implementation to determine variable bindings that satisfy those constraints. 
+
+%More precisely, the constraints in a Prolog program are written as a set of Horn clauses. A clause is a disjunction of literals; it is a Horn clause if it has at most one positive literal. The program also contains query predicates, and the goal of execution is to exhibit a set of variable bindings that satisfy these queries, or report failure if none exists. This is done by unifying the query predicates with the Horn clauses.
+
+Consequently, compilation of Prolog programs requires generating an algorithm to perform unification, in addition to the usual tasks of parsing syntax into a tree and translating it to the target language.
+
+In addition, Prolog programs can backtrack. If variable bindings are made, and subsequently encountered variables have no valid bindings, then the initial bindings must be undone and changed. This can also happen if all the constraints are satisfied, but the user requests an alternate answer. As such, the compiler must also allow for such backtracking.
+
+Continuation-passing style (CPS) is a paradigm of functional programming. While the ``ordinary'' view of procedure invocation is that a result is computed and returned to a caller, CPS instead passes to the procedure an additional single-argument function called a continuation, which is called at the end of the procedure with the procedure's result. Multiple continuations can be passed to allow different behaviour depending on how the procedure terminates.
+
+Consider this example of a factorial function in ML:
+\begin{verbatim}
+fun fact 0 = 1
+  | fact x = x * fact(x - 1)
+\end{verbatim}
+
+The equivalent function in CPS would take a continuation \verb|k| as an argument and call \verb|k| with the result, as follows:
+\begin{verbatim}
+fun fact 0 k = k 1
+  | fact x k = fact (x - 1) (fn y => k( x * y ))
+\end{verbatim}
+%  | fact x k = k (fact (x-1) (fn y => x * y))
+
+The proposed project is to implement a Prolog interpreter, and then to expand it into a compiler that outputs CPS-style ML code. CPS has been used to good effect to implement algorithms which involve backtracking, and should thus provide a natural target language for compiling Prolog. Furthermore, it has been used as an intermediate representation during compilation, as illustrated in Appel's ``Compiling With Continuations''.
+
+%\begin{verbatim}
+%take( [H|T], H, T ).
+%take( [H|T], R, [H|S] :- take( T, R, S ).
+%?-take( [1,2,3] ).
+%\end{verbatim}
+
+\section*{Resources Required}
+
+\begin{itemize}
+\item My own work machine. I accept full responsibility for this machine and I have made contingency plans to protect myself against hardware and/or software failure.
+\item One or more Prolog implementations against which to compare the project. Implementations like SWI-Prolog or GNU Prolog are readily available online.
+\end{itemize}
+
+\section*{Starting Point}
+
+\begin{itemize}
+\item I have completed the IA Foundations of Computer Science course, and ML practical exercises, and thus have a good understanding of programming in ML.
+\item I have completed the IB Prolog course and associated practical exercise, and thus have a good understanding of programming in Prolog.
+\item I have completed the IB Compiler Construction course, and thus have a good understanding of compilation of imperative languages.
+\end{itemize}
+
+\section*{Substance and Structure of the Project}
+
+During an initial preparation period, background reading will be done to better understand Prolog implementation and CPS. The more complex elements of the project will be examined to determine outline solutions. 
+
+A Prolog interpreter will be implemented in the following six weeks (ie: complete by Christmas). The interpreter is a stepping stone to the compiler. It allows the problem of implementing a unification algorithm to be tackled in relative isolation.
+
+The compiler will be implemented in January. The main challenge is to convert the Prolog syntax tree to a CPS representation. This is the main challenge of the project: if it is found to be insurmountable, alternate approaches will be considered.
+
+The following six weeks are scheduled for two main extension elements. If the compiler is more complex than expected, then these extension elements can be dropped to ensure the success of the core project. The first extension element involves granting the user the ability to request an alternate answer to the queries in the program, as is provided by most Prolog implementations. The second extension element involves adding impure Prolog elements, including the cut operator `\texttt{!}' and the \texttt{var/1} predicate.
+
+A fortnight will be spent evaluating the compiler. First and foremost, of course, is to compare the output of a significant body of interpreted and compiled programs against those produced by existing implementations, to establish confidence in the correctness of the project. This will be followed by a quantitative measure of the performance of the compiler and interpreter relative to each other, and also to other Prolog implementations available online. There will also be a qualitative discussion of how amicable Prolog is to conversion to CPS.
+
+The fortnight prior to the Easter vacation will be dedicated to writing a draft of the dissertation, which will be submitted to the supervisor. Following the vacation, a final fortnight will be spent improving the dissertation, before its final submission.
+
+\section*{Success Criteria}
+
+For the project to be deemed a success, a Prolog interpreter must be completed which takes as input a valid pure Prolog source program, and gives as output a set of variable bindings which allow the queries in the program to be unified with the clauses, or outputs ``fail'' if no such binding exists.
+
+Additionally, a Prolog compiler must be completed which takes the same input as the interpreter and outputs a valid ML source program which, when itself compiled and run, outputs the same as the interpreter.
+
+Invalid programs should be rejected cleanly, but need not provide detailed error messages.
+
+\section*{Timetable and Milestones}
+
+\subsection*{Weeks 1 and 2 (24th Oct to 6th Nov)}
+
+Read some background material on existing Prolog implementations, and on the use of continuations in compilation. Investigate the problems to be solved during the project, and determine outline solutions.
+
+\subsection*{Weeks 3 and 4 (7th Nov to 20th Nov)}
+
+Design an ML datastructure to store a Prolog abstract syntax tree. Write a lexer/parser that reads in a Prolog program and constructs a data structure to represent it. Include a function for printing the data structure, to verify its correctness.
+
+\textbf{Milestone:} Lexer/parser that accepts a Prolog program.
+
+\subsection*{Weeks 5 and 6 (21st Nov to 4th Dec)}
+
+Design an algorithm to perform unification of query terms with program clauses.
+
+\subsection*{Weeks 7 and 8 (5th Dec to 18th Dec)}
+
+Complete the code of an interpreter which takes the Prolog program stored in the ML datastructure, applies the unification algorithm, and produces an output as if the program were compiled and run.
+
+\textbf{Milestone:} Interpreter which takes a Prolog program and outputs the result of running it.
+
+\textbf{Vacation 19th Dec to 1st Jan}
+
+\subsection*{Weeks 9 and 10 (2nd Jan to 15th Jan)}
+
+Determine how the previously designed unification algorithm for interpretation can be adapted for compilation to ML. The plan is to implement this using continuation-passing style, but other options may be considered.
+
+\subsection*{Weeks 11 and 12 (16th Jan to 29th Jan)}
+
+Implement the compilation to ML code. By the end of this work block, the project success criterion should be achieved.
+
+\textbf{Milestone:} Compiler that accepts a Prolog program and outputs an equivalent ML program.
+
+\subsection*{Weeks 13 and 14 (30th Jan to 12th Feb)}
+
+Improve the compiled ML code to allow the user to reject a set of variable bindings returned by it, and have the program backtrack and search for an alternate answer.
+
+\subsection*{Weeks 15 and 16 (13th Feb to 26th Feb)}
+
+Expand the accepted source language to allow impure Prolog elements, such as the cut operator.
+
+\subsection*{Weeks 17 to 19 (27th Feb to 19th Mar)}
+
+Quantitatively evaluate the project. Test the interpreter and the compiler against each other and against one or more freely available Prolog implementations for speed.
+
+\subsection*{Weeks 20 to 22 (20th Mar to 9th Apr)}
+
+First draft of dissertation, submitted to project supervisor.
+
+\textbf{Milestone}: Dissertation written.
+
+\textbf{Vacation 10th Apr to 23rd Apr}
+
+\subsection*{Weeks 23 and 24 (24th Apr to 7th May)}
+
+Dissertation reviewed and updated according to supervisor's comments and suggestions. Dissertation printed and submitted, with source code.
+
+\textbf{Milestone}: Dissertation submitted.
+
+\end{document}
