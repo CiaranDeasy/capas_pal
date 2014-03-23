@@ -92,23 +92,35 @@ Date %TODO
 
 \subsection{Project Overview}
 
-The purpose of this project was to produce an implementation of the Prolog programming language, written in ML. This implementation consisted of an interpreter, taking as input a valid pure Prolog source file and outputting the result of running that file, and a compiler, taking the same input and outputting an equivalent ML program. The internal implementation was to use continuation-passing style, a technique that has been previously used to good effect to implement backtracking algorithms, with the aim of deciding whether this was a useful and intuitive way of implementing the Prolog language. The project also sought to investigate the potential gains of pre-compiling a Prolog, compared with simply interpreting it.
+The purpose of this project was to produce an implementation of the Prolog programming language, written in ML. 
+This implementation consisted of an interpreter, taking as input a valid pure Prolog source file and outputting the result of running that file, and a compiler, taking the same input and outputting an equivalent ML program. 
+The internal implementation was to use continuation-passing style, a technique that has been previously used to good effect to implement backtracking algorithms, with the aim of deciding whether this was a useful and intuitive way of implementing the Prolog language. 
+The project also sought to investigate the potential gains of pre-compiling a Prolog program, compared with simply interpreting it.
 
 \subsection{Prolog}
 
-Prolog is a declarative programming language. Unlike imperative languages like Java, or functional languages like ML, programs written in Prolog do not define algorithms by specifying a sequential list of operations. Instead, constraints are placed on variables, and it is left to the Prolog implementation to determine variable bindings that satisfy those constraints. 
+Prolog is a declarative programming language. 
+Unlike imperative languages like Java, or functional languages like ML, programs written in Prolog do not define algorithms by specifying a sequential list of operations. 
+Instead, constraints are placed on variables, and it is left to the Prolog implementation to determine variable bindings that satisfy those constraints. 
 
-More precisely, the constraints in a Prolog program are written as a set of Horn clauses. A clause is a disjunction of literals; it is a Horn clause if it has at most one positive literal. The program also contains query predicates, and the goal of execution is to exhibit a set of variable bindings that satisfy these queries, or report failure if none exists. This is done by unifying the query predicates with the Horn clauses.
+More precisely, the constraints in a Prolog program are written as a set of Horn clauses. 
+A clause is a disjunction of literals; it is a Horn clause if it has at most one positive literal. 
+The program also contains query predicates, and the goal of execution is to exhibit a set of variable bindings that satisfy these queries, or report failure if none exists. 
+This is done by unifying the query predicates with the Horn clauses.
 
 Consequently, compilation of Prolog programs requires generating an algorithm to perform unification, in addition to the usual tasks of parsing syntax into a tree and translating it to the target language.
 
-In addition, Prolog programs can backtrack. If variable bindings are made, and subsequently encountered variables have no valid bindings, then the initial bindings must be undone and changed. This can also happen if all the constraints are satisfied, but the user requests an alternate answer. As such, the compiler must also allow for such backtracking.
+In addition, Prolog programs can backtrack. 
+If variable bindings are made, and subsequently encountered variables have no valid bindings, then the initial bindings must be undone and changed. 
+This can also happen if all the constraints are satisfied, but the user requests an alternate answer. 
+As such, the compiler must also allow for such backtracking.
 
 \subsubsection{The Byrd Box Model}
 
 % Reference the formal semantics paper
 
-A helpful description of Prolog's control flow is given by the Byrd box model. A typical programming function can be modelled as a box with two ports: a A Prolog predicate is viewed as a procedure with four ports: two ways in which control can be passed to the predicate
+A helpful description of Prolog's control flow is given by the Byrd box model. 
+A typical programming function can be modelled as a box with two ports: a A Prolog predicate is viewed as a procedure with four ports: two ways in which control can be passed to the predicate
 
 \subsubsection{The WAM}
 
@@ -116,11 +128,15 @@ A helpful description of Prolog's control flow is given by the Byrd box model. A
 
 \subsubsection{Pure Prolog}
 
-The success criterion for the project is succinctly described as an implementation of ``pure'' Prolog. However, pure Prolog is not an entirely well-defined delineation, so I will clarify which elements this includes.
+The success criterion for the project is succinctly described as an implementation of ``pure'' Prolog. 
+However, pure Prolog is not an entirely well-defined delineation, so I will clarify which elements this includes.
 
-Pure Prolog includes Horn clauses of the syntactic form \verb|Head :- Body|, where \verb|Head| is a positive literal \verb|h| and \verb|Body| is a comma-separated list of positive literals \verb|b_1, ..., b_n|. It also includes query terms of the syntactic form \verb|:- q_1, ..., q_n|.
+Pure Prolog includes Horn clauses of the syntactic form \verb|Head :- Body|, where \verb|Head| is a positive literal \verb|h| and \verb|Body| is a comma-separated list of positive literals \verb|b_1, ..., b_n|. 
+It also includes query terms of the syntactic form \verb|:- q_1, ..., q_n|.
 
-Pure Prolog does not include any built-in predicates, such as \verb|atomic/1|. It also excludes arithmetic infix operators like \verb|+| and \verb|-|, and the \verb|is| keyword. It does not include the cut operator \verb|!|.
+Pure Prolog does not include any built-in predicates, such as \verb|atomic/1|. 
+It also excludes arithmetic infix operators like \verb|+| and \verb|-|, and the \verb|is| keyword. 
+It does not include the cut operator \verb|!|.
 
 The final project was extended to include several of these elements, including arithmetic evaluation and a selection of built-in predicates.
 
@@ -134,17 +150,28 @@ The final project was extended to include several of these elements, including a
 % Relate continuations to Byrd Box
 % Talk about learning ML properly
 
-Typically in programming, we work with functions or procedures of some kind. A function call takes some parameters, branches to another point of code, computes a result, and branches back to the point of calling to continue execution.
+Typically in programming, we work with functions or procedures of some kind. 
+A function call takes some parameters, branches to another point of code, computes a result, and branches back to the point of calling to continue execution.
 
-Continuation-Passing Style (CPS) is an alternative to this paradigm. In pure CPS, there is no concept of ``returning'' a value. When a function $f$ is called, it is provided with a continuation $k$ as one of its parameter, which is a function representing the next step of computation after $f$ completes. 
+Continuation-Passing Style (CPS) is an alternative to this paradigm. 
+In pure CPS, there is no concept of ``returning'' a value. 
+When a function $f$ is called, it is provided with a continuation $k$ as one of its parameter, which is a function representing the next step of computation after $f$ completes. 
 
-The usefulness of CPS becomes clear when one considers giving multiple continuation functions, say $k1$ and $k2$, to a function $f$. This gives an elegant way of forking execution in two or more directions. In non-CPS program, such a fork would require $f$ to return a value and then its caller would test the value and choose a direction of execution on that basis. In CPS, $f$ doesn't have to encode the information in a type-restricted return value.
+The usefulness of CPS becomes clear when one considers giving multiple continuation functions, say $k1$ and $k2$, to a function $f$. 
+This gives an elegant way of forking execution in two or more directions. 
+In a non-CPS program, such a fork would require $f$ to return a value and then its caller would test the value and choose a direction of execution on that basis. 
+In CPS, $f$ doesn't have to encode the information in a type-restricted return value.
 
-The software produced for this project uses a mixture of conventional style and CPS. The unification algorithm is implemented in conventional style: it accepts two terms to unify and a set of the existing substitutions that must remain consistent, and returns the updated set of substitutions. CPS is leveraged in the interpreter and in compiled output to implement the backtracking control flow of Prolog.
+The software produced for this project uses a mixture of conventional style and CPS. 
+The unification algorithm is implemented in conventional style: it accepts two terms to unify and a set of the existing substitutions that must remain consistent, and returns the updated set of substitutions. 
+CPS is leveraged in the interpreter and in compiled output to implement the backtracking control flow of Prolog.
 
 %%%
 
-I studied ML as part of the first year course, but it was in the context of an introduction to the foundations of Computer Science. Thus, the actual ML proficiency that was taught did not go beyond a very basic level, with programs consisting of just a couple of functions which were a handful of lines long. There is a large gap between a simple sorting algorithm and an implementation of a programming language. To address this, I spent a portion of my preparation time studying ``ML for the Working Programmer'', a standard textbook on the language, to develop the necessary proficiency and learn the use of advanced ML concepts like modules that help with programming at the necessary scale.
+I studied ML as part of the first year course, but it was in the context of an introduction to the foundations of Computer Science. 
+Thus, the actual ML proficiency that was taught did not go beyond a very basic level, with programs consisting of just a couple of functions which were a handful of lines long. 
+There is a large gap between a simple sorting algorithm and an implementation of a programming language. 
+To address this, I spent a portion of my preparation time studying ``ML for the Working Programmer'', a standard textbook on the language, to develop the necessary proficiency and learn the use of advanced ML concepts like modules that help with programming at the necessary scale.
 
 \newpage
 
@@ -156,13 +183,23 @@ I studied ML as part of the first year course, but it was in the context of an i
 \subsection{Unit Testing}
 % Talk about the unit tester
 
-Being a relatively little-used language, particularly for building substantial pieces of software, the libraries available for ML are quite limited. With regard to unit testing, the main library I came across was SMLUnit. I looked into using it, but found that while it would work, it was a very heavyweight solution.
+Being a relatively little-used language, particularly for building substantial pieces of software, the libraries available for ML are quite limited. 
+With regard to unit testing, the main library I came across was SMLUnit. 
+I looked into using it, but found that while it would work, it was a very heavyweight solution.
 
-The alternative approach was to write my own unit testing framework. I looked into this, and found that it could be done very easily. ML is not completely free of side-effects, but code written in ML tends towards having very few, which makes it very amenable to unit testing. Thus, I was able to write a very small unit tester - about 40 lines of code - that was sufficient for the needs of this project.
+The alternative approach was to write my own unit testing framework. 
+I looked into this, and found that it could be done very easily. 
+ML is not completely free of side-effects, but code written in ML tends towards having very few, which makes it very amenable to unit testing. 
+Thus, I was able to write a very small unit tester - about 40 lines of code - that was sufficient for the needs of this project.
 
-The main function is \verb|checkResult()|, which takes a test name, the actual and expected results of a function, and a function for comparing the two. It prints success or failure as appropriate. It maintains two internal counters for the number of tests which pass or fail, and a \verb|conclude()| function will print and reset the counters.
+The main function is \verb|checkResult()|, which takes a test name, the actual and expected results of a function, and a function for comparing the two. 
+It prints success or failure as appropriate. 
+It maintains two internal counters for the number of tests which pass or fail, and a \verb|conclude()| function will print and reset the counters.
 
 A set of test cases is simply a function consisting of calls to \verb|checkResult()|, and ending with a call to \verb|conclude()|.
+
+It was important, of course, that the unit tester be completely correct so that test failures would be properly detected. 
+To ensure this, I had the code for the unit tester code-reviewed by a fellow Part II student.
 
 \subsection{Datatypes}
 
@@ -170,18 +207,40 @@ A set of test cases is simply a function consisting of calls to \verb|checkResul
 
 \subsection{Prolog Lexer/Parser}
 
-Generally in software engineering, it is best to tackle the most challenging aspects early. When starting the project, the unification algorithm and interpreter logic were the key areas that needed to be targetted. To facilitate this, I wanted to put together a ``quick and dirty'' front-end that would give me parsed programs to use as test cases.
+Generally in software engineering, it is best to tackle the most challenging aspects early. 
+When starting the project, the unification algorithm and interpreter logic were the key areas that needed to be targetted. 
+To facilitate this, I wanted to put together a ``quick and dirty'' front-end that would give me parsed programs to use as test cases.
 
-The Prolog ISO standard includes predicates for reading and writing Prolog terms. I reasoned that if I were to write a Prolog program that read in another Prolog source file and wrote out the ML datatype for that program, I would effectively get a workable lexer and parser for relatively little development effort. In practice, the program was less trivial than I expected. Given that the final lexer and parser, to be discussed in the sections which follow, were not very complicated to write, it would actually have been better to just write those up-front. Nonetheless, the approach I took was still successful and with about a week's worth of development effort, I had a working front-end.
+The Prolog ISO standard includes predicates for reading and writing Prolog terms. 
+I reasoned that if I were to write a Prolog program that read in another Prolog source file and wrote out the ML datatype for that program, I would effectively get a workable lexer and parser for relatively little development effort. 
+In practice, the program was less trivial than I expected. 
+Given that the final lexer and parser, to be discussed in the sections which follow, were not very complicated to write, it would actually have been better to just write those up-front. 
+Nonetheless, the approach I took was still successful and with about a week's worth of development effort, I had a working front-end.
 
 \subsection{Lexer}
-% Discuss the lexer: FSM (transducer?)
 
-The first step of compilation is to convert the source file, a stream of characters, into a list of tokens. Prolog is syntactically a very lightweight language, particularly when restricted to pure constructs. To tokenise the input, there are just 11 distinct token types required in the pure case, or 22 in the final version that I implemented. Tokenising can be done for Prolog using standard lexing techniques: a type-3 Chomsky grammar, described by a finite state machine. 
+The first step of compilation is to convert the source file, a stream of characters, into a list of tokens. 
+Prolog is syntactically a very lightweight language, particularly when restricted to pure constructs. 
+To tokenise the input, there are just 11 distinct token types required in the pure case, or 22 in the final version that I implemented. 
+Tokenising can be done for Prolog using standard lexing techniques: a type-3 Chomsky grammar, described by a finite state machine. 
 
+[include diagram of state machine]
 
+For the most part, the state machine moves between an ``idle'' state and the state corresponding to a token being lexed. 
+We move to the appropriate state based on the first character lexed, and move back to the idle state when whitespace is encountered. 
+The only case where the first character doesn't tell us the token is for integers and floats. 
+If we see a dot character, then it's a float, otherwise it's an integer. 
+A further inconvenience comes from Prolog's use of the dot character as an end-of-statement marker. 
+This means that an integer at the end of a line will have a dot character immediately after it. 
+We can still parse unambiguously, because an end-of-statement dot must be followed by whitespace, while a floating-point dot must be followed by a digit. 
+It just makes the state machine, and the corresponding code, more complex.
 
-% Lack of error checking, tokens are not a stream.
+The implementation of the state machine includes a function for each state, with transitions represented by calls to the function of the destination state.
+
+The lexer produces the entire list of tokens before any parsing is done. 
+This is less space-efficient than an implementation that lexes the input on-demand to produce the next token in a stream, because the tokens for the entire program must be in memory at once. 
+Furthermore, the lexer fails cleanly if there is a syntax error in the source file being tokenised, but doesn't provide any detailed error information, as one might expect from a commercial compiler. 
+However, these improvements weren't important to the goals of the project, and thus weren't a priority.
 
 \subsection{Parser}
 % Discuss the parser: CFG, recursive descent, special hacks
