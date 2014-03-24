@@ -53,7 +53,7 @@
 \vspace{0.25in}
 
 {\bf Aim:}\\
-The purpose of this project was to produce an implementation of the Prolog programming language. The implementation was to be written in ML and use continuation-passing style to implement the traditionally awkward backtracking behaviour of Prolog in a simple and intuitive way. The implementation was to be extensive, but not exhaustive. It was to include both an interpreter and a compiler. %TODO
+The purpose of this project was to produce an implementation of the Prolog programming language. The implementation was to be written in ML and use continuation-passing style to implement the traditionally awkward backtracking behaviour of Prolog in a simple and intuitive way. The implementation was to be extensive, but not exhaustive. It was to include both an interpreter and a compiler to source ML. %TODO
 
 \vspace{0.25in}
 
@@ -77,6 +77,7 @@ Date %TODO
 \section*{Table of Contents}
 
 %TODO
+[TODO]
 
 \newpage
 
@@ -89,6 +90,7 @@ Date %TODO
 % Talk about Prolog generally
 % Byrd Box Model
 % SML/NJ
+% Unification of terms
 
 \subsection{Project Overview}
 
@@ -179,9 +181,13 @@ To address this, I spent a portion of my preparation time studying ``ML for the 
 
 % Implementation: 4700 words
 
+% Wildcards
+
+Implementation took place over a span of around 14 weeks, starting in the second week of December and finishing in mid-March. 
+Compared to the original work schedule, this represented a significant delay, as implementation should have started in early November but was pushed back due to heavy course workload. 
+By mid-January, work had caught up with the original schedule and proceeded at more or less the planned rate from then on.
 
 \subsection{Unit Testing}
-% Talk about the unit tester
 
 Being a relatively little-used language, particularly for building substantial pieces of software, the libraries available for ML are quite limited. 
 With regard to unit testing, the main library I came across was SMLUnit. 
@@ -203,7 +209,38 @@ To ensure this, I had the code for the unit tester code-reviewed by a fellow Par
 
 \subsection{Datatypes}
 
+% Different term types distinguish strings from numbers.
 
+A \verb|token| datatype was needed to represent the token types that could be recognised during lexing, as described in \S3.4. 
+The \verb|INT|, \verb|FLOAT|, \verb|ATOM| and \verb|VARIABLE| tokens contain relevant values, while all other token types have no internal values. 
+The only remarkable aspect of this datatype is that, because the \verb|FLOAT| token needs to contain a value of type \verb|real| which isn't an equality type in ML, the \verb|token| datatype isn't an equality type. 
+Thus, an explicit equality function had to be defined.
+
+A hierarchy of datatypes were needed to represent Prolog programs. 
+At the bottom level, we have four types of \verb|term|s. A \verb|Term| is a typical instantiated Prolog term, consisting of a \verb|Functor| string and a list of \verb|term|s representing its arguments. 
+An \verb|IntTerm| and a \verb|FloatTerm| are terms which represent integers and floats respectively. 
+These must be distinct types from Prolog \verb|Term|s so that, say, the number 256 does not unify with the string ``256''. 
+
+Finally, a \verb|Variable| represents an uninstantiated Prolog term. 
+A \verb|Variable| is identified by both a name and an integer. 
+The integer represents the scope of a variable, and is essential so that variables of the same name in different scopes do not alias. 
+Scope `1' is specially reserved to identify variables in the query. 
+When reporting a successful query, only the bindings of variables that appeared in the query are reported: the user doesn't care about the bindings of intermediate variables.
+
+The \verb|Binding| type contains two \verb|term|s, and indicates that they are equivalent. 
+It is defined to be symmetric, such that a \verb|Binding| $(A,B)$ and a \verb|Binding| $(B,A)$ are equal.
+
+The \verb|Unifier| type contains a list of \verb|Binding|s. 
+It is returned by the unification algorithm, as discussed in \S3.6, to indicate the variable bindings which were made to unify two terms. 
+The ordering of the list has no semantic meaning.
+
+The \verb|Clause| type contains a ``head'' \verb|term| and a list of ``body'' \verb|terms|, corresponding directly to the Prolog clause syntax.
+
+The \verb|Program| type contains a list of \verb|Clause|s, and represents a complete parsed Prolog program.
+
+The \verb|Query| type contains a list of \verb|term|s, corresponding directly to a Prolog query.
+
+[diagram to illustrate Prolog program datatypes hierarchy]
 
 \subsection{Prolog Lexer/Parser}
 
@@ -245,12 +282,72 @@ However, these improvements weren't important to the goals of the project, and t
 \subsection{Parser}
 % Discuss the parser: CFG, recursive descent, special hacks
 
+Once the character stream has been tokenised, the next step in compilation is to build the token stream into a meaningful data structure. 
+Prolog's syntax is representable by a context-free grammar: it is a small language, so the grammar is relatively small. 
+Furthermore, it can be written in such a way as to not have left recursion, and can therefore be parsed using the standard recursive descent parsing method. 
+The grammar I implemented is as follows:
+
+\texttt{
+S $\rightarrow$ Lines EOF\\
+Lines $\rightarrow$ Lines DOT MoreLines\\
+MoreLines $\rightarrow$ $\epsilon$ | Lines\\
+Line $\rightarrow$ Query\\
+Line $\rightarrow$ Clause\\
+}
+[finish grammar]
+
+The parser is implemented with a function for each non-terminal. 
+The function uniquely determines a rule to apply by examining the next token in the stream. 
+It then implements that rule by going left-to-right through the symbols on the right-hand-side of that rule, consuming a token from the stream for each terminal in the rule, and calling the relevant function for each non-terminal.
+
+The parser for pure Prolog could be implemented by ``pure'' recursive descent. 
+However, when arithmetic was added, it was not possible to write grammar rules without left recursion that would give the desired associativity. 
+Thus, it was necessary to write non-standard code to implement the grammar correctly: specifically, when parsing arithmetic terms, the earlier terms have to be ``passed along'' as arguments to later recursive calls to build the tree correctly.
+
 \subsection{Unification}
 % Discuss unification
+
+The unification algorithm takes two arguments. 
+The first is a \verb|Unifier| containing all of the variable bindings that have been made so far, which must be respected by the new unification. 
+The second is a \verb|Binding|, containing the two terms which are to be unified. 
+The output is a two-tuple containing a \verb|bool| and a \verb|Unifier|. 
+If the unification is successful, the \verb|bool| will be \verb|true| and the \verb|Unifier| will satisfy both the original input \verb|Unifier| and the new unification.
+
+In any case where we are unifying terms of different non-variable types, such as an \verb|IntTerm| and a \verb|FloatTerm|, unification fails right away. 
+
+In any case where at least one term to be unified is a variable, we add the input \verb|Binding| to the input \verb|Unifier|. 
+If the input \verb|Unifier| was empty, then this succeeds immediately. 
+We will see shortly that this is an important base-case for validating \verb|Unifier|s. 
+Otherwise, we must call \verb|validateUnifier()| to check that the updated \verb|Unifier| is consistent, as will be described below.
+
+This leaves three cases. 
+If both terms are \verb|IntTerm|s, or both terms are \verb|FloatTerm|s, unification succeeds if they are equal, returning the same input \verb|Unifier| because no new \verb|Bindings| were made. 
+
+If both terms are Prolog \verb|Term|s, then unification succeeds if the \verb|Functor|s are equal, the arities are equal, and the arguments are unifiable. 
+Testing that the arguments are unifiable involves mapping the unification function onto each pair. 
+The same input unifier is passed to each of the argument unifications. 
+If every unification succeeds, then the resulting \verb|Unifier|s are merged into one \verb|Unifier|. 
+This \verb|Unifier| is then passed through \verb|validateUnifier()| to test that it is consistent, and returned as a success if it is.
+
+To check that a \verb|Unifier| is consistent, \verb|validateUnifier()| takes the transitive closure of that \verb|Unifier|. 
+That is, if there are two \verb|Binding|s $(A, B)$ and $(B, C)$, then $(A, C)$ is added. 
+It then calls \verb|unify()| on each individual \verb|Binding|, with an empty \verb|Unifier|, to verify that every \verb|Binding| is individually consistent.
+
+This fact that \verb|unify()| and \verb|validateUnifier()| are mutually recursive should give the reader concern as to whether this algorithm will always terminate. 
+This is a valid question, and a justification will be given later on during evaluation, showing that this will indeed terminate on any valid input.
 
 \subsection{Interpreter}
 % Interpretation and continuations
 % Substitutions: reference Mycroft's paper
+% Scoping
+
+The input to the interpreter is a \verb|Program| and a list of \verb|Query|s. 
+For each query, the aim is to find a \verb|Unifier| that unifies each term in the query with the head of some clause in the program. 
+If the clause has a body, then the terms in the body also have to be unified with a clause in the program.
+
+At a given step of execution, there is a term which must be satisfied, a success continuation to call when the term is satisfied, and a failure continuation to call if the term cannot be satisfied. There is also a list of program clauses left to try to unify the term with. 
+Execution proceeds by taking the first clause off the list and attempting to unify the head of the clause with the term to be satisfied. 
+If successful, the 
 
 \subsection{Compiler}
 % Compiler
@@ -263,7 +360,11 @@ However, these improvements weren't important to the goals of the project, and t
 
 % Evaluation and Conclusion: 2400 words
 
+The most important aspect of an implementation of a programming language is correctness. 
+A fast implementation is worth nothing if it does not produce the correct result.
 
+To establish the correctness of my implementation, I put together a collection of sample Prolog programs, both by writing my own targetted programs that tested specific elements of the language, and by searching online for code fragments. 
+I 
 
 
 
