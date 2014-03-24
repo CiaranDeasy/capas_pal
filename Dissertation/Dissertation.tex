@@ -364,14 +364,22 @@ The most important aspect of an implementation of a programming language is corr
 A fast implementation is worth nothing if it does not produce the correct result.
 
 To establish the correctness of my implementation, I put together a collection of sample Prolog programs, both by writing my own targetted programs that tested specific elements of the language, and by searching online for code fragments. 
-I 
+I then compared the output of the program when run by my implementation with the output when run with the existing publicly-available SWI-Prolog implementation to verify that there was no difference.
+
+\subsection{Termination of Unification Algorithm}
+
+As mentioned in \S3.6, the unification algorithm is implemented by two mutually recursive functions, \verb|unify()| and \verb|validateUnifier()|. The following shows that the algorithm will always terminate.
+
+[to write]
 
 
+
+%100-line interpreter shows effectiveness of continuations
 
 \newpage
 
 \section{Conclusion}
 
-
+Both success criteria for the project were met. Both an interpreter for Prolog programs and a source-to-source compiler from Prolog to ML were written and shown to be correct with a high degree of confidence, through extensive testing. Continuations were found to be a concise and powerful way to express the backtracking behaviour of Prolog. Pre-compilation of a Prolog source program to ML was shown to give visible performance improvements compared to interpreting. After initial scheduling setbacks, the project work proceeded in a steady, structured manner. 
 
 \end{document}
