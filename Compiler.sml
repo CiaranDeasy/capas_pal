@@ -90,7 +90,7 @@ fun getPredArity( Clause( Term( _, args ), _ )::_ ) = List.length( args );
 fun getMatchingClauses( clause, clauses ) =
     let val x as ( Clause( Term( Functor( mainHead ), mainArgs ), _ ) ) = clause
         val arity = List.length( mainArgs )
-        val matching = ref []
+        val matching = ref [clause]
         fun worker( [] ) = []
           | worker( clause::clauses ) = 
             let val x as ( Clause( Term( Functor( head ), args ), _ ) ) = clause
@@ -105,7 +105,7 @@ fun getMatchingClauses( clause, clauses ) =
             end
         val nonMatching = worker( clauses )
     in
-        ( clause::(!matching), nonMatching )
+        ( List.rev(!matching), nonMatching )
     end;
 
 (* Takes a list of clauses in a program. Outputs functions that implement the 
@@ -212,9 +212,9 @@ and compilePattern( out, clause, pattNum ) =
                         TextIO.output( out, Int.toString( num ) );
                         TextIO.output( out, ", uni" );
                         TextIO.output( out, Int.toString( num ) );
-                        TextIO.output( out, ") = unify uni" );
+                        TextIO.output( out, ") = unify( uni" );
                         TextIO.output( out, Int.toString( num-1 ) );
-                        TextIO.output( out, " ( Binding( arg" );
+                        TextIO.output( out, ", Binding( arg" );
                         TextIO.output( out, Int.toString( num ) );
                         TextIO.output( out, ", " );
                         outputTermDatatypeFlat( out, arg );
@@ -350,7 +350,7 @@ fun compileQueries( out, queries ) =
 (* Outputs the execute() function that executes the queries in the program, and 
    a call to the execute function. Outputs nothing if there are no queries. *)
 fun outputPostamble( out, [] ) = ()
-fun outputPostamble( out, queries ) = 
+  | outputPostamble( out, queries ) = 
     let fun outputQueries( query::queries, num ) = (
                 TextIO.output( out, "        query_" );
                 TextIO.output( out, Int.toString( num ) );
