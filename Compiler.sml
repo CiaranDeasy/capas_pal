@@ -172,6 +172,11 @@ and compilePredicate( out, clauses ) =
         TextIO.output( out, "    let fun " );
         outputContinuations( 1 );
         TextIO.output( out, "        m1()\n" );
+        (*DEBUG*)
+        (*TextIO.output( out, "        ( print \"" );
+        TextIO.output( out, name );
+        TextIO.output( out, "\\n\"; m1() )\n" );*)
+        (*/DEBUG*)
         TextIO.output( out, "    end\n" );
         TextIO.output( out, "\n" );
         
