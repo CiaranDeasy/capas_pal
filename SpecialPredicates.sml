@@ -1,5 +1,15 @@
 exception UninstantiatedVariable;
+exception EvaluationTypeError;
     
+(* Negates the value of an IntTerm or a FloatTerm. *)
+fun negate( IntTerm(i) ) = IntTerm(~i)
+  | negate( FloatTerm(f) ) = FloatTerm(~f)
+  | negate( Term( Functor(f), [arg] ) ) = 
+        if( f = "-" ) then
+            arg
+        else
+            raise EvaluationTypeError;
+  
 (* Takes a variable and a unifier. Scans the unifier and returns the term to 
    which the variable is bound. Raises an exception if no binding is found. *)
 fun subVarForTerm( var, unifier ) = 
@@ -30,27 +40,99 @@ fun evaluate( Variable(v, s), unifier ) =
   | evaluate( IntTerm(i), _ ) = IntTerm(i)
   | evaluate( FloatTerm(f), _ ) = FloatTerm(f)
   | evaluate( Term( Functor(f), [arg1, arg2] ), unifier ) = 
-    let fun addTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 + i2 )
+    (* Returns positive IntTerms and FloatTerms as they are. Returns negative 
+       IntTerms and FloatTerms as positive terms wrapped in a unary minus Term.
+       Terms which already have a unary minus are also returned as they are. *)
+    let fun formatNegation( IntTerm(i) ) = 
+                if( i >= 0 ) then 
+                    IntTerm(i) 
+                else
+                    Term( Functor("-"), [ IntTerm(~i) ] )
+          | formatNegation( FloatTerm(f) ) = 
+                if( f >= 0.0 ) then 
+                    FloatTerm(f) 
+                else
+                    Term( Functor("-"), [ FloatTerm(~f) ] )
+          | formatNegation( Term( Functor(f), [arg] ) ) = 
+                Term( Functor(f), [arg] )
+        fun addTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 + i2 )
           | addTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) + f2 )
           | addTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 + real(i2) )
           | addTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 + f2 )
+          | addTerms( Term( Functor(func1), [arg1] ), term ) =
+                if( func1 = "-" ) then
+                    formatNegation( addTerms( 
+                            negate( evaluate( arg1, unifier ) ), term ) )
+                else
+                    raise EvaluationTypeError
+          | addTerms( term, Term( Functor(func2), [arg2] ) ) =
+                addTerms( Term( Functor(func2), [arg2] ), term )
+          | addTerms( term1, term2 ) = raise EvaluationTypeError
     in
     let fun subTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 - i2 )
           | subTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) - f2 )
           | subTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 - real(i2) )
           | subTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 - f2 )
+          | subTerms( Term( Functor(func1), [arg1] ), term ) =
+                if( func1 = "-" ) then
+                    formatNegation( subTerms( 
+                            negate( evaluate( arg1, unifier ) ), term ) )
+                else
+                    raise EvaluationTypeError
+          | subTerms( term, Term( Functor(func2), [arg2] ) ) =
+                if( func2 = "-" ) then
+                    formatNegation( subTerms( 
+                            term, negate( evaluate( arg2, unifier ) ) ) )
+                else
+                    raise EvaluationTypeError
+          | subTerms( term1, term2 ) = raise EvaluationTypeError
     in
     let fun mulTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 * i2 )
           | mulTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) * f2 )
           | mulTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 * real(i2) )
           | mulTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 * f2 )
+          | mulTerms( Term( Functor(func1), [arg1] ), term ) =
+                if( func1 = "-" ) then
+                    formatNegation( mulTerms( 
+                            negate( evaluate( arg1, unifier ) ), term ) )
+                else
+                    raise EvaluationTypeError
+          | mulTerms( term, Term( Functor(func2), [arg2] ) ) =
+                mulTerms( Term( Functor(func2), [arg2] ), term )
+          | mulTerms( term1, term2 ) = raise EvaluationTypeError
     in
     let fun divTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 div i2 )
           | divTerms( IntTerm(i1), FloatTerm(f2) ) = FloatTerm( real(i1) / f2 )
           | divTerms( FloatTerm(f1), IntTerm(i2) ) = FloatTerm( f1 / real(i2) )
           | divTerms( FloatTerm(f1), FloatTerm(f2) ) = FloatTerm( f1 / f2 )
+          | divTerms( Term( Functor(func1), [arg1] ), term ) =
+                if( func1 = "-" ) then
+                    formatNegation( divTerms( 
+                            negate( evaluate( arg1, unifier ) ), term ) )
+                else
+                    raise EvaluationTypeError
+          | divTerms( term, Term( Functor(func2), [arg2] ) ) =
+                if( func2 = "-" ) then
+                    formatNegation( divTerms( 
+                            term, negate( evaluate( arg2, unifier ) ) ) )
+                else
+                    raise EvaluationTypeError
+          | divTerms( term1, term2 ) = raise EvaluationTypeError
     in
     let fun modTerms( IntTerm(i1), IntTerm(i2) ) = IntTerm( i1 mod i2 )
+          | modTerms( Term( Functor(func1), [arg1] ), term ) =
+                if( func1 = "-" ) then
+                    formatNegation( modTerms( 
+                            negate( evaluate( arg1, unifier ) ), term ) )
+                else
+                    raise EvaluationTypeError
+          | modTerms( term, Term( Functor(func2), [arg2] ) ) =
+                if( func2 = "-" ) then
+                    formatNegation( modTerms( 
+                            term, negate( evaluate( arg2, unifier ) ) ) )
+                else
+                    raise EvaluationTypeError
+          | modTerms( term1, term2 ) = raise EvaluationTypeError
     in
     if( f = "+" )
         then addTerms( evaluate( arg1, unifier ), evaluate( arg2, unifier ) )
@@ -136,6 +218,18 @@ fun specialPredicateLess( unifier, IntTerm(i1), IntTerm(i2), k1, k2 ) =
             k1( unifier, k2 )
         else
             k2()
+  | specialPredicateLess( 
+            unifier, Term( Functor(func1), [arg1] ), term2, k1, k2 ) =
+        if( func1 = "-" ) then
+            specialPredicateLess( unifier, negate( arg1 ), term2, k1, k2 )
+        else
+            raise EvaluationTypeError
+  | specialPredicateLess( 
+            unifier, term1, Term( Functor(func2), [arg2] ), k1, k2 ) =
+        if( func2 = "-" ) then
+            specialPredicateLess( unifier, term1, negate( arg2 ), k1, k2 )
+        else
+            raise EvaluationTypeError
   | specialPredicateLess( unifier, Variable( v, s ), arg2, k1, k2 ) =
         specialPredicateLess( unifier, 
                 subVarForTerm( Variable( v, s ), unifier ), arg2, k1, k2 )
