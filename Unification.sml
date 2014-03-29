@@ -108,7 +108,7 @@ and unify( Unifier(defaultBindings),
     in
         if( not successOfThis ) then ( false, Unifier([]) ) else
             (* unify the arguments pairwise *)
-            unifyAll( Unifier([]), zipBinding( argsA, argsB ) )
+            unifyAll( Unifier(defaultBindings), zipBinding( argsA, argsB ) )
     end
     
   | unify( Unifier(xs), Binding( IntTerm(i1), IntTerm(i2) ) ) =
