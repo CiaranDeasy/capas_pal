@@ -140,6 +140,13 @@ and parseTermList( ATOM(a)::tokens ) =
     in
         ( (isTerm::terms), tokens4 )
     end end end
+  | parseTermList( MINUS::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( MINUS::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
     (* TermList -> empty-string *)
   | parseTermList( tokens ) = ( [], tokens )
 
@@ -149,7 +156,6 @@ and parseMoreTerms( COMMA::tokens ) = parseTermList( tokens )
   | parseMoreTerms( RIGHTPAREN::tokens ) = ( [], RIGHTPAREN::tokens )
   | parseMoreTerms( RIGHTSQ::tokens ) = ( [], RIGHTSQ::tokens )
   | parseMoreTerms( PIPE::tokens ) = ( [], PIPE::tokens )
-  | parseMoreTerms( tokens ) = ( printTokenStream( tokens ); ( [], [] ) )
 
 (* Returns a term and a list of the remaining tokens. *)
 and parseTerm( ATOM(a)::tokens ) = 
@@ -185,6 +191,23 @@ and parseTerm( ATOM(a)::tokens ) =
     let val x as (arith, tokens2) = parseArith( LEFTPAREN::tokens )
     in
         parseMoreArith( tokens2, arith )
+    end
+  | parseTerm( MINUS::tokens ) = 
+    let val x as (arith, tokens2) = parseNegArith( MINUS::tokens )
+    in
+        parseMoreArith( tokens2, arith )
+    end
+    
+and parseNegArith( tokens ) = 
+    let val x as (term, tokens2) = parseNegArithTerm( tokens )
+    in
+        parseMoreArithTerms( tokens2, term )
+    end
+    
+and parseNegArithTerm( MINUS::tokens ) = 
+    let val x as (factor, tokens2) = parseFactor( tokens )
+    in
+        parseMoreFactors( tokens2, Term( Functor("-"), [factor] ) )
     end
 
 (* Returns a list of terms and a list of the remaining tokens. *)
@@ -263,21 +286,23 @@ and parseArithTerm( tokens ) =
     
 (* Takes the current tokens and an already-parsed arithmetic term.
    Returns a Term and the remaining tokens. *)
-and parseMoreArithTerms( PLUS::tokens, arithTerm ) =
-    let val x as (arithTerms, tokens2) = parseArith( tokens )
+and parseMoreArithTerms( PLUS::tokens, prevTerm ) =
+    let val x as (nextTerm, tokens2) = parseArithTerm( tokens )
     in
-        ( Term( Functor("+"), [ arithTerm, arithTerms ] ), tokens2 )
+        parseMoreArithTerms( 
+                tokens2, Term( Functor("+"), [ prevTerm, nextTerm ] ) )
     end
-  | parseMoreArithTerms( MINUS::tokens, arithTerm ) =
-    let val x as (arithTerms, tokens2) = parseArith( tokens )
+  | parseMoreArithTerms( MINUS::tokens, prevTerm ) =
+    let val x as (nextTerm, tokens2) = parseArithTerm( tokens )
     in
-        ( Term( Functor("-"), [ arithTerm, arithTerms ] ), tokens2 )
+        parseMoreArithTerms( 
+                tokens2, Term( Functor("-"), [ prevTerm, nextTerm ] ) )
     end
   | parseMoreArithTerms( tokens, arithTerm ) = ( arithTerm, tokens )
     
 (* Returns a term and the remaining tokens. *)
 and parseFactor( LEFTPAREN::tokens ) = 
-    let val x as (arith, tokens2) = parseArith( tokens )
+    let val x as (arith, tokens2) = parseBracketed( tokens )
     in
         if( eqToken( hd tokens2, RIGHTPAREN ) )
             then ( arith, tl tokens2 )
@@ -288,6 +313,12 @@ and parseFactor( LEFTPAREN::tokens ) =
   | parseFactor( FLOAT(f)::tokens ) = ( FloatTerm( f ), tokens )
   | parseFactor( VARIABLE(v)::tokens ) = ( Variable(v, 0), tokens )
   
+and parseBracketed( MINUS::tokens ) = 
+    let val x as (arith, tokens2) = parseArith( tokens )
+    in
+        ( Term( Functor("-"), [ arith ] ), tokens2 )
+    end
+  | parseBracketed( tokens ) = parseArith( tokens )
 
 and parseMoreFactors( MULT::tokens, prevFactor ) = 
     let val x as (nextFactor, tokens2) = parseFactor( tokens )
