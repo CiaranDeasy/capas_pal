@@ -16,7 +16,16 @@ fun memberPoly( x, [], _ ) = false
 
 (* Takes a list and a value. Returns true if the value is in the list. *)
 fun member( x, ys ) = memberPoly( x, ys, op= );
-  
+
+(* Takes a value and a list. Removes all occurrences of the value from the list.
+   *)
+fun polyRemove _ ( _, [] ) = []
+  | polyRemove eqTest ( x, y::ys ) = 
+        if eqTest( x, y ) then 
+            polyRemove eqTest ( x, ys )
+        else
+            y::( polyRemove eqTest ( x, ys ) )
+
 (* Takes two lists, and removes from the first any elements that occur in the 
    second. *)
 fun removeWithBlacklist( [], ys ) = []
@@ -38,6 +47,10 @@ fun second(a, b) = b;
 (* Takes a list of bools and returns the result of ANDing them all together. *)
 fun andList( [] ) = true
   | andList( x::xs ) = x andalso andList( xs );
+
+(* Takes a list of bools and returns the result of ANDing them all together. *)
+fun orList( [] ) = false
+  | orList( x::xs ) = x orelse orList( xs );
 
 (* Takes a 2-tuple and returns the a 2-tuple with the same elements in reverse 
    order. *)
