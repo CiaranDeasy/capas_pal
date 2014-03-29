@@ -52,6 +52,10 @@ fun specialPredicate( IntTerm(i), _, _, k2, _ ) = k2()
             let val x as [arg1, arg2] = args in
                 specialPredicateLess( unifier, arg1, arg2, k1, k3 )
             end
+        else if( ( f = "print" ) andalso ( List.length( args ) = 1 ) ) then
+            let val x as [arg1] = args in
+                specialPredicatePrint1( unifier, arg1, k1, k3 )
+            end
         else
             k2();
         
@@ -61,10 +65,10 @@ fun specialPredicate( IntTerm(i), _, _, k2, _ ) = k2()
    updated Unifier. If not, then the second continuation is called with unit. *)
 fun findUnifier( program, term, unifier, k1, k2 ) = 
     (* Takes a list of terms and finds a unifier that satisfies all of them. *)
-    let fun findUnifiers( [], unifier, k1, k2 ) = k1( unifier, k2 )
-          | findUnifiers( (term::terms), unifier, k1, k2 ) = 
+    let fun findUnifiers( [], unifier, scope, k1, k2 ) = k1( unifier, k2 )
+          | findUnifiers( (term::terms), unifier, scope, k1, k2 ) = 
             let fun m1( newUnifier, k3 ) = 
-                    findUnifiers( terms, newUnifier, k1, k3 )
+                    findUnifiers( terms, newUnifier, scope, k1, k3 )
             in 
                 findUnifier( program, term, unifier, m1, k2 )
             end in
@@ -80,7 +84,7 @@ fun findUnifier( program, term, unifier, k1, k2 ) =
                     let fun m2() = worker( clauses )
                         in 
                             findUnifiers( 
-                                    body, ( second ( unification ) ), k1, m2 )
+                                    body, ( second ( unification ) ), scope, k1, m2 )
                         end
                 else
                     worker( clauses )
@@ -92,6 +96,21 @@ fun findUnifier( program, term, unifier, k1, k2 ) =
         (* But first check if we're dealing with a special predicate. *)
         specialPredicate( term, unifier, k1, m1, k2 )
     end end end end;
+    
+(* Takes a Unifier and a scope.  *)
+fun clearScope( Unifier(xs), scope ) = 
+    let fun hasScope( Term( _, args ) ) = orList( map hasScope args )
+          | hasScope( Variable( _, s ) ) = (s = scope)
+          | hasScope( IntTerm( _ ) ) = false
+          | hasScope( FloatTerm( _ ) ) = false
+        fun worker( Binding( t1, t2 )::bindings ) = 
+                if( hasScope( t1 ) orelse hasScope( t2 ) ) then
+                    worker( bindings )
+                else
+                    ( Binding( t1, t2 )::( worker( bindings ) ) )
+    in
+        Unifier( worker( xs ) )
+    end
     
 (* Takes a program, a query and two continuations. If the query is satisfiable 
    by the program, then the first continuation is called with the most general 

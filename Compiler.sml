@@ -51,6 +51,8 @@ fun outputPredicateCall( out, name, arity ) =
             TextIO.output( out, "specialPredicateLess" )
         else if( name = ">" andalso arity = 2 ) then
             TextIO.output( out, "specialPredicateGreater" )
+        else if( name = "print" andalso arity = 1 ) then
+            TextIO.output( out, "specialPredicatePrint1" )
         else (
             TextIO.output( out, name );
             TextIO.output( out, "_" );
