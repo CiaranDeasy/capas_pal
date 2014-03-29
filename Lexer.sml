@@ -67,7 +67,7 @@ fun lexIdle( [], inFile ) =
 and lexVar( xs, inFile ) =
     let val remaining = ref [] in
     let fun worker (x::xs) = 
-                if( Char.isAlphaNum x ) then 
+                if( ( Char.isAlphaNum x ) orelse ( x = #"_" ) ) then 
                     x :: ( worker xs )
                 else ( 
                     remaining := (x::xs);
@@ -81,7 +81,7 @@ and lexVar( xs, inFile ) =
 and lexAtom( xs, inFile ) =
     let val remaining = ref [] in
     let fun worker (x::xs) = 
-                if( Char.isAlphaNum x ) then 
+                if( ( Char.isAlphaNum x ) orelse ( x = #"_" ) ) then 
                     x :: ( worker xs )
                 else ( 
                     remaining := (x::xs);
