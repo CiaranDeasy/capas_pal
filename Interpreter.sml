@@ -45,9 +45,13 @@ fun specialPredicate( IntTerm(i), _, _, k2, _ ) = k2()
                 is_2( unifier, arg1, arg2, k1, k3 )
             end
         else if( ( f = ">" ) andalso ( List.length( args ) = 2 ) ) then
-            specialPredicateGreater( Term( Functor(f), args ), unifier, k1, k3 )
+            let val x as [arg1, arg2] = args in
+                specialPredicateGreater( unifier, arg1, arg2, k1, k3 )
+            end
         else if( ( f = "<" ) andalso ( List.length( args ) = 2 ) ) then
-            specialPredicateLess( Term( Functor(f), args ), unifier, k1, k3 )
+            let val x as [arg1, arg2] = args in
+                specialPredicateLess( unifier, arg1, arg2, k1, k3 )
+            end
         else
             k2();
         
@@ -104,81 +108,6 @@ fun executeQuery( program, (Query(xs)), k1, k2 ) =
             end
     in
         executeQueryTerms( xs, (Unifier([])), k1, k2 )
-    end;
-    
-(* Takes two term-to-variable bindings, and applies the first to the second as a
-   substitution, returning the updated second binding. Returns the binding 
-   unchanged if either binding is variable-to-variable. *)
-(* If either Binding is purely variables, then there is no change. *)
-fun substitute( Binding( Variable( _, _ ), Variable( _, _ ) ), b2 ) = b2
-  | substitute( b1, Binding( Variable( v1, s1 ), Variable( v2, s2 ) ) ) = 
-        Binding( Variable( v1, s1 ), Variable( v2, s2 ) )
-(* Mirror bindings if the variable comes before the term. *)
-  | substitute( Binding( Variable( v1, s1 ), t1 ), b2 ) = 
-        substitute( Binding( t1, Variable( v1, s1 ) ), b2 )
-  | substitute( b1, Binding( Variable( v2, s2 ), t2 ) ) = 
-        substitute( b1, Binding( t2, Variable( v2, s2 ) ) )
-(* No substitution if the target is an IntTerm or a FloatTerm binding *)
-  | substitute( b1, Binding( IntTerm(i), Variable(v,s) ) ) = 
-        Binding( IntTerm(i), Variable(v,s) )
-  | substitute( b1, Binding( FloatTerm(f), Variable(v,s) ) ) = 
-        Binding( FloatTerm(f), Variable(v,s) )
-(* Main version when the target is a Term: *)
-  | substitute( Binding( term, Variable( v1, s1 ) ),
-            Binding( Term( f2, args2 ), Variable( v2, s2 ) ) ) =
-    let fun worker( Term( f, args ) ) = 
-            let fun iterateArgs( [] ) = []
-                  | iterateArgs( arg::remaining ) = 
-                        ( worker( arg ) ) :: ( iterateArgs( remaining ) )
-            in
-                Term( f, ( iterateArgs( args ) ) )
-            end
-          | worker( Variable( v, s ) ) = 
-                if( eqTerm( Variable( v, s ), Variable( v1, s1 ) ) )
-                    then term
-                else Variable( v, s )
-          | worker( IntTerm(i) ) = IntTerm(i)
-          | worker( FloatTerm(f) ) = FloatTerm(f)
-    in
-        Binding( ( worker( Term( f2, args2 ) ) ), Variable( v2, s2 ) )
-    end;
-
-(* Takes a consistent Unifier with no term-to-term Bindings. Expands Bindings 
-   containing Terms by replacing Variables with Terms according to other 
-   Bindings in the Unifier. *)
-fun substituteUnifier( Unifier(xs) ) = 
-    let fun addBinding( Binding( x, y ), bindings ) = 
-        let fun firstRound( newBinding, [] ) = newBinding
-              | firstRound( newBinding, ( nextBinding::remaining ) ) = 
-                    firstRound( substitute(nextBinding, newBinding), remaining )
-        in
-        let fun secondRound( newBinding, [] ) = [ newBinding ]
-              | secondRound( newBinding, ( nextBinding::remaining ) ) = 
-                    ( substitute( newBinding, nextBinding ) )::
-                            ( secondRound( newBinding, remaining ) )
-        in
-            secondRound( firstRound( Binding( x, y ), bindings ), bindings )
-        end end in
-    let fun worker( [], ys ) = Unifier(ys)
-          | worker( (x::xs), ys ) = worker( xs, ( addBinding( x, ys ) ) )
-    in
-        worker( xs, [] )
-    end end;
-
-(* Takes a Unifier and returns a Unifier containing the same Bindings, excluding
-   those which don't include a variable. *)
-fun cleanUnifier( Unifier(xs) ) =
-    let fun worker( [] ) = []
-          | worker( ( Binding( Term( _, _ ), Term( _, _ ) ) )::bindings ) = 
-                worker( bindings )
-          | worker( ( Binding( IntTerm( _ ), IntTerm( _ ) ) )::bindings ) = 
-                worker( bindings )
-          | worker( ( Binding( FloatTerm( _ ), FloatTerm( _ ) ) )::bindings ) = 
-                worker( bindings )
-          | worker( ( Binding( term1, term2 ) )::bindings ) = 
-                ( Binding( term1, term2 ) )::( worker( bindings ) )
-    in
-        Unifier( worker xs )
     end;
 
 (* Takes a program and a list of queries. Returns true if all of the queries 
