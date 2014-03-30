@@ -9,6 +9,8 @@ parser, taking as input a list of tokens and returning an ML datastructure
 representing the Prolog program.
 *******************************************************************************)
 
+exception ParseError;
+
 (* Takes a list of tokens produced by the lexer and returns a 
    ( Program, queries ) tuple. *)
 fun parseStart( tokens ) = 
@@ -17,7 +19,8 @@ fun parseStart( tokens ) =
         if( eqToken( hd tokens2, EOF ) )
             then (Program(clauses), queries)
         else
-            (Program([]), []) (*ERROR*)
+            ( printTokenStream( tokens2 );
+            raise ParseError )
     end
     
 (* Returns a list of clauses, a list of queries, and a list of the remaining 
@@ -36,7 +39,8 @@ and parseLines( tokens ) =
                         ( ( ( hd clause ) :: clauses ), queries, tokens3 )
                 end
         else 
-            ([], [], tokens) (*ERROR*)
+            ( printTokenStream( tokens2 );
+            raise ParseError )
     end
     
 (* Returns a list of clauses, a list of queries, and a list of the remaining 
@@ -251,6 +255,12 @@ and parseIsTerm( IS::tokens, prevTerm ) =
     in
         ( Term( Functor("is"), [ prevTerm, nextIsTerm ] ), tokens3 )
     end end
+  | parseIsTerm( EQUALS::tokens, prevTerm ) = 
+    let val x as (nextTerm, tokens2) = parseTerm( tokens ) in
+    let val y as (nextIsTerm, tokens3) = parseIsTerm( tokens2, nextTerm )
+    in
+        ( Term( Functor("="), [ prevTerm, nextIsTerm ] ), tokens3 )
+    end end
   | parseIsTerm( tokens, prevTerm ) = ( prevTerm, tokens )
 
 (* Returns a Term and the remaining tokens. *)
@@ -269,10 +279,6 @@ and parseMoreArith( LESS::tokens, prevArith ) =
   | parseMoreArith( GREATER::tokens, prevArith ) = 
     let val x as (nextArith, tokens2) = parseArith( tokens ) in
         ( Term( Functor(">"), [ prevArith, nextArith ] ), tokens2 )
-    end
-  | parseMoreArith( EQUALS::tokens, prevArith ) = 
-    let val x as (nextArith, tokens2) = parseArith( tokens ) in
-        ( Term( Functor("="), [ prevArith, nextArith ] ), tokens2 )
     end
     (* MoreArith -> empty-string *)
   | parseMoreArith( tokens, prevArith ) = ( prevArith, tokens )
