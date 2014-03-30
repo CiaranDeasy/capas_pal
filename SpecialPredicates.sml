@@ -211,7 +211,16 @@ fun specialPredicateLess( unifier, IntTerm(i1), IntTerm(i2), k1, k2 ) =
                 subVarForTerm( Variable( v, s ), unifier ), k1, k2 );
           
 fun specialPredicateGreater( unifier, term1, term2, k1, k2 ) =
-        specialPredicateLess( unifier, term2, term1, k1, k2 )
+        specialPredicateLess( unifier, term2, term1, k1, k2 );
 
 fun specialPredicatePrint1( unifier, arg1, k1, k2 ) = 
-        ( printTerm( arg1 ); k1( unifier, k2 ) )
+        ( printTerm( arg1 ); k1( unifier, k2 ) );
+
+fun specialPredicateEquals( unifier, arg1, arg2, k1, k2 ) = 
+    let val x as (succ, newUnifier ) = unify( unifier, Binding( arg1, arg2 ) )
+    in
+        if( succ ) then
+            k1( newUnifier, k2 )
+        else
+            k2()
+    end
