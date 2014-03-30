@@ -269,6 +269,9 @@ fun printToken( ATOM(a) ) = ( print "ATOM( "; print a; print " )" )
   | printToken( MULT ) = print "MULT"
   | printToken( DIV ) = print "DIV"
   | printToken( MOD ) = print "MOD"
+  | printToken( LESS ) = print "LESS"
+  | printToken( GREATER ) = print "GREATER"
+  | printToken( EQUALS ) = print "EQUALS"
   | printToken( EOF ) = print "EOF";
 
 fun printTokenStream( [] ) = ()
