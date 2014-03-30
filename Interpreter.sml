@@ -56,6 +56,10 @@ fun specialPredicate( IntTerm(i), _, _, k2, _ ) = k2()
             let val x as [arg1] = args in
                 specialPredicatePrint1( unifier, arg1, k1, k3 )
             end
+        else if( ( f = "=" ) andalso ( List.length( args ) = 2 ) ) then
+            let val x as [arg1, arg2] = args in
+                specialPredicateEquals( unifier, arg1, arg2, k1, k3 )
+            end
         else
             k2();
         
