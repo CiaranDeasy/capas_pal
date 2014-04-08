@@ -117,18 +117,26 @@ If variable bindings are made, and subsequently encountered variables have no va
 This can also happen if all the constraints are satisfied, but the user requests an alternate answer. 
 As such, the compiler must also allow for such backtracking.
 
-\subsubsection{The Byrd Box Model}
+\subsection{The Byrd Box Model}
 
 % Reference the formal semantics paper
 
 A helpful description of Prolog's control flow is given by the Byrd box model. 
-A typical programming function can be modelled as a box with two ports: a A Prolog predicate is viewed as a procedure with four ports: two ways in which control can be passed to the predicate
+A typical programming function can be modelled as a box with two ports: a ``call'' port for calling into the function and a ``success'' port when the function returns. 
+%A Prolog predicate is viewed as a procedure with four ports: two ways in which control can be passed to the predicate
 
-\subsubsection{The WAM}
+[Describe Byrd Box Model in detail]
+
+\subsection{The WAM}
 
 % Reference the WAM manual
+[Describe the WAM in brief, relate it to the Byrd Box model, and reference the manual.]
 
-\subsubsection{Pure Prolog}
+\subsection{Unification}
+
+[Describe how unification works in general]
+
+\subsection{Pure Prolog}
 
 The success criterion for the project is succinctly described as an implementation of ``pure'' Prolog. 
 However, pure Prolog is not an entirely well-defined delineation, so I will clarify which elements this includes.
@@ -152,6 +160,8 @@ The final project was extended to include several of these elements, including a
 % Relate continuations to Byrd Box
 % Talk about learning ML properly
 
+\subsection{Programming in Continuation-Passing Style}
+
 Typically in programming, we work with functions or procedures of some kind. 
 A function call takes some parameters, branches to another point of code, computes a result, and branches back to the point of calling to continue execution.
 
@@ -168,12 +178,18 @@ The software produced for this project uses a mixture of conventional style and 
 The unification algorithm is implemented in conventional style: it accepts two terms to unify and a set of the existing substitutions that must remain consistent, and returns the updated set of substitutions. 
 CPS is leveraged in the interpreter and in compiled output to implement the backtracking control flow of Prolog.
 
+[Relate continuations to the Byrd Box model]
+
 %%%
+
+\subsection{ML as an implementation language}
 
 I studied ML as part of the first year course, but it was in the context of an introduction to the foundations of Computer Science. 
 Thus, the actual ML proficiency that was taught did not go beyond a very basic level, with programs consisting of just a couple of functions which were a handful of lines long. 
 There is a large gap between a simple sorting algorithm and an implementation of a programming language. 
 To address this, I spent a portion of my preparation time studying ``ML for the Working Programmer'', a standard textbook on the language, to develop the necessary proficiency and learn the use of advanced ML concepts like modules that help with programming at the necessary scale.
+
+[Mention SML/NJ as exact language]
 
 \newpage
 
@@ -287,14 +303,32 @@ Prolog's syntax is representable by a context-free grammar: it is a small langua
 Furthermore, it can be written in such a way as to not have left recursion, and can therefore be parsed using the standard recursive descent parsing method. 
 The grammar I implemented is as follows:
 
+\newpage
+
 \texttt{
 S $\rightarrow$ Lines EOF\\
-Lines $\rightarrow$ Lines DOT MoreLines\\
+Lines $\rightarrow$ Line DOT MoreLines\\
 MoreLines $\rightarrow$ $\epsilon$ | Lines\\
-Line $\rightarrow$ Query\\
-Line $\rightarrow$ Clause\\
+Line $\rightarrow$ Query | Clause\\
+Query $\rightarrow$ COLONMINUS TermList\\
+Clause $\rightarrow$ Term COLONMINUS Body\\
+Body $\rightarrow$ $\epsilon$ | TermList\\
+TermList $\rightarrow$ Term IsTerm MoreTerms\\
+IsTerm $\rightarrow$ $\epsilon$ | IS Term IsTerm\\
+MoreTerms $\rightarrow$ $\epsilon$ | COMMA TermList\\
+Term $\rightarrow$ ATOM Args | LEFTSQ TermList MoreList | Arith MoreArith\\
+Args $\rightarrow$ $\epsilon$ | LEFTPAREN TermList RIGHTPAREN\\
+MoreList $\rightarrow$ RIGHTSQ | PIPE Tail RIGHTSQ\\
+Tail $\rightarrow$ VARIABLE | LEFTSQ TermList MoreList\\
+Arith $\rightarrow$ ArithTerm MoreArithTerms\\
+MoreArith $\rightarrow$ GREATER ArithTerm MoreArithTerms\\
+.\hspace{50px} | LESS ArithTerm MoreArithTerms \\
+.\hspace{50px} | EQUALS ArithTerm MoreArithTerms\\
+ArithTerm $\rightarrow$ Factor MoreFactors\\
+MoreArithTerms $\rightarrow$ $\epsilon$ | PLUS Arith | MINUS Arith\\
+Factor $\rightarrow$ INT | FLOAT | LEFTPAREN Arith RIGHTPAREN | VARIABLE\\
+MoreFactors $\rightarrow$ MULT ArithTerm | DIV ArithTerm | MOD ArithTerm
 }
-[finish grammar]
 
 The parser is implemented with a function for each non-terminal. 
 The function uniquely determines a rule to apply by examining the next token in the stream. 
@@ -347,12 +381,13 @@ If the clause has a body, then the terms in the body also have to be unified wit
 
 At a given step of execution, there is a term which must be satisfied, a success continuation to call when the term is satisfied, and a failure continuation to call if the term cannot be satisfied. There is also a list of program clauses left to try to unify the term with. 
 Execution proceeds by taking the first clause off the list and attempting to unify the head of the clause with the term to be satisfied. 
-If successful, the 
+
+[ Finish describing interpreter control flow, and talk about how substitutions work ]
 
 \subsection{Compiler}
 % Compiler
 
-
+[ Describe the source-to-source compiler ]
 
 \newpage
 
@@ -372,7 +407,13 @@ As mentioned in \S3.6, the unification algorithm is implemented by two mutually 
 
 [to write]
 
+\subsection{Implementing ML with continuations}
 
+[ Emphasise the simplicity of the interpreter thanks to the use of continuations ]
+
+\subsection{Benefits of compiling to ML}
+
+[ Collect and display data showing the performance gains of the compiler over the interpreter ]
 
 %100-line interpreter shows effectiveness of continuations
 
