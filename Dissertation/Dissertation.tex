@@ -53,12 +53,12 @@
 \vspace{0.25in}
 
 {\bf Aim:}\\
-The purpose of this project was to produce an implementation of the Prolog programming language. The implementation was to be written in ML and use continuation-passing style to implement the traditionally awkward backtracking behaviour of Prolog in a simple and intuitive way. The implementation was to be extensive, but not exhaustive. It was to include both an interpreter and a compiler to source ML. %TODO
+The purpose of this project was to produce two implementations of the Prolog programming language, one being an interpreter and the other a compiler outputting source ML code. The implementations were to be written in ML and use continuation-passing style to implement the traditionally awkward backtracking behaviour of Prolog in a simple and intuitive way. The implementations were to be extensive, but not exhaustive. 
 
 \vspace{0.25in}
 
 {\bf Work completed:}\\
-A working implementation of Prolog was built, using continuation-passing style as planned. %TODO
+Both implementations of Prolog were completed as planned. They were tested for correctness on a wide range of sample programs, and their relative performance was measured.
 
 \vspace{0.25in}
 
@@ -94,8 +94,8 @@ Date %TODO
 
 \subsection{Project Overview}
 
-The purpose of this project was to produce an implementation of the Prolog programming language, written in ML. 
-This implementation consisted of an interpreter, taking as input a valid pure Prolog source file and outputting the result of running that file, and a compiler, taking the same input and outputting an equivalent ML program. 
+The purpose of this project was to produce two implementations of the Prolog programming language, written in ML. 
+The first implementation was an interpreter, taking as input a valid pure Prolog source file and outputting the result of running that file, and the second implementation was a compiler, taking the same input and outputting an equivalent ML program. 
 The internal implementation was to use continuation-passing style, a technique that has been previously used to good effect to implement backtracking algorithms, with the aim of deciding whether this was a useful and intuitive way of implementing the Prolog language. 
 The project also sought to investigate the potential gains of pre-compiling a Prolog program, compared with simply interpreting it.
 
@@ -117,24 +117,40 @@ If variable bindings are made, and subsequently encountered variables have no va
 This can also happen if all the constraints are satisfied, but the user requests an alternate answer. 
 As such, the compiler must also allow for such backtracking.
 
+\subsection{Unification}
+
+[Describe how unification works in general]
+
+Prolog's execution proceeds by performing unification of terms. A 
+
 \subsection{The Byrd Box Model}
 
 % Reference the formal semantics paper
 
 A helpful description of Prolog's control flow is given by the Byrd box model. 
 A typical programming function can be modelled as a box with two ports: a ``call'' port for calling into the function and a ``success'' port when the function returns. 
-%A Prolog predicate is viewed as a procedure with four ports: two ways in which control can be passed to the predicate
-
-[Describe Byrd Box Model in detail]
+Once a function call returns, it is never re-entered.
+In Prolog, however, a predicate may find zero, one, or many answers to a call. 
+If there is no solution, then control leaves through a ``fail'' port, and enters an earlier predicate's ``redo'' port.
+A Prolog predicate is therefore viewed as a procedure with four ports: two ways in which control can be passed to the predicate, and two ways in which it can leave.
+This is called the Byrd box model.
 
 \subsection{The WAM}
 
 % Reference the WAM manual
-[Describe the WAM in brief, relate it to the Byrd Box model, and reference the manual.]
 
-\subsection{Unification}
+Warren's Abstract Machine (``the WAM'') is the most common basis for implementing Prolog. 
+It consists of a memory architecture and an instruction set. 
+The memory architecture describes how to lay out Prolog terms in a heap structure, while the instruction set describes operations for manipulating this structure, corresponding to familiar primitive Prolog operations like unification. 
 
-[Describe how unification works in general]
+Clearly from the above description of the Byrd box model, it is necessary to have some mechanism that maintains information about predicate evaluations so that they can be re-entered through the ``redo'' port. 
+To this end, the WAM also describes a stack of environments, whereby the bindings made by unifying predicates are tracked so that they can be undone in the event of backtracking. 
+
+A full discussion of the WAM can be found in [reference].
+
+This project does not follow the WAM's model. 
+Rather, the focus is on leveraging ML's language features to achieve a cleaner, simpler and more intuitive implementation of Prolog. 
+In particular, I will describe in \S2.1 how the use of continuation-passing style removes the need for the WAM's environment stack by using ML's function closures to implicitly retain the required information.
 
 \subsection{Pure Prolog}
 
