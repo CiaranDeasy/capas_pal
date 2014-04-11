@@ -156,12 +156,12 @@ and compilePredicate( out, clauses ) =
                 if( this < patterns ) then (
                     TextIO.output( out, "m" );
                     TextIO.output( out, Int.toString( this + 1 ) );
-                    TextIO.output( out, " )\n" );
+                    TextIO.output( out, ", fail )\n" );
                     TextIO.output( out, "        and " );
                     outputContinuations( this + 1 )
                 )
                 else (
-                    TextIO.output( out, "fail ) in\n" )
+                    TextIO.output( out, "fail, fail ) in\n" )
                 )
         )
     in (
@@ -276,12 +276,12 @@ and compilePattern( out, clause, pattNum ) =
                         TextIO.output( out, Int.toString( num ) );
                         TextIO.output( out, " ) = specialPredicateCut( uni, " );
                         if( List.null( terms ) ) then (
-                            TextIO.output( out, "succ, fail ) in\n" )
+                            TextIO.output( out, "succ, globalFail ) in\n" )
                         )
                         else (
                             TextIO.output( out, "m" );
                             TextIO.output( out, Int.toString( num + 1 ) );
-                            TextIO.output( out, ", fail )\n" );
+                            TextIO.output( out, ", globalFail )\n" );
                             TextIO.output( out, "        and " );
                             worker( terms, num+1 )
                         )
@@ -303,7 +303,7 @@ and compilePattern( out, clause, pattNum ) =
         TextIO.output( out, Int.toString( pattNum ) );
         TextIO.output( out, "( uni0, " );
         outputArgs( 1 );
-        TextIO.output( out, "succ, fail ) = \n" );
+        TextIO.output( out, "succ, fail, globalFail ) = \n" );
         TextIO.output( out, "    let val scope = getScope() in\n" );
         outputArgMatchers();
         if( List.null( body ) ) then (
