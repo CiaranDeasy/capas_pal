@@ -74,7 +74,7 @@ fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
    updated Unifier. If not, then the second continuation is called with unit. *)
 fun findUnifier( program, term, unifier, succ, localFail, globalFail ) = 
     (* Takes a list of terms and finds a unifier that satisfies all of them. *)
-    let fun findUnifiers( terms, unifier, scope, globalSucc, globalFail ) = 
+    let fun findUnifiers( terms, unifier, scope, globalSucc, localFail, globalFail ) = 
             let fun worker( [], unifier, succ, localFail ) = 
                         succ( unifier, localFail )
                   | worker( (term::terms), unifier, globalSucc, localFail ) = 
@@ -85,7 +85,7 @@ fun findUnifier( program, term, unifier, succ, localFail, globalFail ) =
                                 localFail, globalFail )
                     end 
             in
-                worker( terms, unifier, globalSucc, globalFail )
+                worker( terms, unifier, globalSucc, localFail )
             end
         fun worker( [] ) = localFail()
           | worker( ( clause as Clause( _, _ ) )::clauses ) = 
@@ -96,11 +96,11 @@ fun findUnifier( program, term, unifier, succ, localFail, globalFail ) =
                 val unification = unify( unifier, ( Binding( term, head ) ) )
             in
                 if ( first( unification ) ) then 
-                    let fun newFail() = worker( clauses )
+                    let fun newLocalFail() = worker( clauses )
                         in 
                             findUnifiers( 
                                     body, ( second ( unification ) ), scope, 
-                                      succ, newFail )
+                                      succ, newLocalFail, localFail )
                         end
                 else
                     worker( clauses )
