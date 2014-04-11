@@ -26,80 +26,92 @@ fun scopeClause( Clause( head, body ), scope ) =
         Clause( ( hd( scopeTerms( [ head ] ) ) ), scopeTerms( body ) )                        
     end;
 
-(* Takes a term, a unifier and three continuations. If the term is one of the 
+(* Takes a term, a unifier and four continuations. If the term is one of the 
    special built-in predicates, then it is evaluated by a special-purpose 
-   function. If it succeeds, k1 is called with the new unifier and with k3 as a 
-   backtracking continuation. If it fails, then the backtracking continuation k3
-   is called. If the term is not a special predicate, then k2 is called to 
-   evaluate it the normal way. *)
-fun specialPredicate( IntTerm(i), _, _, k2, _ ) = k2()
-  | specialPredicate( FloatTerm(i), _, _, k2, _ ) = k2()
-  | specialPredicate( Variable(i), _, _, k2, _ ) = k2()
-  | specialPredicate( Term( Functor( f ), args ), unifier, k1, k2, k3 ) = 
+   function. If it succeeds, the success continuation is called with the new 
+   unifier and with the localFail continuation as a backtracking continuation. 
+   If it fails, then the backtracking continuation localFail is called. If the 
+   term is not a special predicate, then the notSpecial continuation is called 
+   to evaluate it the normal way. The globalFail continuation is used by the 
+   cut operator. *)
+fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
+  | specialPredicate( FloatTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
+  | specialPredicate( Variable(i), _, _, notSpecial, _, _) = notSpecial()
+  | specialPredicate( Term( Functor( f ), args ), 
+            unifier, succ, notSpecial, localFail, globalFail ) = 
         if( ( f = "atomic" ) andalso ( List.length( args ) = 1 ) ) then
             let val x as [arg1] = args in
-                atomic_1( unifier, arg1, k1, k3 )
+                atomic_1( unifier, arg1, succ, localFail )
             end
         else if( ( f = "is" ) andalso ( List.length( args ) = 2 ) ) then
             let val x as [arg1, arg2] = args in
-                is_2( unifier, arg1, arg2, k1, k3 )
+                is_2( unifier, arg1, arg2, succ, localFail )
             end
         else if( ( f = ">" ) andalso ( List.length( args ) = 2 ) ) then
             let val x as [arg1, arg2] = args in
-                specialPredicateGreater( unifier, arg1, arg2, k1, k3 )
+                specialPredicateGreater( unifier, arg1, arg2, succ, localFail )
             end
         else if( ( f = "<" ) andalso ( List.length( args ) = 2 ) ) then
             let val x as [arg1, arg2] = args in
-                specialPredicateLess( unifier, arg1, arg2, k1, k3 )
+                specialPredicateLess( unifier, arg1, arg2, succ, localFail )
             end
         else if( ( f = "print" ) andalso ( List.length( args ) = 1 ) ) then
             let val x as [arg1] = args in
-                specialPredicatePrint1( unifier, arg1, k1, k3 )
+                specialPredicatePrint1( unifier, arg1, succ, localFail )
             end
         else if( ( f = "=" ) andalso ( List.length( args ) = 2 ) ) then
             let val x as [arg1, arg2] = args in
-                specialPredicateEquals( unifier, arg1, arg2, k1, k3 )
+                specialPredicateEquals( unifier, arg1, arg2, succ, localFail )
             end
+        else if( ( f = "!" ) andalso ( List.length( args ) = 0 ) ) then
+                 specialPredicateCut( unifier, succ, globalFail )
         else
-            k2();
+            notSpecial();
         
 (* Takes a term, an input Unifier and two continuations. If the term is 
    satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
    with the input Unifier, then the first continuation is called with the 
    updated Unifier. If not, then the second continuation is called with unit. *)
-fun findUnifier( program, term, unifier, k1, k2 ) = 
+fun findUnifier( program, term, unifier, succ, localFail, globalFail ) = 
     (* Takes a list of terms and finds a unifier that satisfies all of them. *)
-    let fun findUnifiers( [], unifier, scope, k1, k2 ) = k1( unifier, k2 )
-          | findUnifiers( (term::terms), unifier, scope, k1, k2 ) = 
-            let fun m1( newUnifier, k3 ) = 
-                    findUnifiers( terms, newUnifier, scope, k1, k3 )
-            in 
-                findUnifier( program, term, unifier, m1, k2 )
-            end in
-    let fun worker( [] ) = k2()
+    let fun findUnifiers( terms, unifier, scope, globalSucc, globalFail ) = 
+            let fun worker( [], unifier, succ, localFail ) = 
+                        succ( unifier, localFail )
+                  | worker( (term::terms), unifier, globalSucc, localFail ) = 
+                    let fun localSucc( newUnifier, newFail ) = 
+                                worker( terms, newUnifier, globalSucc, newFail )
+                    in 
+                        findUnifier( program, term, unifier, localSucc, 
+                                localFail, globalFail )
+                    end 
+            in
+                worker( terms, unifier, globalSucc, globalFail )
+            end
+        fun worker( [] ) = localFail()
           | worker( ( clause as Clause( _, _ ) )::clauses ) = 
-            let val scope = !scopeCounter in 
-            let val liveClause as Clause( head, body ) = 
-                        scopeClause( clause, scope ) in 
-            let val incScope = ( scopeCounter := !scopeCounter + 1 ) in
-            let val unification = unify( unifier, ( Binding( term, head ) ) )
+            let val scope = !scopeCounter 
+                val liveClause as Clause( head, body ) = 
+                        scopeClause( clause, scope ) 
+                val incScope = ( scopeCounter := !scopeCounter + 1 )
+                val unification = unify( unifier, ( Binding( term, head ) ) )
             in
                 if ( first( unification ) ) then 
-                    let fun m2() = worker( clauses )
+                    let fun newFail() = worker( clauses )
                         in 
                             findUnifiers( 
-                                    body, ( second ( unification ) ), scope, k1, m2 )
+                                    body, ( second ( unification ) ), scope, 
+                                      succ, newFail )
                         end
                 else
                     worker( clauses )
-            end end end end in
-    let fun getClauses( Program(xs) ) = xs in
+            end 
+        fun getClauses( Program(xs) ) = xs
     (* Make a continuation for running through the clauses. *)
-    let fun m1() = worker( getClauses( program ) )
+        fun notSpecial() = worker( getClauses( program ) )
     in
         (* But first check if we're dealing with a special predicate. *)
-        specialPredicate( term, unifier, k1, m1, k2 )
-    end end end end;
+        specialPredicate(term, unifier, succ, notSpecial, localFail, globalFail)
+    end;
     
 (* Takes a Unifier and a scope.  *)
 fun clearScope( Unifier(xs), scope ) = 
@@ -120,14 +132,14 @@ fun clearScope( Unifier(xs), scope ) =
    by the program, then the first continuation is called with the most general 
    unifier that satisfies it. If not, then the second continuation is called 
    with unit. *)
-fun executeQuery( program, (Query(xs)), k1, k2 ) = 
+fun executeQuery( program, (Query(xs)), k1, k2, k3 ) = 
     let fun executeQueryTerms( [], unifier, k1, _ ) = k1( unifier )
           | executeQueryTerms( (x::xs), unifier, k1, k2 ) = 
             (* Executes the next term. *)
             let fun m1( newUnifier, k ) = 
                         executeQueryTerms( xs, newUnifier, k1, k )
             in
-                findUnifier( program, x, unifier, m1, k2 )
+                findUnifier( program, x, unifier, m1, k2, k3 )
             end
     in
         executeQueryTerms( xs, (Unifier([])), k1, k2 )
@@ -155,5 +167,5 @@ fun executeQueries( _, [] ) = true
             false 
         ) 
     in
-        executeQuery( program, x, m1, m2 )
+        executeQuery( program, x, m1, m2, m2 )
     end;

@@ -239,6 +239,9 @@ and compilePattern( out, clause, pattNum ) =
             end
         fun outputBodyContinuations() = 
             let fun worker( Term( Functor( f ), args )::terms, num ) = (
+                        if( ( f = "!" ) andalso List.length( args ) = 0 ) then 
+                            outputBodyContinuationCut( num, terms ) 
+                        else (
                         TextIO.output( out, "m" );
                         TextIO.output( out, Int.toString( num ) );
                         TextIO.output( out, "( uni, fail" );
@@ -263,6 +266,24 @@ and compilePattern( out, clause, pattNum ) =
                             TextIO.output( out, "succ, fail" );
                             TextIO.output( out, Int.toString( num ) );
                             TextIO.output( out, " ) in\n" )
+                        )
+                        )
+                )
+                and outputBodyContinuationCut( num, terms ) = (
+                        TextIO.output( out, "m" );
+                        TextIO.output( out, Int.toString( num ) );
+                        TextIO.output( out, "( uni, fail" );
+                        TextIO.output( out, Int.toString( num ) );
+                        TextIO.output( out, " ) = specialPredicateCut( uni, " );
+                        if( List.null( terms ) ) then (
+                            TextIO.output( out, "succ, fail ) in\n" )
+                        )
+                        else (
+                            TextIO.output( out, "m" );
+                            TextIO.output( out, Int.toString( num + 1 ) );
+                            TextIO.output( out, ", fail )\n" );
+                            TextIO.output( out, "        and " );
+                            worker( terms, num+1 )
                         )
                 )
             in
@@ -305,6 +326,10 @@ and compilePattern( out, clause, pattNum ) =
     
 fun compileQuery( out, Query( terms ), num ) = 
     let fun outputContinuations( Term( Functor(f), args )::terms, termNum ) = (
+                if( ( f = "!" ) andalso List.length( args ) = 0 ) then (
+                    outputContinuationCut( termNum, terms )
+                )
+                else (
                 TextIO.output( out, "m" );
                 TextIO.output( out, Int.toString( termNum ) );
                 TextIO.output( out, "( uni, fail" );
@@ -326,6 +351,24 @@ fun compileQuery( out, Query( terms ), num ) =
                     TextIO.output( out, ", fail" );
                     TextIO.output( out, Int.toString( termNum ) );
                     TextIO.output( out, " )\n" );
+                    TextIO.output( out, "        and " );
+                    outputContinuations( terms, termNum+1 )
+                )
+                )
+        )
+        and outputContinuationCut( termNum, terms ) = (
+                TextIO.output( out, "m" );
+                TextIO.output( out, Int.toString( termNum ) );
+                TextIO.output( out, "( uni, fail" );
+                TextIO.output( out, Int.toString( termNum ) );
+                TextIO.output( out, " ) = specialPredicateCut( uni, " );
+                if( List.null( terms ) ) then (
+                    TextIO.output( out, "succ, fail ) in\n" )
+                )
+                else (
+                    TextIO.output( out, "m" );
+                    TextIO.output( out, Int.toString( termNum + 1 ) );
+                    TextIO.output( out, ", fail )\n" );
                     TextIO.output( out, "        and " );
                     outputContinuations( terms, termNum+1 )
                 )

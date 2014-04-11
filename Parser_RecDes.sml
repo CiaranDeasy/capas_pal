@@ -151,6 +151,13 @@ and parseTermList( ATOM(a)::tokens ) =
     in
         ( (isTerm::terms), tokens4 )
     end end end
+  | parseTermList( CUT::tokens ) = 
+    let val x as (term, tokens2) = parseTerm( CUT::tokens ) in
+    let val y as (isTerm, tokens3) = parseIsTerm( tokens2, term ) in
+    let val z as (terms, tokens4) = parseMoreTerms( tokens3 )
+    in
+        ( (isTerm::terms), tokens4 )
+    end end end
     (* TermList -> empty-string *)
   | parseTermList( tokens ) = ( [], tokens )
 
@@ -198,6 +205,11 @@ and parseTerm( ATOM(a)::tokens ) =
     end
   | parseTerm( MINUS::tokens ) = 
     let val x as (arith, tokens2) = parseNegArith( MINUS::tokens )
+    in
+        parseMoreArith( tokens2, arith )
+    end
+  | parseTerm( CUT::tokens ) =
+    let val x as (arith, tokens2) = parseArith( CUT::tokens )
     in
         parseMoreArith( tokens2, arith )
     end
@@ -318,6 +330,7 @@ and parseFactor( LEFTPAREN::tokens ) =
   | parseFactor( INT(i)::tokens ) = ( IntTerm( i ), tokens )
   | parseFactor( FLOAT(f)::tokens ) = ( FloatTerm( f ), tokens )
   | parseFactor( VARIABLE(v)::tokens ) = ( Variable(v, 0), tokens )
+  | parseFactor( CUT::tokens ) = ( Term( Functor("!"), [] ), tokens )
   
 and parseBracketed( MINUS::tokens ) = 
     let val x as (arith, tokens2) = parseArith( tokens )
