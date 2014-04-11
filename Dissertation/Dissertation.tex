@@ -117,11 +117,14 @@ If variable bindings are made, and subsequently encountered variables have no va
 This can also happen if all the constraints are satisfied, but the user requests an alternate answer. 
 As such, the compiler must also allow for such backtracking.
 
-\subsection{Unification}
+% Describe terms.
+\subsubsection{Terms}
+
+\subsubsection{Unification}
 
 [Describe how unification works in general]
 
-Prolog's execution proceeds by performing unification of terms. A 
+Prolog's execution proceeds by performing unification of terms. Two terms unify if they have the same functor symbol and the same arity, and each $i$th argument in one term unifies with the corresponding $i$th argument in the other term. Performing unification in Prolog involves finding a consistent set of variable bindings such that two input terms unify successfully, or determining that no such set exists. A set of variable bindings is consistent if no variable is bound to two distinct and non-unifiable terms. For a successful unification, the variable bindings must be consistent not only with each other, but with all variable bindings made by earlier unifications.
 
 \subsection{The Byrd Box Model}
 
@@ -216,8 +219,6 @@ To address this, I spent a portion of my preparation time studying ``ML for the 
 % Wildcards
 
 Implementation took place over a span of around 14 weeks, starting in the second week of December and finishing in mid-March. 
-Compared to the original work schedule, this represented a significant delay, as implementation should have started in early November but was pushed back due to heavy course workload. 
-By mid-January, work had caught up with the original schedule and proceeded at more or less the planned rate from then on.
 
 \subsection{Unit Testing}
 
@@ -227,12 +228,12 @@ I looked into using it, but found that while it would work, it was a very heavyw
 
 The alternative approach was to write my own unit testing framework. 
 I looked into this, and found that it could be done very easily. 
-ML is not completely free of side-effects, but code written in ML tends towards having very few, which makes it very amenable to unit testing. 
+ML is not completely free of side-effects, but code written in ML tends towards having very few, which makes it very amenable to simple unit testing. 
 Thus, I was able to write a very small unit tester - about 40 lines of code - that was sufficient for the needs of this project.
 
 The main function is \verb|checkResult()|, which takes a test name, the actual and expected results of a function, and a function for comparing the two. 
 It prints success or failure as appropriate. 
-It maintains two internal counters for the number of tests which pass or fail, and a \verb|conclude()| function will print and reset the counters.
+It maintains two internal counters for the number of tests which pass or fail, and a \verb|conclude()| function to be called at the end of a test run to print and reset the counters.
 
 A set of test cases is simply a function consisting of calls to \verb|checkResult()|, and ending with a call to \verb|conclude()|.
 
@@ -241,14 +242,19 @@ To ensure this, I had the code for the unit tester code-reviewed by a fellow Par
 
 \subsection{Datatypes}
 
-% Different term types distinguish strings from numbers.
+% Lists!
+
+For the implementations, a hierarchy of datatypes were needed to represent Prolog programs, as well as datatypes to represent the interpreter's and compiler's internal state. 
+
+\subsubsection{Lexer tokens}
 
 A \verb|token| datatype was needed to represent the token types that could be recognised during lexing, as described in \S3.4. 
 The \verb|INT|, \verb|FLOAT|, \verb|ATOM| and \verb|VARIABLE| tokens contain relevant values, while all other token types have no internal values. 
 The only remarkable aspect of this datatype is that, because the \verb|FLOAT| token needs to contain a value of type \verb|real| which isn't an equality type in ML, the \verb|token| datatype isn't an equality type. 
 Thus, an explicit equality function had to be defined.
 
-A hierarchy of datatypes were needed to represent Prolog programs. 
+\subsubsection{Terms}
+
 At the bottom level, we have four types of \verb|term|s. A \verb|Term| is a typical instantiated Prolog term, consisting of a \verb|Functor| string and a list of \verb|term|s representing its arguments. 
 An \verb|IntTerm| and a \verb|FloatTerm| are terms which represent integers and floats respectively. 
 These must be distinct types from Prolog \verb|Term|s so that, say, the number 256 does not unify with the string ``256''. 
@@ -258,6 +264,9 @@ A \verb|Variable| is identified by both a name and an integer.
 The integer represents the scope of a variable, and is essential so that variables of the same name in different scopes do not alias. 
 Scope `1' is specially reserved to identify variables in the query. 
 When reporting a successful query, only the bindings of variables that appeared in the query are reported: the user doesn't care about the bindings of intermediate variables.
+Thus, by reserving scope `1' for such variables, all other bindings can be easily filtered out.
+
+\subsubsection{Variable Bindings}
 
 The \verb|Binding| type contains two \verb|term|s, and indicates that they are equivalent. 
 It is defined to be symmetric, such that a \verb|Binding| $(A,B)$ and a \verb|Binding| $(B,A)$ are equal.
@@ -265,6 +274,9 @@ It is defined to be symmetric, such that a \verb|Binding| $(A,B)$ and a \verb|Bi
 The \verb|Unifier| type contains a list of \verb|Binding|s. 
 It is returned by the unification algorithm, as discussed in \S3.6, to indicate the variable bindings which were made to unify two terms. 
 The ordering of the list has no semantic meaning.
+During unification, there may be \verb|Term|-to-\verb|Term| bindings generated when verifying consistency, but they aren't returned in the unification result because they contain no useful information.
+
+\subsubsection{Prolog programs}
 
 The \verb|Clause| type contains a ``head'' \verb|term| and a list of ``body'' \verb|terms|, corresponding directly to the Prolog clause syntax.
 
@@ -277,20 +289,26 @@ The \verb|Query| type contains a list of \verb|term|s, corresponding directly to
 \subsection{Prolog Lexer/Parser}
 
 Generally in software engineering, it is best to tackle the most challenging aspects early. 
-When starting the project, the unification algorithm and interpreter logic were the key areas that needed to be targetted. 
+When starting the project, I identified the unification algorithm and interpreter logic as the key areas that needed to be developed early. 
 To facilitate this, I wanted to put together a ``quick and dirty'' front-end that would give me parsed programs to use as test cases.
 
 The Prolog ISO standard includes predicates for reading and writing Prolog terms. 
-I reasoned that if I were to write a Prolog program that read in another Prolog source file and wrote out the ML datatype for that program, I would effectively get a workable lexer and parser for relatively little development effort. 
-In practice, the program was less trivial than I expected. 
-Given that the final lexer and parser, to be discussed in the sections which follow, were not very complicated to write, it would actually have been better to just write those up-front. 
+I reasoned that if I were to write a Prolog program that read in another Prolog source file and wrote out the ML datatype for that program, I would effectively get a working lexer and parser for relatively little development effort. 
+
+The implementation was conceptually simple. 
+The \verb|read| predicate was called to read in clauses and queries from the source file. 
+These inputs were successively syntactically split up into terms and then into individual atoms, and these were printed to an output file in the appropriate format for the ML datatype I described in \S3.2 above.
+
+The development of the program was straightforward, but less so than I expected. 
+Given that the final lexer and parser, to be discussed in the sections which follow, were not very much more complicated to write, in hindsight it would actually have been better to just write those up-front. 
+Work on the important areas would have started a couple of weeks later, but I would have saved time.
 Nonetheless, the approach I took was still successful and with about a week's worth of development effort, I had a working front-end.
 
 \subsection{Lexer}
 
 The first step of compilation is to convert the source file, a stream of characters, into a list of tokens. 
 Prolog is syntactically a very lightweight language, particularly when restricted to pure constructs. 
-To tokenise the input, there are just 11 distinct token types required in the pure case, or 22 in the final version that I implemented. 
+To tokenise the input, there are just 11 distinct token types required in the pure case, or 23 in the final version that I implemented. 
 Tokenising can be done for Prolog using standard lexing techniques: a type-3 Chomsky grammar, described by a finite state machine. 
 
 [include diagram of state machine]
@@ -350,12 +368,15 @@ The parser is implemented with a function for each non-terminal.
 The function uniquely determines a rule to apply by examining the next token in the stream. 
 It then implements that rule by going left-to-right through the symbols on the right-hand-side of that rule, consuming a token from the stream for each terminal in the rule, and calling the relevant function for each non-terminal.
 
+% Reference a compiler book
+
 The parser for pure Prolog could be implemented by ``pure'' recursive descent. 
 However, when arithmetic was added, it was not possible to write grammar rules without left recursion that would give the desired associativity. 
 Thus, it was necessary to write non-standard code to implement the grammar correctly: specifically, when parsing arithmetic terms, the earlier terms have to be ``passed along'' as arguments to later recursive calls to build the tree correctly.
 
 \subsection{Unification}
-% Discuss unification
+
+\subsubsection{The signature}
 
 The unification algorithm takes two arguments. 
 The first is a \verb|Unifier| containing all of the variable bindings that have been made so far, which must be respected by the new unification. 
@@ -363,19 +384,21 @@ The second is a \verb|Binding|, containing the two terms which are to be unified
 The output is a two-tuple containing a \verb|bool| and a \verb|Unifier|. 
 If the unification is successful, the \verb|bool| will be \verb|true| and the \verb|Unifier| will satisfy both the original input \verb|Unifier| and the new unification.
 
+\subsubsection{Conditions for success}
+
 In any case where we are unifying terms of different non-variable types, such as an \verb|IntTerm| and a \verb|FloatTerm|, unification fails right away. 
 
 In any case where at least one term to be unified is a variable, we add the input \verb|Binding| to the input \verb|Unifier|. 
-If the input \verb|Unifier| was empty, then this succeeds immediately. 
+If the input \verb|Unifier| was empty, then there can be no inconsistency, so unification succeeds immediately. 
 We will see shortly that this is an important base-case for validating \verb|Unifier|s. 
 Otherwise, we must call \verb|validateUnifier()| to check that the updated \verb|Unifier| is consistent, as will be described below.
 
 This leaves three cases. 
-If both terms are \verb|IntTerm|s, or both terms are \verb|FloatTerm|s, unification succeeds if they are equal, returning the same input \verb|Unifier| because no new \verb|Bindings| were made. 
+If both terms are \verb|IntTerm|s, or both terms are \verb|FloatTerm|s, unification succeeds if and only if they are equal, returning the same input \verb|Unifier| because no new \verb|Bindings| were made. 
 
-If both terms are Prolog \verb|Term|s, then unification succeeds if the \verb|Functor|s are equal, the arities are equal, and the arguments are unifiable. 
+Finally, if both terms are Prolog \verb|Term|s, then unification succeeds if and only if the \verb|Functor|s are equal, the arities are equal, and the arguments are pairwise unifiable. 
 Testing that the arguments are unifiable involves mapping the unification function onto each pair. 
-The same input unifier is passed to each of the argument unifications. 
+The same input unifier is passed to each of the argument unifications. [WRONG]
 If every unification succeeds, then the resulting \verb|Unifier|s are merged into one \verb|Unifier|. 
 This \verb|Unifier| is then passed through \verb|validateUnifier()| to test that it is consistent, and returned as a success if it is.
 
@@ -410,6 +433,8 @@ Execution proceeds by taking the first clause off the list and attempting to uni
 \section{Evaluation}
 
 % Evaluation and Conclusion: 2400 words
+
+% Future Improvements
 
 The most important aspect of an implementation of a programming language is correctness. 
 A fast implementation is worth nothing if it does not produce the correct result.
