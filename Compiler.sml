@@ -253,8 +253,10 @@ and compilePattern( out, clause, pattNum ) =
                         TextIO.output( out, " ) = " );
                         outputPredicateCall( out, f, ( List.length( args ) ) );
                         TextIO.output( out, "( uni, " );
-                        outputTermListDatatypeFlat( out, args );
-                        TextIO.output( out, ", " );
+                        if( List.length( args ) > 0 ) then (
+                            outputTermListDatatypeFlat( out, args );
+                            TextIO.output( out, ", " )
+                        ) else ();
                         (* If this is not the last term of the body, the success
                            continuation is the next term of the body. *)
                         if( num < ( List.length( body ) ) ) then (
