@@ -343,8 +343,10 @@ fun compileQuery( out, Query( terms ), num ) =
                 TextIO.output( out, " ) = " );
                 outputPredicateCall( out, f, ( List.length( args ) ) );
                 TextIO.output( out, "( uni, " );
-                outputTermListDatatypeFlat( out, args );
-                TextIO.output( out, ", " );
+                if( List.length( args ) > 0 ) then (
+                    outputTermListDatatypeFlat( out, args );
+                    TextIO.output( out, ", " )
+                ) else ();
                 (* If this is the last query term... *)
                 if( List.null( terms ) ) then (
                     TextIO.output( out, "succ, fail" );
