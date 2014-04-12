@@ -181,6 +181,8 @@ and compilePredicate( out, clauses ) =
         (*DEBUG*)
         (*TextIO.output( out, "        ( print \"" );
         TextIO.output( out, name );
+        TextIO.output( out, "_" );
+        TextIO.output( out, Int.toString( arity ) );
         TextIO.output( out, "\\n\"; m1() )\n" );*)
         (*/DEBUG*)
         TextIO.output( out, "    end\n" );
