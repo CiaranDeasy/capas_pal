@@ -55,6 +55,8 @@ fun outputPredicateCall( out, name, arity ) =
             TextIO.output( out, "specialPredicatePrint1" )
         else if( name = "=" andalso arity = 2 ) then
             TextIO.output( out, "specialPredicateEquals" )
+        else if( name = "fail" andalso arity = 0 ) then
+            TextIO.output( out, "specialPredicateFail" )
         else (
             TextIO.output( out, name );
             TextIO.output( out, "_" );

@@ -227,3 +227,5 @@ fun specialPredicateEquals( unifier, arg1, arg2, k1, k2 ) =
 
 fun specialPredicateCut( unifier, succ, globalFail ) = 
         succ( unifier, globalFail );
+
+fun specialPredicateFail( unifier, succ, fail ) = fail();

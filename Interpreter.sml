@@ -65,6 +65,8 @@ fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
             end
         else if( ( f = "!" ) andalso ( List.length( args ) = 0 ) ) then
                  specialPredicateCut( unifier, succ, globalFail )
+        else if( ( f = "fail" ) andalso ( List.length( args ) = 0 ) ) then
+                 specialPredicateFail( unifier, succ, localFail )
         else
             notSpecial();
         
