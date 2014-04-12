@@ -286,7 +286,7 @@ and compilePattern( out, clause, pattNum ) =
                             TextIO.output( out, "m" );
                             TextIO.output( out, Int.toString( num + 1 ) );
                             TextIO.output( out, ", globalFail )\n" );
-                            TextIO.output( out, "        and " );
+                            TextIO.output( out, "            and " );
                             worker( terms, num+1 )
                         )
                 )
