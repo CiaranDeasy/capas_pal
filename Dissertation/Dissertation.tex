@@ -457,10 +457,20 @@ This is a valid question, and a justification will be given later on during eval
 
 The input to the interpreter is a \verb|Program| and a list of \verb|Query|s. 
 For each query, the aim is to find a \verb|Unifier| that unifies each term in the query with the head of some clause in the program. 
-If the clause has a body, then the terms in the body also have to be unified with a clause in the program.
+If we visualise a queue of terms that need to be unified with a clause, then the query terms are the initial contents of that queue. 
+If the clause with which a term is unified has a body, then the terms in the body also have to be unified with a clause in the program.
+The unified term is therefore removed from the queue and the body terms are added to the front of the queue.
 
-At a given step of execution, there is a term which must be satisfied, a success continuation to call when the term is satisfied, and a failure continuation to call if the term cannot be satisfied. There is also a list of program clauses left to try to unify the term with. 
-Execution proceeds by taking the first clause off the list and attempting to unify the head of the clause with the term to be satisfied. 
+% Diagram of queue, unification, expansion
+
+At a given step of execution, there is a term at the front of the queue which must be satisfied, and a list of clauses with which to try to unify it. 
+Execution proceeds by taking a clause off the list and attempting the unification. 
+There are success and failure continuation functions, which are called based on the outcome of the unification.
+The success continuation is the execution of the rest of the terms in the queue, while the failure continuation backtracks to a previously completed queue item.
+
+% Diagram of continuations
+
+
 
 [ Finish describing interpreter control flow, and talk about how substitutions work ]
 
