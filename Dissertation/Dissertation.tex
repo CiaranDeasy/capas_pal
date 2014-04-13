@@ -117,8 +117,27 @@ If variable bindings are made, and subsequently encountered variables have no va
 This can also happen if all the constraints are satisfied, but the user requests an alternate answer. 
 As such, the compiler must also allow for such backtracking.
 
-% Describe terms.
 \subsubsection{Terms}
+
+Prolog's only datatype is the term. 
+A term can be either an atom, a variable or a compound term. 
+An atom is a numerical or string literal. 
+A variable is an unbound term which can be bound to any other term, such that that term replaces all occurrences of the variable. 
+A compound term consists of a functor symbol, which is just a string literal, and one or more argument terms.
+
+\subsubsection{Clauses}
+
+Prolog programs are made up of clauses. 
+A clause consists of a head term and a list of body terms, with the semantic meaning that the head term is true if the body terms can be shown to be true. 
+
+Prolog clauses are based on Horn clauses in first-order logic. 
+A Horn clause is a disjunction of literals containing at most one positive literal. 
+The body terms in a Prolog clause correspond to the negated literals in a Horn clause, and the head term corresponds to the positive literal. 
+If all of the body terms can be shown to be true, then for the Horn clause to be true, it must be the case that the head term is true. 
+
+\subsubsection{Queries and Control Flow}
+
+Execution 
 
 \subsubsection{Unification}
 
