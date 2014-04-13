@@ -421,9 +421,31 @@ The same input unifier is passed to each of the argument unifications. [WRONG]
 If every unification succeeds, then the resulting \verb|Unifier|s are merged into one \verb|Unifier|. 
 This \verb|Unifier| is then passed through \verb|validateUnifier()| to test that it is consistent, and returned as a success if it is.
 
-To check that a \verb|Unifier| is consistent, \verb|validateUnifier()| takes the transitive closure of that \verb|Unifier|. 
-That is, if there are two \verb|Binding|s $(A, B)$ and $(B, C)$, then $(A, C)$ is added. 
-It then calls \verb|unify()| on each individual \verb|Binding|, with an empty \verb|Unifier|, to verify that every \verb|Binding| is individually consistent.
+\subsubsection{Checking consistency}
+
+%To check that a \verb|Unifier| is consistent, \verb|validateUnifier()| takes the transitive closure of that \verb|Unifier|. 
+%That is, if there are two \verb|Binding|s $(A, B)$ and $(B, C)$, then $(A, C)$ is added. 
+%It then calls \verb|unify()| on each individual \verb|Binding|, with an empty \verb|Unifier|, to verify that every \verb|Binding| is individually consistent.
+
+When a \verb|Binding| is to be added to a \verb|Unifier|, it is necessary to check that it doesn't introduce any inconsistencies. 
+To do this, we check the new \verb|Binding| against all the existing \verb|Binding|s to get a list of transitive \verb|Binding|s. 
+Any two \verb|Binding|s $(A,B)$ and $(B,C)$ give a transitive \verb|Binding| $(A,C)$.
+
+These transitive \verb|Binding|s are then checked individually in isolation to see that they are consistent. 
+This is done by calling \verb|unify()| with an empty \verb|Unifier| for each \verb|Binding| to be checked. 
+If all of these unifications succeed, then the input new \verb|Binding| and all of the transitive \verb|Binding|s are added to the input \verb|Unifier| to give a new candidate \verb|Unifier|.
+
+If the individual unifications did not produce any additional \verb|Binding|s, then the candidate \verb|Unifier| is returned as an answer. 
+However, if they did, then each such \verb|Binding| has to be added to the \verb|Unifier| by calling \verb|unify()|.
+
+To illustrate the consistency check, consider an example. 
+Say we have a \verb|Unifier| containing two \verb|Bindings|: \verb|X = foo(A)| and \verb|Y = foo(B)|. 
+We call \verb|unify()| to add a new \verb|Binding| \verb|X = Y|. 
+The consistency check will add three transitive bindings: \verb|X = foo(B)|, \verb|Y = foo(A)| and \verb|foo(A) = foo(B)|. 
+It will then check that each of these transitive bindings is consistent by calling \verb|unify()| with an empty \verb|Unifier|. 
+All three will succeed, and we will get a candidate \verb|Unifier| containing all of the bindings mentioned so far.
+However, the third unification will generate another new binding \verb|A = B|. 
+This new binding has to be added to the candidate \verb|Unifier|, so we call \verb|unify()| with the candidate \verb|Unifier| and this new \verb|Binding| that we wish to add.
 
 This fact that \verb|unify()| and \verb|validateUnifier()| are mutually recursive should give the reader concern as to whether this algorithm will always terminate. 
 This is a valid question, and a justification will be given later on during evaluation, showing that this will indeed terminate on any valid input.
