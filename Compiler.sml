@@ -177,13 +177,13 @@ and compilePredicate( out, clauses ) =
         
         TextIO.output( out, "    let fun " );
         outputContinuations( 1 );
-        TextIO.output( out, "        m1()\n" );
+        (*TextIO.output( out, "        m1()\n" );*)
         (*DEBUG*)
-        (*TextIO.output( out, "        ( print \"" );
+        TextIO.output( out, "        ( print \"" );
         TextIO.output( out, name );
         TextIO.output( out, "_" );
         TextIO.output( out, Int.toString( arity ) );
-        TextIO.output( out, "\\n\"; m1() )\n" );*)
+        TextIO.output( out, "\\n\"; m1() )\n" );
         (*/DEBUG*)
         TextIO.output( out, "    end\n" );
         TextIO.output( out, "\n" );
@@ -310,6 +310,15 @@ and compilePattern( out, clause, pattNum ) =
         TextIO.output( out, "( uni0, " );
         outputArgs( 1 );
         TextIO.output( out, "succ, fail, globalFail ) = \n" );
+        (*DEBUG*)
+        TextIO.output( out, "    ( print \"" );
+        TextIO.output( out, head );
+        TextIO.output( out, "_" );
+        TextIO.output( out, Int.toString( arity ) );
+        TextIO.output( out, "_patt_" );
+        TextIO.output( out, Int.toString( pattNum ) );
+        TextIO.output( out, "\\n\"; \n" );
+        (*/DEBUG*)
         TextIO.output( out, "    let val scope = getScope() in\n" );
         outputArgMatchers();
         if( List.null( body ) ) then (
@@ -326,7 +335,10 @@ and compilePattern( out, clause, pattNum ) =
             TextIO.output( out, "        end\n" )
         );
         TextIO.output( out, "    end" );
-        outputEnds( out, arity )
+        outputEnds( out, arity );
+        (*DEBUG*)
+        TextIO.output( out, ")\n" )
+        (*/DEBUG*)
     )
     end;
     
