@@ -88,13 +88,7 @@ Date %TODO
 \section{Introduction}
 
 % Introduction and Preparation: 3100 words
-
-% Talk about the WAM
-% Talk about pure Prolog
-% Talk about Prolog generally
-% Byrd Box Model
-% SML/NJ
-% Unification of terms
+%TODO Occurs Check
 
 \subsection{Project Overview}
 
@@ -115,13 +109,13 @@ Instead, constraints are placed on variables, and it is left to the Prolog imple
 
 \subsubsection{Terms}
 
-%TODO Lists
-
 Prolog's only datatype is the term. 
 A term can be either an atom, a variable or a compound term. 
 An atom is a numerical or string literal. 
 A variable is an unbound term which can be bound to any other term, such that that term replaces all occurrences of the variable. 
 A compound term consists of a functor symbol, which is just a string literal, and one or more argument terms.
+
+Prolog also supports lists of terms of the recursive form \verb/[H|T]/, where \verb|H| is the first term of the list and \verb|T| is another list containing all of the other terms.
 
 \subsubsection{Clauses}
 
@@ -166,7 +160,7 @@ This is called the Byrd box model.
 
 \subsection{The WAM}
 
-% Reference the WAM manual
+%TODO Reference the WAM manual
 
 Warren's Abstract Machine (``the WAM'') is the most common basis for implementing Prolog. 
 It consists of a memory architecture and an instruction set. 
@@ -186,8 +180,6 @@ In particular, I will describe in \S2.1 how the use of continuation-passing styl
 \section{Preparation}
 
 % Introduction and Preparation: 3100 words
-
-% Relate continuations to Byrd Box
 
 \subsection{Pure Prolog}
 
@@ -240,8 +232,6 @@ I chose Standard ML of New Jersey (SML/NJ) because of an informal impression tha
 
 % Implementation: 4700 words
 
-% Wildcards
-
 Implementation took place over a span of around 14 weeks, starting in the second week of December and finishing in mid-March. 
 
 \subsection{Unit Testing}
@@ -265,8 +255,6 @@ It was important, of course, that the unit tester be completely correct so that 
 To ensure this, I had the code for the unit tester code-reviewed by a fellow Part II student.
 
 \subsection{Datatypes}
-
-% Lists!
 
 For the implementations, a hierarchy of datatypes were needed to represent Prolog programs, as well as datatypes to represent the interpreter's and compiler's internal state. 
 
@@ -317,6 +305,7 @@ The \verb|Program| type contains a list of \verb|Clause|s, and represents a comp
 
 The \verb|Query| type contains a list of \verb|term|s, corresponding directly to a Prolog query.
 
+%TODO
 [diagram to illustrate Prolog program datatypes hierarchy]
 
 \subsection{Prolog Lexer/Parser}
@@ -368,7 +357,6 @@ Furthermore, the lexer fails cleanly if there is a syntax error in the source fi
 However, these improvements weren't important to the goals of the project, and thus weren't a priority.
 
 \subsection{Parser}
-% Discuss the parser: CFG, recursive descent, special hacks
 
 Once the character stream has been tokenised, the next step in compilation is to build the token stream into an abstract syntax tree. 
 Prolog's syntax is representable by a context-free grammar: it is a small language, so the grammar is relatively small. 
@@ -377,6 +365,7 @@ The grammar I implemented is as follows:
 
 \newpage
 
+%TODO Update
 \texttt{
 S $\rightarrow$ Lines EOF\\
 Lines $\rightarrow$ Line DOT MoreLines\\
@@ -472,9 +461,8 @@ Doing so produces no transitive \verb|Binding|s, so the \verb|Binding| is simply
 %This is a valid question, and a justification will be given later on during evaluation, showing that this will indeed terminate on any valid input.
 
 \subsection{Interpreter}
-% Interpretation and continuations
-% Substitutions: reference Mycroft's paper
-% Scoping
+%TODO Substitutions: reference Mycroft's paper
+%TODO Scoping
 
 The input to the interpreter is a \verb|Program| and a list of \verb|Query|s. 
 For each query, the aim is to find a \verb|Unifier| that unifies each term in the query with the head of some clause in the program. 
@@ -560,13 +548,17 @@ These predicates are implemented by hand in an ML source file that both the inte
 The interpreter tests a predicate to be evaluated against this known list of built-ins before going through the program clauses, and calls the relevant function if it finds a match. 
 Similarly, the compiler will output a call to a built-in predicate rather than the usual predicate function if it detects a match.
 
+%TODO Wildcards
+
 \newpage
 
 \section{Evaluation}
 
 % Evaluation and Conclusion: 2400 words
 
-% Future Improvements
+%TODO Future Improvements
+%TODO Correctness subsection
+%TODO Speed analysis
 
 The most important aspect of an implementation of a programming language is correctness. 
 A fast implementation is worth nothing if it does not produce the correct result.
@@ -594,6 +586,6 @@ As mentioned in \S3.6, the unification algorithm is implemented by two mutually 
 
 \section{Conclusion}
 
-Both success criteria for the project were met. Both an interpreter for Prolog programs and a source-to-source compiler from Prolog to ML were written and shown to be correct with a high degree of confidence, through extensive testing. Continuations were found to be a concise and powerful way to express the backtracking behaviour of Prolog. Pre-compilation of a Prolog source program to ML was shown to give visible performance improvements compared to interpreting. After initial scheduling setbacks, the project work proceeded in a steady, structured manner. 
+Both success criteria for the project were met. Both an interpreter for Prolog programs and a source-to-source compiler from Prolog to ML were written and shown to be correct with a high degree of confidence, through extensive testing. Continuations were found to be a concise and powerful way to express the backtracking behaviour of Prolog. Pre-compilation of a Prolog source program to ML was shown to give visible performance improvements compared to interpreting. The project work proceeded in a steady, structured manner and reached a successful result. 
 
 \end{document}
