@@ -15,6 +15,8 @@ val _ = (
         use "Datatypes.sml";
         use "Lexer.sml";
         use "Parser_RecDes.sml";
+        use "Unification.sml";
+        use "SpecialPredicates.sml";
         use "Interpreter.sml";
         use "Compiler.sml"
 );
