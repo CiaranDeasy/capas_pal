@@ -5,35 +5,72 @@ val scopeCounter = ref 2;
 fun zipBinding( [], [] ) = []
   | zipBinding( (x::xs), (y::ys) ) = Binding(x,y)::( zipBinding( xs, ys ) );
   
-(* Takes two Bindings and returns a (bool, Binding) tuple. If they share a 
-   common term, then the first value is true, and the second value is the 
-   Binding containing the two distinct terms (ie: the Binding that exists by 
-   transitivity). If they do not share a common term, or if the Bindings are 
-   equal, then the first value is false. *)
-fun getTransitiveBinding( Binding( term1A, term1B ), 
+(* Takes two Bindings (A,B) and (C,D) and returns a (bool, Binding) tuple. If 
+   B=C or B=D, then the first value is true, and the second value is (A,D) or 
+   (A,C) respectively. Binding containing the two distinct terms (ie: the 
+   Binding that exists by transitivity). If they do not share a common term, or 
+   if the Bindings are equal, then the first value is false. *)
+fun getLeftTransitiveBinding( Binding( leftTerm, rightTerm ), 
             Binding( term2A, term2B ) ) = 
-        if( eqBinding( ( Binding( term1A, term1B ) ), 
+        if( eqBinding( ( Binding( leftTerm, rightTerm ) ), 
                 ( Binding( term2A, term2B ) ) ) )
-            then ( false, Binding( term1A, term2A ) )
-        else if( eqTerm( term1A, term2A ) )
-            then ( true, Binding( term1B, term2B ) )
-        else if( eqTerm( term1A, term2B ) )
-            then ( true, Binding( term1B, term2A ) )
-        else if( eqTerm( term1B, term2A ) )
-            then ( true, Binding( term1A, term2B ) )
-        else if( eqTerm( term1B, term2B ) )
-            then ( true, Binding( term1A, term2A ) )
-        else ( false, Binding( term1A, term2A ) );
+            then ( false, Binding( leftTerm, rightTerm ) )
+        else if( eqTerm( rightTerm, term2A ) )
+            then ( true, Binding( leftTerm, term2B ) )
+        else if( eqTerm( rightTerm, term2B ) )
+            then ( true, Binding( leftTerm, term2A ) )
+        else ( false, Binding( leftTerm, rightTerm ) );
+        
+fun getRightTransitiveBinding( Binding( leftTerm, rightTerm ), 
+            Binding( term2A, term2B ) ) = 
+        if( eqBinding( ( Binding( leftTerm, rightTerm ) ), 
+                ( Binding( term2A, term2B ) ) ) )
+            then ( false, Binding( leftTerm, rightTerm ) )
+        else if( eqTerm( leftTerm, term2A ) )
+            then ( true, Binding( term2B, rightTerm ) )
+        else if( eqTerm( leftTerm, term2B ) )
+            then ( true, Binding( term2A, rightTerm ) )
+        else ( false, Binding( leftTerm, rightTerm ) );
         
 (* Takes a binding x and a list of bindings. Returns all transitive bindings 
    that are implied by adding x to the list. *)
-fun getAllTransitiveBindings( x, [] ) = []
+(*fun getAllTransitiveBindings( x, [] ) = []
   | getAllTransitiveBindings( x, (y::ys) ) = 
     let val transitive = getTransitiveBinding( x, y ) in
         if( first( transitive ) ) then 
             ( second( transitive ) ) :: ( getAllTransitiveBindings( x, ys ) )
         else
             getAllTransitiveBindings( x, ys )
+    end;*)
+    
+fun getAllBindingPairs( [], _ ) = []
+  | getAllBindingPairs( Binding( _, term1 )::lefts, rights ) =
+    let fun worker( [] ) = []
+          | worker( Binding( term2, _ )::rights ) = 
+                Binding( term2, term1 ) :: worker( rights )
+    in
+        worker( rights ) @ ( getAllBindingPairs( lefts, rights ) )
+    end;
+    
+fun getAllTransitiveBindings( newBinding, bindings ) = 
+    let fun worker( _, [], lefts, rights ) = 
+                lefts @ rights @ ( getAllBindingPairs( lefts, rights ) )
+          | worker( newBinding, binding::bindings, lefts, rights ) = 
+            let val x as (leftSucc, leftTransBinding) = 
+                        getLeftTransitiveBinding( newBinding, binding )
+                val x as (rightSucc, rightTransBinding) = 
+                        getRightTransitiveBinding( newBinding, binding )
+            in
+                if( leftSucc ) then 
+                    worker( newBinding, bindings, 
+                            leftTransBinding::lefts, rights )
+                else if( rightSucc ) then 
+                    worker( newBinding, bindings, 
+                            lefts, rightTransBinding::rights )
+                else worker( newBinding, bindings, lefts, rights )
+            end
+    in
+        worker( newBinding, bindings, [], [] )
     end;
     
 (* Takes a list of Unifiers and returns a list of all the Bindings that occur 
