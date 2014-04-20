@@ -5,6 +5,10 @@ val scopeCounter = ref 2;
 fun zipBinding( [], [] ) = []
   | zipBinding( (x::xs), (y::ys) ) = Binding(x,y)::( zipBinding( xs, ys ) );
   
+fun eqVariable( Variable( v1, s1 ), Variable( v2, s2 ) ) = 
+        eqTerm( Variable( v1, s1 ), Variable( v2, s2 ) )
+  | eqVariable( _, _ ) = false;
+  
 (* Takes two Bindings (A,B) and (C,D) and returns a (bool, Binding) tuple. If 
    B=C or B=D, then the first value is true, and the second value is (A,D) or 
    (A,C) respectively. Binding containing the two distinct terms (ie: the 
@@ -15,9 +19,9 @@ fun getLeftTransitiveBinding( Binding( leftTerm, rightTerm ),
         if( eqBinding( ( Binding( leftTerm, rightTerm ) ), 
                 ( Binding( term2A, term2B ) ) ) )
             then ( false, Binding( leftTerm, rightTerm ) )
-        else if( eqTerm( rightTerm, term2A ) )
+        else if( eqVariable( rightTerm, term2A ) )
             then ( true, Binding( leftTerm, term2B ) )
-        else if( eqTerm( rightTerm, term2B ) )
+        else if( eqVariable( rightTerm, term2B ) )
             then ( true, Binding( leftTerm, term2A ) )
         else ( false, Binding( leftTerm, rightTerm ) );
         
@@ -26,9 +30,9 @@ fun getRightTransitiveBinding( Binding( leftTerm, rightTerm ),
         if( eqBinding( ( Binding( leftTerm, rightTerm ) ), 
                 ( Binding( term2A, term2B ) ) ) )
             then ( false, Binding( leftTerm, rightTerm ) )
-        else if( eqTerm( leftTerm, term2A ) )
+        else if( eqVariable( leftTerm, term2A ) )
             then ( true, Binding( term2B, rightTerm ) )
-        else if( eqTerm( leftTerm, term2B ) )
+        else if( eqVariable( leftTerm, term2B ) )
             then ( true, Binding( term2A, rightTerm ) )
         else ( false, Binding( leftTerm, rightTerm ) );
         
@@ -73,10 +77,40 @@ fun getAllTransitiveBindings( newBinding, bindings ) =
         worker( newBinding, bindings, [], [] )
     end;
     
+fun removeTermToTermBindings( [] ) = []
+  | removeTermToTermBindings( Binding( Variable( v, s ), t2 )::bindings ) = 
+        Binding( Variable( v, s ), t2 )::removeTermToTermBindings( bindings )
+  | removeTermToTermBindings( Binding( t1, Variable( v, s ) )::bindings ) = 
+        Binding( t1, Variable( v, s ) )::removeTermToTermBindings( bindings )
+  | removeTermToTermBindings( binding::bindings ) = 
+        removeTermToTermBindings( bindings );
+    
 (* Takes a list of Unifiers and returns a list of all the Bindings that occur 
    in them, potentially with duplicates. *)
 fun combineUnifiers( [] ) = []
   | combineUnifiers( ( Unifier(xs) )::ys ) = xs @ ( combineUnifiers( ys ) );
+  
+    (* Dismiss V-V main binding *)
+fun alreadyBound( Binding( Variable( _, _ ), Variable( _, _ ) ), _ ) = false
+    (* Base case *)
+  | alreadyBound( _, [] ) = false
+    (* Flip backwards main binding *)
+  | alreadyBound( Binding( t, Variable( v, s ) ), bindings ) = 
+        alreadyBound( Binding( Variable( v, s ), t ), bindings )
+    (* Ignore V-V list binding *)
+  | alreadyBound( binding, 
+                  Binding( Variable( _, _ ), Variable( _, _ ) )::bindings ) =
+        alreadyBound( binding, bindings )
+    (* Flip backwards list binding *)
+  | alreadyBound( binding, Binding( t, Variable( v, s ) )::bindings ) =
+        alreadyBound( binding, Binding( Variable( v, s ), t )::bindings )
+    (* Main case: compare T-V with T-V *)
+  | alreadyBound( Binding( Variable( v1, s1 ), t1 ), 
+                  Binding( Variable( v2, s2 ), _ )::bindings ) = 
+        if( eqTerm( Variable( v1, s1 ), Variable( v2, s2 ) ) ) then
+            true
+        else
+            alreadyBound( Binding( Variable( v1, s1 ), t1 ), bindings )
   
 (* Takes a list of Bindings and returns a two-tuple. The first value is a bool 
    indicating whether the bindings are consistent, and the second value is a 
@@ -105,14 +139,22 @@ and validateUnifier( currentBindings, newBinding ) =
     let val transitiveBindings = 
                 getAllTransitiveBindings( newBinding, currentBindings )
     (* Test whether the bindings are consistent. *)
-         val x as (success, iteratedBindings) = 
-            consistentBindings( transitiveBindings )
+        val x as (success, iteratedBindings) = 
+                consistentBindings( transitiveBindings )
+        val sanitisedTransitiveBindings = 
+                removeTermToTermBindings( transitiveBindings )
     in
-        if( success ) then
+        if( success andalso alreadyBound( newBinding, currentBindings ) ) then
             (* Verify any new Bindings that arose when verifying the transitive
                bindings *)
             unifyAll( Unifier( 
-                    newBinding::(transitiveBindings @ currentBindings) 
+                    (sanitisedTransitiveBindings @ currentBindings) 
+                    ), iteratedBindings )
+        else if( success ) then
+            (* Verify any new Bindings that arose when verifying the transitive
+               bindings *)
+            unifyAll( Unifier( 
+                    newBinding::(sanitisedTransitiveBindings @ currentBindings) 
                     ), iteratedBindings )
         else
             ( false, Unifier( [] ) )
