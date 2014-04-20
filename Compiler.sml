@@ -269,7 +269,7 @@ and compilePattern( out, clause, pattNum ) =
                             worker( terms, num+1 )
                         )
                         else (
-                            TextIO.output( out, "succ, fail" );
+                            TextIO.output( out, "subSucc, fail" );
                             TextIO.output( out, Int.toString( num ) );
                             TextIO.output( out, " ) in\n" )
                         )
@@ -322,12 +322,14 @@ and compilePattern( out, clause, pattNum ) =
         TextIO.output( out, "    let val scope = getScope() in\n" );
         outputArgMatchers();
         if( List.null( body ) ) then (
-            TextIO.output( out, "        succ( uni" );
+            TextIO.output( out, "        succ( cleanupScope( uni" );
             TextIO.output( out, Int.toString( arity ) );
-            TextIO.output( out, ", fail )\n" )
+            TextIO.output( out, ", scope ), fail )\n" )
         )
         else (
-            TextIO.output( out, "        let fun " );
+            TextIO.output( out, "        let fun subSucc( uni, fail )" );
+            TextIO.output( out, " = succ( cleanupScope( uni, scope ), fail )" );
+            TextIO.output( out, "\n            and " );
             outputBodyContinuations();
             TextIO.output( out, "            m1( uni" );
             TextIO.output( out, Int.toString( arity ) );
