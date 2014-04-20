@@ -5,15 +5,17 @@ val scopeCounter = ref 2;
 fun zipBinding( [], [] ) = []
   | zipBinding( (x::xs), (y::ys) ) = Binding(x,y)::( zipBinding( xs, ys ) );
   
+(* If both terms are variables, returns true if they are equal, false otherwise. 
+   If either term is a non-variable, returns false. *)
 fun eqVariable( Variable( v1, s1 ), Variable( v2, s2 ) ) = 
         eqTerm( Variable( v1, s1 ), Variable( v2, s2 ) )
   | eqVariable( _, _ ) = false;
   
 (* Takes two Bindings (A,B) and (C,D) and returns a (bool, Binding) tuple. If 
-   B=C or B=D, then the first value is true, and the second value is (A,D) or 
-   (A,C) respectively. Binding containing the two distinct terms (ie: the 
-   Binding that exists by transitivity). If they do not share a common term, or 
-   if the Bindings are equal, then the first value is false. *)
+   B is a Variable and B=C or B=D, then the first value is true, and the second 
+   value is (A,D) or (A,C) respectively, ie: the Binding that exists by 
+   transitivity. If they do not share a common term, or if the Bindings are 
+   equal, then the first value is false. *)
 fun getLeftTransitiveBinding( Binding( leftTerm, rightTerm ), 
             Binding( term2A, term2B ) ) = 
         if( eqBinding( ( Binding( leftTerm, rightTerm ) ), 
@@ -25,6 +27,11 @@ fun getLeftTransitiveBinding( Binding( leftTerm, rightTerm ),
             then ( true, Binding( leftTerm, term2A ) )
         else ( false, Binding( leftTerm, rightTerm ) );
         
+(* Takes two Bindings (A,B) and (C,D) and returns a (bool, Binding) tuple. If 
+   A is a Variable and A=C or A=D, then the first value is true, and the second 
+   value is (B,D) or (B,C) respectively, ie: the Binding that exists by 
+   transitivity. If they do not share a common term, or if the Bindings are 
+   equal, then the first value is false. *)
 fun getRightTransitiveBinding( Binding( leftTerm, rightTerm ), 
             Binding( term2A, term2B ) ) = 
         if( eqBinding( ( Binding( leftTerm, rightTerm ) ), 
@@ -35,18 +42,10 @@ fun getRightTransitiveBinding( Binding( leftTerm, rightTerm ),
         else if( eqVariable( leftTerm, term2B ) )
             then ( true, Binding( term2A, rightTerm ) )
         else ( false, Binding( leftTerm, rightTerm ) );
-        
-(* Takes a binding x and a list of bindings. Returns all transitive bindings 
-   that are implied by adding x to the list. *)
-(*fun getAllTransitiveBindings( x, [] ) = []
-  | getAllTransitiveBindings( x, (y::ys) ) = 
-    let val transitive = getTransitiveBinding( x, y ) in
-        if( first( transitive ) ) then 
-            ( second( transitive ) ) :: ( getAllTransitiveBindings( x, ys ) )
-        else
-            getAllTransitiveBindings( x, ys )
-    end;*)
     
+(* Takes two lists of bindings. Returns a list of bindings which bind the right 
+   terms from bindings in the first list with the left terms from bindings in 
+   the second list. *)
 fun getAllBindingPairs( [], _ ) = []
   | getAllBindingPairs( Binding( _, term1 )::lefts, rights ) =
     let fun worker( [] ) = []
@@ -56,6 +55,9 @@ fun getAllBindingPairs( [], _ ) = []
         worker( rights ) @ ( getAllBindingPairs( lefts, rights ) )
     end;
     
+(* Takes a new binding and a list of existing bindings. Returns a list of all of
+   the bindings implied transitively by adding the new binding to the list of 
+   existing bindings. The new binding is not included in the output list. *)
 fun getAllTransitiveBindings( newBinding, bindings ) = 
     let fun worker( _, [], lefts, rights ) = 
                 lefts @ rights @ ( getAllBindingPairs( lefts, rights ) )
@@ -77,6 +79,8 @@ fun getAllTransitiveBindings( newBinding, bindings ) =
         worker( newBinding, bindings, [], [] )
     end;
     
+(* Takes a list of bindings, removes bindings which don't contain a variable, 
+   and returns a list of the remaining bindings. *)
 fun removeTermToTermBindings( [] ) = []
   | removeTermToTermBindings( Binding( Variable( v, s ), t2 )::bindings ) = 
         Binding( Variable( v, s ), t2 )::removeTermToTermBindings( bindings )
@@ -90,6 +94,11 @@ fun removeTermToTermBindings( [] ) = []
 fun combineUnifiers( [] ) = []
   | combineUnifiers( ( Unifier(xs) )::ys ) = xs @ ( combineUnifiers( ys ) );
   
+exception derpl;
+  
+(* Takes a single binding and a list of bindings. If the single binding binds a 
+   variable to a term, and a binding in the list binds the same variable to a 
+   term, then returns true. Otherwise false. *)
     (* Dismiss V-V main binding *)
 fun alreadyBound( Binding( Variable( _, _ ), Variable( _, _ ) ), _ ) = false
     (* Base case *)
@@ -111,6 +120,37 @@ fun alreadyBound( Binding( Variable( _, _ ), Variable( _, _ ) ), _ ) = false
             true
         else
             alreadyBound( Binding( Variable( v1, s1 ), t1 ), bindings )
+            
+fun isVarToVarBinding( Binding( Variable( _, _ ), Variable( _, _ ) ) ) = true
+  | isVarToVarBinding( _ ) = false;
+        
+(* Takes a list of new bindings and a list of current bindings. Removes from new
+   bindings any V-T binding where the variable is already bound in current 
+   bindings. Returns the remaining new bindings. *)
+fun removeAlreadyBoundVariables( newBindings, currentBindings ) = 
+          (* Base case. *)
+    let fun worker( [] ) = []
+          (* Skip V-V Bindings. *)
+          | worker( Binding( Variable( v1, s1 ), Variable( v2, s2 ) )::
+                    bindings ) =
+                Binding( Variable( v1, s1 ), Variable( v2, s2 ) )::
+                        worker( bindings )
+          (* Remove V-T bindings if the variable is already bound. *)
+          | worker( Binding( Variable( v1, s1 ), t2 )::bindings ) = 
+            let val binding = Binding( Variable( v1, s1 ), t2 )
+            in
+                if( alreadyBound( binding, currentBindings ) ) then
+                    worker( bindings )
+                else
+                    binding::worker( bindings )
+            end
+          (* Flip T-V bindings into V-T bindings *)
+          | worker( Binding( t1, Variable( v2, s2 ) )::bindings ) =
+                worker( Binding( Variable( v2, s2 ), t1 )::bindings )
+          (* T-T bindings are an error, so don't match that pattern. *)
+    in
+        worker( newBindings )
+    end;
   
 (* Takes a list of Bindings and returns a two-tuple. The first value is a bool 
    indicating whether the bindings are consistent, and the second value is a 
@@ -144,20 +184,29 @@ and validateUnifier( currentBindings, newBinding ) =
         val sanitisedTransitiveBindings = 
                 removeTermToTermBindings( transitiveBindings )
     in
-        if( success andalso alreadyBound( newBinding, currentBindings ) ) then
-            (* Verify any new Bindings that arose when verifying the transitive
-               bindings *)
+        if( not( success ) ) then
+            ( false, Unifier( [] ) )
+        else if( alreadyBound( newBinding, currentBindings ) ) then
+            (* Don't include the newBinding in the Unifier *)
             unifyAll( Unifier( 
                     (sanitisedTransitiveBindings @ currentBindings) 
                     ), iteratedBindings )
-        else if( success ) then
+        else if( isVarToVarBinding( newBinding ) ) then
+            (* This can produce duplicate bindings, so we have to manually check
+               that every V-T transitive binding is unbound *)
+            let val finalTransitiveBindings = removeAlreadyBoundVariables( 
+                        sanitisedTransitiveBindings, currentBindings )
+            in
+                unifyAll( Unifier( 
+                        newBinding::(finalTransitiveBindings @ currentBindings) 
+                        ), iteratedBindings )
+            end
+        else
             (* Verify any new Bindings that arose when verifying the transitive
                bindings *)
             unifyAll( Unifier( 
                     newBinding::(sanitisedTransitiveBindings @ currentBindings) 
                     ), iteratedBindings )
-        else
-            ( false, Unifier( [] ) )
     end
 
 (* Takes a unifier and a list of bindings. Successively calls unify() on each 
