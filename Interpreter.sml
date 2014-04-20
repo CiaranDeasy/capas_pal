@@ -77,8 +77,8 @@ fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
 fun findUnifier( program, term, unifier, succ, localFail, globalFail ) = 
     (* Takes a list of terms and finds a unifier that satisfies all of them. *)
     let fun findUnifiers( terms, unifier, scope, globalSucc, localFail, globalFail ) = 
-            let fun worker( [], unifier, succ, localFail ) = 
-                        succ( unifier, localFail )
+            let fun worker( [], unifier, succ, localFail ) =
+                        succ( cleanupScope( unifier, scope ), localFail )
                   | worker( (term::terms), unifier, globalSucc, localFail ) = 
                     let fun localSucc( newUnifier, newFail ) = 
                                 worker( terms, newUnifier, globalSucc, newFail )
@@ -115,21 +115,6 @@ fun findUnifier( program, term, unifier, succ, localFail, globalFail ) =
         specialPredicate(term, unifier, succ, notSpecial, localFail, globalFail)
     end;
     
-(* Takes a Unifier and a scope.  *)
-fun clearScope( Unifier(xs), scope ) = 
-    let fun hasScope( Term( _, args ) ) = orList( map hasScope args )
-          | hasScope( Variable( _, s ) ) = (s = scope)
-          | hasScope( IntTerm( _ ) ) = false
-          | hasScope( FloatTerm( _ ) ) = false
-        fun worker( Binding( t1, t2 )::bindings ) = 
-                if( hasScope( t1 ) orelse hasScope( t2 ) ) then
-                    worker( bindings )
-                else
-                    ( Binding( t1, t2 )::( worker( bindings ) ) )
-    in
-        Unifier( worker( xs ) )
-    end
-    
 (* Takes a program, a query and two continuations. If the query is satisfiable 
    by the program, then the first continuation is called with the most general 
    unifier that satisfies it. If not, then the second continuation is called 
@@ -151,15 +136,23 @@ fun executeQuery( program, (Query(xs)), k1, k2, k3 ) =
    can be satisfied by the program. *)
 fun executeQueries( _, [] ) = true
   | executeQueries( program, (x::xs) ) = 
-    let fun m1( unifier ) = ( 
+    let val timer = Timer.startCPUTimer()
+        fun m1( unifier ) = ( 
             printQuery( x ); 
             print "\n";
             (* Remove bindings which don't feature a variable. *)
             let val reducedUnifier = cleanUnifier( unifier ) in
             (* Perform variable substitutions. *)
-            let val subUnifier = substituteUnifier( reducedUnifier ) in
+            let val subUnifier = substituteUnifier( reducedUnifier ) in (
                 (* Print the Unifier. *)
-                printUnifier( subUnifier ) 
+                printUnifier( subUnifier ) ;
+                print "\n"
+            );
+            let val {usr, sys} = Timer.checkCPUTimer( timer )
+            in
+                print( Time.toString( Time.+( usr, sys ) ) );
+                print "\n"
+            end
             end end;
             executeQueries( program, xs) 
         )
