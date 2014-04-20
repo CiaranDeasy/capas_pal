@@ -376,3 +376,81 @@ fun cleanUnifier( Unifier(xs) ) =
     in
         Unifier( worker xs )
     end;
+    
+(* Takes a Unifier and a scope. For all variables of the given scope that have a
+   V-T binding in the Unifier, eliminates the variable by substituting the 
+   instantiation for the variable everywhere in the Unifier. Returns the 
+   resulting Unifier. *)
+fun cleanupScope( Unifier(allBindings), scope ) = 
+    let fun worker( [], searchedBindings ) = searchedBindings
+            (* V-V case: skip *)
+          | worker( Binding( Variable( v1, s1 ), Variable( v2, s2 ) )::bindings, 
+                    searchedBindings ) = 
+                worker( bindings, 
+                        Binding( Variable( v1, s1 ), Variable( v2, s2 ) )
+                                ::searchedBindings )
+            (* V-T case: if the variable is in the relevant scope, replace all 
+               instances of the variable with the term to which it is bound, 
+               else skip. *)
+          | worker( Binding( Variable( v, s ), t )::bindings, 
+                    searchedBindings ) = 
+                if( s = scope ) then
+                    worker( substituteOneToMany( 
+                                    Binding( Variable( v, s ), t ), 
+                                    bindings ), 
+                            substituteOneToMany( 
+                                    Binding( Variable( v, s ), t ), 
+                                    searchedBindings ) )
+                else
+                    worker( bindings, 
+                            Binding( Variable( v, s ), t )::searchedBindings )
+            (* T-V case: flip the binding to get the V-T case *)
+          | worker( Binding( t, Variable( v, s ) )::bindings, 
+                    searchedBindings ) = 
+                worker( Binding( Variable( v, s ), t )::bindings,
+                        searchedBindings )
+          | worker( binding::bindings, searchedBindings ) = ( printAllBindings( [binding] ); worker( bindings, searchedBindings ) )
+    in
+        Unifier( worker( allBindings, [] ) )
+    end
+    
+(* Takes a single V-T Binding and a Binding list. Replaces all occurrences of V 
+   in the Binding list with T *)
+and substituteOneToMany( _, [] ) = []
+  | substituteOneToMany( Binding( v, b ), 
+                         Binding( Variable( v1, s1 ), Variable( v2, s2 ) )
+                                 ::bindings ) = 
+        if( eqTerm( v, Variable( v1, s1 ) ) orelse 
+                eqTerm( v, Variable( v2, s2 ) ) ) then
+            substituteOneToMany( Binding( v, b ), bindings )
+        else
+            Binding( Variable( v1, s1 ), Variable( v2, s2 ) )::
+                    substituteOneToMany( Binding( v, b ), bindings )
+  | substituteOneToMany( Binding( v, b ), binding::bindings ) = 
+        substituteOneToOne( Binding( v, b ), binding )::
+                substituteOneToMany( Binding( v, b ), bindings )
+                
+(* Takes a single V-T Binding and a target Binding. Replaces all occurrences of 
+   V in the target Binding with T *)
+and substituteOneToOne( binding1, Binding( t1, t2 ) ) =
+        Binding( substituteBindingIntoTerm( binding1, t1 ),
+                 substituteBindingIntoTerm( binding1, t2 ) )
+        
+(* Takes a single V-T Binding and a term. Replaces all occurrences of V in the 
+   term with T *)
+and substituteBindingIntoTerm( _, IntTerm( i ) ) = IntTerm( i )
+  | substituteBindingIntoTerm( _, FloatTerm( f ) ) = FloatTerm( f )
+  | substituteBindingIntoTerm( Binding( v1, b ), Variable( v2, s2 ) ) = 
+        if( eqTerm( v1, Variable( v2, s2 ) ) ) then
+            b
+        else
+            Variable( v2, s2 )
+  | substituteBindingIntoTerm( binding, Term( f, args ) ) = 
+        Term( f, substituteBindingIntoTermList( binding, args ) )
+        
+(* Takes a single V-T Binding and a list of term. Replaces all occurrences of V 
+   in the list of terms with T *)
+and substituteBindingIntoTermList( _, [] ) = []
+  | substituteBindingIntoTermList( binding, term::terms ) = 
+        substituteBindingIntoTerm( binding, term )::
+                substituteBindingIntoTermList( binding, terms );
