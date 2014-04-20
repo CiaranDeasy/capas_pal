@@ -523,6 +523,46 @@ In this way, we have eliminated the linear search through the program clauses, r
 Queries are compiled into functions similarly to patterns, with a chain of success continuations to evaluate the query terms in turn. 
 Finally, an \verb|execute()| function is added which calls the query functions in turn: separate queries are completely independent, so this is simply a sequence of calls.
 
+\subsection{Variable Substitutions}
+
+In \S1.2.1, I described how when a variable is bound, the term to which it is bound replaces all occurrences of that variable. 
+Therefore, at some point during or after the execution of a query, the instantiation must be substituted for all occurrences of the variable. 
+For example, if we had the bindings \verb|A = a(B)| and \verb|B = b|, and \verb|A| was a query variable, we would want to return \verb|A = a(b)|.
+
+\subsubsection{Substituting at the end}
+
+My initial implementations performed substitution at the very end of a query's evaluation, after all unifications had been completed. 
+The algorithm uses two sets of \verb|Binding|s, $A$ and $B$, with $A$ initially containing all of the \verb|Binding|s in the final output \verb|Unifier| and $B$ initially empty.
+
+I say that a \verb|Binding| $x$ is ``expanded'' with respect to a set of \verb|Binding|s $X$ if $x$ contains no variables which are instantiated by a \verb|Binding| in $X$. 
+Otherwise, I can ``expand'' $x$ with respect to $X$ by replacing variables in $x$ with their instantiations in $X$.
+
+For each \verb|Binding| $a$ in $A$, I expand $a$ with respect to $B$. 
+I then apply $a$ as a substitution to each \verb|Binding| in $B$, and then add $a$ to $B$. 
+After each iteration, all bindings in $B$ are expanded with respect to each other. 
+When all bindings from $A$ have been added to $B$, then $B$ is the output.
+
+The problem with this approach is that the \verb|Unifier| becomes very large during execution, which slows down verification of new \verb|Binding|s as described in \S3.6.3. 
+It is also a large memory overhead, storing the \verb|Binding|s from every successful unification.
+To remedy this, I sought out an alternative approach.
+
+\subsubsection{Substituting during execution}
+
+My final implementations perform variable substitutions during execution of a query to eliminate all instances of that variable so that its \verb|Binding|s can be forgotten.
+The algorithm performs cleanup every time the end of an executed clause is reached.
+All variables local to that clause will be tagged with that clause's scope %TODO : section ref.
+These variables cannot occur in future predicates' executions, because they are local to the now-complete clause.
+So, for any local variables of the completed clause which have been instantiated, we can replace all occurrences of them in the \verb|Unifier| with that instantiation. 
+This requires a linear scan through the \verb|Unifier| to find the instantiations of local variables, and for each instantiation found, another linear scan to perform the substitution.
+Once this substitution has been done, the instantiation can be removed from the \verb|Unifier|.
+This allows us to keep the size of the \verb|Unifier| down as execution proceeds.
+
+An important aspect of this algorithm is that it does not guarantee to clean up all local variables.
+A local variable is only cleaned up at the end of its clause, and only if it is instantiated.
+If it is not instantiated at that time, then it is never substituted.
+In this sense, the implementations safely over-approximate the liveness of local variables.
+For this reason, we still have to perform the end-of-execution substitution pass as described in the previous section, which will perform all remaining substitutions.
+
 \subsection{Other Features}
 
 \subsubsection{Cut}
@@ -557,14 +597,32 @@ Similarly, the compiler will output a call to a built-in predicate rather than t
 % Evaluation and Conclusion: 2400 words
 
 %TODO Future Improvements
-%TODO Correctness subsection
+% -- Error handling
+% -- Built-ins, ISO standard
+%TODO Negative Areas
+% -- Binding representation
 %TODO Speed analysis
+% -- Potential future gains
+
+\subsection{Correctness of implementation}
 
 The most important aspect of an implementation of a programming language is correctness. 
 A fast implementation is worth nothing if it does not produce the correct result.
 
-To establish the correctness of my implementation, I put together a collection of sample Prolog programs, both by writing my own targetted programs that tested specific elements of the language, and by searching online for code fragments. 
-I then compared the output of the program when run by my implementation with the output when run with the existing publicly-available SWI-Prolog implementation to verify that there was no difference.
+To establish the correctness of my implementations, I put together several suites of sample Prolog programs to test it.
+By comparing the output of the program when run by my implementations with the output when run with the existing publicly-available SWI-Prolog implementation, I could verify that there was no difference and that my implementations were behaving correctly.
+
+The first suite was a collection of programs that I wrote myself, which were specially targetted at testing specific behaviours of the software.
+These included straightforward programs to test basic functionality like simple unifications, as well as more obtuse program with unusual syntax or semantics that would test rare edge cases, like variable names containing numbers and underscores.
+Some of the programs contained intentional compile-time or run-time errors, so that I could ensure that these were also handled cleanly and correctly.
+
+I built up this suite of test programs over the course of implementation, expanding it as I added functionality. 
+I attempted to cover as broad a range of potential failures as possible. 
+When new bugs arose and were fixed, I added additional programs to cover those cases.
+Having this suite also allowed me to do regression testing whenever I made significant alterations to the code, such as when I implemented the alternate substitution algorithm as described in \S3.9.
+
+The second collection of programs consisted of real-world programs collected from various online resources.
+This collection was put together in the project's evaluation phase to establish further confidence in the correctness of my implementations.
 
 \subsection{Termination of Unification Algorithm}
 
@@ -579,6 +637,21 @@ As mentioned in \S3.6, the unification algorithm is implemented by two mutually 
 \subsection{Benefits of compiling to ML}
 
 [ Collect and display data showing the performance gains of the compiler over the interpreter ]
+
+\subsection{Future developments}
+
+While the software implemented for the project was sufficient for its goals, there are aspects which could be improved or expanded if it were to be developed further.
+
+Firstly, as discussed in \S3.4 and \S3.5, neither the lexer nor the parser has detailed error reporting because it wasn't essential to the goals of the project and would take a very non-trivial amount of development effort to implement to a satisfactory standard. 
+In a commercial compiler, if a syntactic error arose which prevented successful lexing or parsing of the input source file, the compiler would report exactly where in the source file the problem arose, and what the problem was.
+
+Secondly, the current implementations do not support the use of infix operators in prefix notation. 
+For example, the valid term \verb|+(1, 2)|, equivalent to \verb|1 + 2|, is not parsed successfully by the current parser grammar. 
+The grammar would have to be altered to handle this.
+
+Thirdly, the number of built-in predicates could be expanded significantly. 
+The ISO standard for Prolog, ISO/IEC 13211-1, describes a large selection of built-in predicates which are required to be supported by any conforming implementation. 
+The current software only provides support for a small subset of these.
 
 %100-line interpreter shows effectiveness of continuations
 
