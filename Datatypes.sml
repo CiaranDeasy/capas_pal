@@ -409,7 +409,9 @@ fun cleanupScope( Unifier(allBindings), scope ) =
                     searchedBindings ) = 
                 worker( Binding( Variable( v, s ), t )::bindings,
                         searchedBindings )
-          | worker( binding::bindings, searchedBindings ) = ( printAllBindings( [binding] ); worker( bindings, searchedBindings ) )
+          | worker( binding::bindings, searchedBindings ) = 
+                    ( (*printAllBindings( [binding] ); *)
+                      worker( bindings, searchedBindings ) )
     in
         Unifier( worker( allBindings, [] ) )
     end
