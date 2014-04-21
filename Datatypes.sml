@@ -377,6 +377,11 @@ fun cleanUnifier( Unifier(xs) ) =
         Unifier( worker xs )
     end;
     
+(* Takes a variable V and a term T and returns true if T contains V. *)
+fun triggersOccursCheck ( Variable( v, s ) ) ( Term( _, args ) ) = 
+        orList( map ( triggersOccursCheck ( Variable( v, s ) ) ) args )
+  | triggersOccursCheck ( Variable( v, s ) ) t = eqTerm( Variable( v, s ), t )
+    
 (* Takes a Unifier and a scope. For all variables of the given scope that have a
    V-T binding in the Unifier, eliminates the variable by substituting the 
    instantiation for the variable everywhere in the Unifier. Returns the 
@@ -424,6 +429,7 @@ and substituteOneToMany( _, [] ) = []
                                  ::bindings ) = 
         if( eqTerm( v, Variable( v1, s1 ) ) orelse 
                 eqTerm( v, Variable( v2, s2 ) ) ) then
+            (* throw away V-V binding: it'll just become a duplicate. *)
             substituteOneToMany( Binding( v, b ), bindings )
         else
             Binding( Variable( v1, s1 ), Variable( v2, s2 ) )::
@@ -434,9 +440,21 @@ and substituteOneToMany( _, [] ) = []
                 
 (* Takes a single V-T Binding and a target Binding. Replaces all occurrences of 
    V in the target Binding with T *)
-and substituteOneToOne( binding1, Binding( t1, t2 ) ) =
-        Binding( substituteBindingIntoTerm( binding1, t1 ),
-                 substituteBindingIntoTerm( binding1, t2 ) )
+and substituteOneToOne( Binding( v, t ), Binding( t1, t2 ) ) =
+        if( triggersOccursCheck v t ) then
+            let fun isVariable( Variable( _ ) ) = true
+                  | isVariable( _ ) = false
+            in
+                if( isVariable( t1 ) ) then
+                    Binding( t1, 
+                             substituteBindingIntoTerm( Binding( v, t1 ), t2 ) )
+                else
+                    Binding( t2, 
+                             substituteBindingIntoTerm( Binding( v, t2 ), t1 ) )
+            end
+        else
+            Binding( substituteBindingIntoTerm( Binding( v, t ), t1 ),
+                     substituteBindingIntoTerm( Binding( v, t ), t2 ) )
         
 (* Takes a single V-T Binding and a term. Replaces all occurrences of V in the 
    term with T *)
