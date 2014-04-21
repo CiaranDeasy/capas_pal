@@ -507,8 +507,6 @@ The failure continuation also holds all previous predicates' progress in a simil
 It is in this way that we realise the goal described in \S1.4 of retaining information about previous predicates without the WAM's explicit environment stack, by leveraging continuations. 
 When a continuation is defined, ML implicitly creates a closure containing all relevant state.
 
-%TODO Substitutions
-
 \subsection{Compiler}
 
 When running a predicate through the interpreter, it has to search the head of every program clause for a potential unification. 
@@ -595,6 +593,14 @@ We then want to substituted \verb|A = a(A)| into \verb|B = a(A)|.
 The former will be detected as an occurs-check case, and the substitution will be changed so that we are substituting \verb|A = B| into \verb|B = a(A)|, which gives \verb|B = a(B)| as we would like.
 
 \subsection{Other Features}
+
+\subsubsection{Scoping}
+
+As mentioned in \S3.2.2, \verb|Variable|s are tagged with a scope number to distinguish them from unrelated variables of the same name, eg: multiple calls to the same clause.
+This is simply implemented by having an \verb|int ref| initialised to \verb|2| in the interpreter and compiler to act as a scope counter.
+Recall that scope \verb|`1'| is reserved for query variables.
+When the interpreter tries to unify the current predicate with a program clause, it first sets the scope of all variables in that clause to the value of the scope counter and increments the counter. 
+Similarly, the compiler reads and increments the scope counter's value at the start of a pattern function and uses it for variables in that pattern.
 
 \subsubsection{Cut}
 
