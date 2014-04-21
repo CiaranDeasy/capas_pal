@@ -632,7 +632,40 @@ As mentioned in \S3.6, the unification algorithm is implemented by two mutually 
 
 \subsection{Implementing ML with continuations}
 
-[ Emphasise the simplicity of the interpreter thanks to the use of continuations ]
+I stated at the beginning that a primary goal of the project was to judge the effectiveness of using continuation-passing style to implement the control flow of Prolog. 
+Having completed the implementation, I can say that CPS was a very successful strategy.
+
+The code in the interpreter module of the software is relatively straightforward. 
+Execution of any given predicate is passed a success continuation and a failure continuation, and the appropriate continuation is called based on the outcome of the execution, as was described in detail in \S3.7. 
+These continuations are easy to define: a series of success continuations are defined by a call to a recursive function that executes each predicate of a clause in turn, and a failure continuation is defined as attempting to execute a predicate using the remaining clauses that haven't been tried yet. 
+These calls are already integral to interpreting Prolog code, and applying CPS simply means that we pass these calls around.
+
+The code for the interpreter module is concise, being about 150 lines long. 
+It did not take significant development time to write, and no subtle bugs were found in it later on when the programs being executed became more complex. 
+It was small, intuitive and maintainable.
+
+\subsection{Implementation problems: the Binding representation}
+
+When it comes to project difficulties which could have been avoided with hindsight, the \verb|Binding| datatype for representing variable bindings is by far the most prominent. 
+As was described in detail in earlier sections, variable bindings are handled by keeping a transitive closure of current bindings in a \verb|Unifier| datastructure. 
+When a new binding is made by unification, transitive bindings are also added to the \verb|Unifier|.
+
+The major difficulty with this datastructure comes from maintaining it in such a way as to keep it free of clutter. 
+Not only is this important for memory efficiency, but in addition, several areas of the code are required to do linear scans of the current \verb|Unifier|, such as the substitution algorithm discussed in \S3.9. 
+If we have a lot of extraneous \verb|Binding|s in the \verb|Unifier|, then this will slow down performance considerably.
+
+With this in mind, I imposed the semantics that the unification algorithm would not return a \verb|Unifier| containing any \verb|Binding|s between two non-variables, as these \verb|Binding|s contain no information. 
+In practice, correctly enforcing this was conceptually challenging. 
+It presented a major hazard for subtle bugs to slip through. 
+
+When I changed my substitution algorithm to perform substitutions during execution, this produced further complications. 
+Great care was needed to efficiently eliminate \verb|Binding|s which were no longer useful after substitution: either because they became term-to-term bindings, or because they became duplicates of existing \verb|Binding|s. 
+This was another area that needed significant development effort to fully debug to achieve an efficient implementation.
+
+The \verb|Binding| representation was simply not well-suited to the problem. 
+If I were approaching the project again, I would consider a datastructure closer to what the WAM does (\S1.4). 
+The WAM focuses on structure-sharing, whereby variables are pointers into a heap of instantiated terms. 
+While ML is not necessarily very robust with respect to this low-level view of data, the principle of of having shared structures when variables are bound to each other could be refined into an appropriate concept for a datatype which might be more intuitive and less bug-prone than the \verb|Binding| datastructure I elected to use.
 
 \subsection{Benefits of compiling to ML}
 
