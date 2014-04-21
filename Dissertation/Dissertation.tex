@@ -370,8 +370,6 @@ Prolog is syntactically a very lightweight language, particularly when restricte
 To tokenise the input, there are just 11 distinct token types required in the pure case, or 23 in the final version that I implemented. 
 Tokenising can be done for Prolog using standard lexing techniques: a type-3 Chomsky grammar, described by a finite state machine. 
 
-%TODO Reference for lexing.
-
 %TODO
 [include diagram of state machine]
 
@@ -432,7 +430,7 @@ The parser is implemented with a function for each non-terminal.
 The function uniquely determines a rule to apply by examining the next token in the stream. 
 It then implements that rule by going left-to-right through the symbols on the right-hand-side of that rule, consuming a token from the stream for each terminal in the rule, and calling the relevant function for each non-terminal.
 
-%TODO Reference a compiler book
+A full treatment of recursive-descent parsing methods is given by Aho et al. \cite{compiler}
 
 The parser for pure Prolog could be implemented by ``pure'' recursive descent. 
 However, when arithmetic was added, it was not possible to write grammar rules without left recursion that would give the desired associativity. 
@@ -498,7 +496,6 @@ Doing so produces no transitive \verb|Binding|s, so the \verb|Binding| is simply
 %This is a valid question, and a justification will be given later on during evaluation, showing that this will indeed terminate on any valid input.
 
 \subsection{Interpreter}
-%TODO Substitutions: reference Mycroft's paper
 
 The input to the interpreter is a \verb|Program| and a list of \verb|Query|s. 
 For each query, the aim is to find a \verb|Unifier| that unifies each term in the query with the head of some clause in the program. 
@@ -788,6 +785,13 @@ Both success criteria for the project were met. Both an interpreter for Prolog p
   \emph{Warren's Abstract Machine: A Tutorial Reconstruction}.
   The MIT Press,
   August 1991.
+  
+\bibitem{compiler}
+  Aho, Sethi, Ullman,
+  \emph{Compilers: Principles, Techniques and Tools}.
+  Pearson Education,
+  1st Edition,
+  1986.
 
 \end{thebibliography}
 
