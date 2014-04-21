@@ -567,7 +567,7 @@ To remedy this, I sought out an alternative approach.
 
 My final implementations perform variable substitutions during execution of a query to eliminate all instances of that variable so that its \verb|Binding|s can be forgotten.
 The algorithm performs cleanup every time the end of an executed clause is reached.
-All variables local to that clause will be tagged with that clause's scope %TODO : section ref.
+All variables local to that clause will be tagged with that clause's scope (recall \S3.2.2).
 These variables cannot occur in future predicates' executions, because they are local to the now-complete clause.
 So, for any local variables of the completed clause which have been instantiated, we can replace all occurrences of them in the \verb|Unifier| with that instantiation. 
 This requires a linear scan through the \verb|Unifier| to find the instantiations of local variables, and for each instantiation found, another linear scan to perform the substitution.
