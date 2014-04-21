@@ -126,6 +126,8 @@ If all of the body terms can be shown to be true, then for the Horn clause to be
 
 A set of clauses whose head terms have the same functor symbol and arity (number of argument terms) constitute a predicate, and the functor symbol and arity are analogous to a function signature: a fact that this project will exploit when compiling to source ML.
 
+A clause with no body terms is often called a fact, because as a disjunction of one positive literal, it simply asserts that something is always true.
+
 \subsubsection{Queries}
 
 A Prolog query contains a list of query terms. 
@@ -141,6 +143,25 @@ Two compound terms unify if they have the same functor symbol and the same arity
 Performing unification in Prolog involves finding a consistent set of variable bindings such that two input terms unify successfully, or determining that no such set exists. 
 A set of variable bindings is consistent if no variable is bound to two distinct and non-unifiable terms. 
 For a successful unification, the variable bindings must be consistent not only with each other, but with all variable bindings made by earlier unifications.
+
+\subsubsection{Control Flow and Backtracking}
+
+A Prolog term is successfully executed if it unifies with the head of a clause, and each term in the body of the clause is successfully executed.
+Prolog execution proceeds by successively executing each term in a query. 
+If all query terms are executed successfully, then the variable bindings that had to be made are returned.
+
+When executing a term, a clause is selected with which to try to unify it.
+If at any point in Prolog execution a unification fails, then control backtracks to the last time a clause selection was made, and selects a different clause.
+Any variable bindings that were made since that selection are undone.
+If there are no more clauses to try, then control backtracks further, to the selection before that.
+If there is no point to backtrack to, then query execution is said to have failed.
+
+\subsubsection{Cut}
+
+Prolog's cut operator, written `\verb|!|', is a special term which clears existing backtracking points.
+When it is reached during execution of the body terms in a clause, we are no longer allowed to backtrack to the execution of body terms that appear before it in the clause. 
+We are also no longer allowed to try another clause for the current execution of the current term. 
+Failure must backtrack to an earlier term's execution.
 
 \subsubsection{Occurs Check}
 
@@ -163,8 +184,6 @@ So \verb|9 = +(6,3)| would fail, but \verb|9 is +(6,3)| would succeed.
 
 \subsection{The Byrd Box Model}
 
-%TODO Reference the formal semantics paper
-
 A helpful description of Prolog's control flow is given by the Byrd box model. 
 A typical programming function can be modelled as a box with two ports: a ``call'' port for calling into the function and a ``success'' port when the function returns. 
 Once a function call returns, it is never re-entered.
@@ -172,10 +191,9 @@ In Prolog, however, a predicate may find zero, one, or many answers to a call.
 If there is no solution, then control leaves through a ``fail'' port, and enters an earlier predicate's ``redo'' port.
 A Prolog predicate is therefore viewed as a procedure with four ports: two ways in which control can be passed to the predicate, and two ways in which it can leave.
 This is called the Byrd box model.
+A deeper specification of this model is given by Jahier et al. \cite{byrd00}
 
 \subsection{The WAM}
-
-%TODO Reference the WAM manual
 
 Warren's Abstract Machine (``the WAM'') is the most common basis for implementing Prolog. 
 It consists of a memory architecture and an instruction set. 
@@ -184,7 +202,7 @@ The memory architecture describes a systematic way to efficiently lay out Prolog
 Clearly from the above description of the Byrd box model, it is necessary to have some mechanism that maintains information about predicate evaluations so that they can be re-entered through the ``redo'' port. 
 To this end, the WAM also describes a stack of environments, whereby the bindings made by unifying terms when evaluating predicates are tracked so that they can be undone in the event of backtracking. 
 
-A full discussion of the WAM can be found in [reference].
+A full discussion of the WAM's design is given by A\"it-Kaci \cite{wam91}.
 
 This project does not follow the WAM's model. 
 Rather, the focus is on leveraging ML's language features to achieve a cleaner, simpler and more intuitive implementation of Prolog. 
@@ -481,7 +499,6 @@ Doing so produces no transitive \verb|Binding|s, so the \verb|Binding| is simply
 
 \subsection{Interpreter}
 %TODO Substitutions: reference Mycroft's paper
-%TODO Scoping
 
 The input to the interpreter is a \verb|Program| and a list of \verb|Query|s. 
 For each query, the aim is to find a \verb|Unifier| that unifies each term in the query with the head of some clause in the program. 
@@ -604,12 +621,8 @@ Similarly, the compiler reads and increments the scope counter's value at the st
 
 \subsubsection{Cut}
 
-Prolog's cut operator, written `\verb|!|', is a special term which clears existing backtracking points.
-When it is reached during execution of a clause, we are no longer allowed to backtrack to body terms that appear before it in the clause. 
-We are also no longer allowed to try another clause for the current execution of the current predicate. 
-Failure must backtrack to an earlier predicate's execution.
-
-Cut is implemented by introducing a ``global fail'' continuation. 
+The semantics of Prolog's special cut operator `\verb|!|' were introduced back in \S1.2.6.
+It is implemented by introducing a ``global fail'' continuation. 
 At any given time, this represents the new backtracking point if we were to encounter the cut operator. 
 In the interpreter, the fail continuation given at the beginning of a predicate's execution is kept as the global fail continuation for that predicate's execution. 
 Similarly in the compiler, the fail continuation supplied as an argument to a predicate function is its global fail continuation, and is passed to each pattern function.
@@ -627,7 +640,7 @@ Similarly, the compiler will output a call to a built-in predicate rather than t
 
 \subsubsection{The `is' keyword}
 
-As outlined in \S1.2.6, Prolog implementations should not arithmetically evaluate a term unless explicitly instructed to by the presence of the \verb|is| predicate.
+As outlined in \S1.2.8, Prolog implementations should not arithmetically evaluate a term unless explicitly instructed to by the presence of the \verb|is| predicate.
 This predicate is provided through the built-in predicates system.
 When it is called, the second argument is evaluated arithmetically and then unified with the first.
 Arithmetic expressions are parsed into a tree of Prolog terms at the parser stage, so evaluation involves doing a post-order treewalk (evaluate both of a node's children before the node) to build up the final result.
@@ -753,5 +766,29 @@ The current software only provides support for a small subset of these.
 \section{Conclusion}
 
 Both success criteria for the project were met. Both an interpreter for Prolog programs and a source-to-source compiler from Prolog to ML were written and shown to be correct with a high degree of confidence, through extensive testing. Continuations were found to be a concise and powerful way to express the backtracking behaviour of Prolog. Pre-compilation of a Prolog source program to ML was shown to give visible performance improvements compared to interpreting. The project work proceeded in a steady, structured manner and reached a successful result. 
+
+\begin{thebibliography}{9}
+
+\bibitem{lamport94}
+  Leslie Lamport,
+  \emph{\LaTeX: A Document Preparation System}.
+  Addison Wesley, Massachusetts,
+  2nd Edition,
+  1994.
+
+\bibitem{byrd00}
+  Jahier, Ducass\'e, Ridoux
+  \emph{Specifying Byrd's Box Model with a Continuation Semantics}.
+  Electronic Notes in Theoretical Computer Science
+  Volume 30, Issue 4,
+  April 2000.
+
+\bibitem{wam91}
+  Hassan A\"it-Kaci
+  \emph{Warren's Abstract Machine: A Tutorial Reconstruction}.
+  The MIT Press,
+  August 1991.
+
+\end{thebibliography}
 
 \end{document}
