@@ -78,14 +78,13 @@ Date %TODO
 \vfil
 \eject
 
-\tableofcontents 
+%\tableofcontents 
 
 \newpage
 
 \section{Introduction}
 
 % Introduction and Preparation: 3100 words
-%TODO Occurs Check
 
 \subsection{Project Overview}
 
@@ -150,6 +149,17 @@ For example, if we had a binding \verb|A = a(A)|, this would trigger the occurs 
 Typical Prolog implementations will accept such a binding, and mine are no exception.
 However, it should be clear that some care will likely be needed when substituting variables to handle bindings like these in a clean way.
 When I discuss substitutions in \S3.9, I will talk briefly about this.
+
+\subsubsection{Arithmetic Evaluation}
+
+Prolog implementations support the same standard arithmetic expressions that most other languages do.
+An expression \verb|1+2*6-4| can be written and is accepted as Prolog syntax.
+However, what may be surprising is that this doesn't implicitly get evaluated down to \verb|9|. 
+Rather, this syntax is shorthand for the Prolog term \verb|-(+(1,*(2,6)),4)|.
+Indeed, if we were to try to unify this with the term \verb|9|, it would fail.
+The special two-argument in-fix predicate `\verb|is|' is provided by Prolog implementations to perform arithmetic evaluation.
+The second argument provided to \verb|is| will be evaluated as one would expect for arithmetic, and then unified with the first argument.
+So \verb|9 = +(6,3)| would fail, but \verb|9 is +(6,3)| would succeed.
 
 \subsection{The Byrd Box Model}
 
@@ -277,6 +287,10 @@ A \verb|Term| is a typical instantiated Prolog term, consisting of a \verb|Funct
 An atom is represented as a \verb|Term| with zero arguments.
 An \verb|IntTerm| and a \verb|FloatTerm| are terms which represent integers and floats respectively. 
 These must be distinct types from Prolog \verb|Term|s so that, say, the number 256 does not unify with the string ``256'', as these are distinct atoms in Prolog.
+
+An important point is that \verb|IntTerm|s and \verb|FloatTerm|s must be non-negative. 
+Negative numbers are represented by wrapping a positive number in a unary `\verb|-|' term. 
+The reasoning behind this is to give a consistent representation of negation, as I will discuss in more detail when I talk about the implementation of arithmetic in \S3.10.3.
 
 Finally, a \verb|Variable| represents an uninstantiated Prolog term. 
 A \verb|Variable| is identified by both a name and an integer. 
@@ -604,6 +618,25 @@ While my implementations are by no means exhaustive with respect to supporting t
 These predicates are implemented by hand in an ML source file that both the interpreter and the compiler refer to.
 The interpreter tests a predicate to be evaluated against this known list of built-ins before going through the program clauses, and calls the relevant function if it finds a match. 
 Similarly, the compiler will output a call to a built-in predicate rather than the usual predicate function if it detects a match.
+
+\subsubsection{The `is' keyword}
+
+As outlined in \S1.2.6, Prolog implementations should not arithmetically evaluate a term unless explicitly instructed to by the presence of the \verb|is| predicate.
+This predicate is provided through the built-in predicates system.
+When it is called, the second argument is evaluated arithmetically and then unified with the first.
+Arithmetic expressions are parsed into a tree of Prolog terms at the parser stage, so evaluation involves doing a post-order treewalk (evaluate both of a node's children before the node) to build up the final result.
+When variables are encountered during evaluation, the current \verb|Unifier| is searched for a binding of that variable.
+If one is not found, an \verb|UninstantiatedVariable| exception is raised. 
+
+I mentioned when describing the \verb|term| datatype in \S3.2.2 that negative numbers are represented by a positive term with a unary minus parent.
+To understand the rationale, consider the expressions \verb|-X + 4|, \verb|Y + 4| and \verb|-9 + 4|. 
+Consider unifying any two of these directly, without the \verb|is| predicate. 
+If \verb|X| was bound to 9 and \verb|Y| to -9, we would expect success. 
+However, how would we represent the fact that \verb|X| was negated?
+It would have to have a unary minus parent term.
+If the other two expressions simply had \verb|IntTerm|s with negative values, this would require a whole lot of extra logic in the unification algorithm to handle correctly: there wouldn't be a canonical form for terms of this nature.
+Similarly, the implementation of \verb|is| would have two different potential tree layouts for negative numbers, and extra care would be needed.
+By using the unary minus parent representation everywhere, we get a canonical form.
 
 %TODO Wildcards
 
