@@ -679,6 +679,10 @@ When I changed my substitution algorithm to perform substitutions during executi
 Great care was needed to efficiently eliminate \verb|Binding|s which were no longer useful after substitution: either because they became term-to-term bindings, or because they became duplicates of existing \verb|Binding|s. 
 This was another area that needed significant development effort to fully debug to achieve an efficient implementation.
 
+Finally, the occurs check was difficult to handle with this scheme. 
+Typical Prolog interpreters don't ever have to perform an occurs-check explicitly, because the internal datastructures they use allow self-reference without trouble.
+However, as I described in \S3.9.3, substitutions using my \verb|Binding| representation can give undesirable effects in the presence of self-referencing variables unless an explicit occurs check is performed and appropriate steps are taken.
+
 The \verb|Binding| representation was simply not well-suited to the problem. 
 If I were approaching the project again, I would consider a datastructure closer to what the WAM does (\S1.4). 
 The WAM focuses on structure-sharing, whereby variables are pointers into a heap of instantiated terms. 
