@@ -78,10 +78,7 @@ Date %TODO
 \vfil
 \eject
 
-\section*{Table of Contents}
-
-%TODO
-[TODO]
+\tableofcontents 
 
 \newpage
 
@@ -145,6 +142,14 @@ Two compound terms unify if they have the same functor symbol and the same arity
 Performing unification in Prolog involves finding a consistent set of variable bindings such that two input terms unify successfully, or determining that no such set exists. 
 A set of variable bindings is consistent if no variable is bound to two distinct and non-unifiable terms. 
 For a successful unification, the variable bindings must be consistent not only with each other, but with all variable bindings made by earlier unifications.
+
+\subsubsection{Occurs Check}
+
+A Prolog variable is said to trigger the occurs check if it is bound to a term containing itself.
+For example, if we had a binding \verb|A = a(A)|, this would trigger the occurs check.
+Typical Prolog implementations will accept such a binding, and mine are no exception.
+However, it should be clear that some care will likely be needed when substituting variables to handle bindings like these in a clean way.
+When I discuss substitutions in \S3.9, I will talk briefly about this.
 
 \subsection{The Byrd Box Model}
 
@@ -562,6 +567,18 @@ A local variable is only cleaned up at the end of its clause, and only if it is 
 If it is not instantiated at that time, then it is never substituted.
 In this sense, the implementations safely over-approximate the liveness of local variables.
 For this reason, we still have to perform the end-of-execution substitution pass as described in the previous section, which will perform all remaining substitutions.
+
+\subsubsection{Occurs Check}
+
+Substitution gets messy when a variable violates the occurs check, which I described in \S1.2.5. 
+When a substitution is to be made, the source binding is checked to see whether the instantiation contains the variable it is instantiating. 
+If so, then some fix-up code is executed which performs the substitution correctly. 
+This is most clearly explained by example.
+
+Say we have \verb|A = a(A)| and \verb|B = A|. By transitivity, we must also have \verb|B = a(A)|. 
+When eliminating \verb|A|, \verb|B = A| is deleted as part of the normal algorithm. 
+We then want to substituted \verb|A = a(A)| into \verb|B = a(A)|. 
+The former will be detected as an occurs-check case, and the substitution will be changed so that we are substituting \verb|A = B| into \verb|B = a(A)|, which gives \verb|B = a(B)| as we would like.
 
 \subsection{Other Features}
 
