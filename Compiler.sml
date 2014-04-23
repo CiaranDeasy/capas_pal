@@ -79,15 +79,11 @@ fun outputPreamble( out ) = (
         TextIO.output( out, "    use \"Datatypes.sml\";\n" );
         TextIO.output( out, "    use \"Unification.sml\";\n" );
         TextIO.output( out, "    use \"SpecialPredicates.sml\"\n" );
-        TextIO.output( out, ")\n" );
+        TextIO.output( out, ");\n" );
         TextIO.output( out, "\n" );
-        TextIO.output( out, "val scopeCounter = ref 2;\n" );
-        TextIO.output( out, "fun getScope() = (\n" );
-        TextIO.output( out, "        scopeCounter := !scopeCounter + 1;\n" );
-        TextIO.output( out, "        !scopeCounter\n" );
-        TextIO.output( out, ")\n" );
-        TextIO.output(out,  "\n" )
-)
+        TextIO.output( out, "fun dummy() = ()\n" );
+        TextIO.output( out, "\n" )
+);
     
 (* Takes a list of clauses representing a predicate. Examines the head clause 
    and returns the name of the predicate. *)

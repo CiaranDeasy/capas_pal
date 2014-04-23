@@ -91,10 +91,9 @@ fun findUnifier( program, term, unifier, succ, localFail, globalFail ) =
             end
         fun worker( [] ) = localFail()
           | worker( ( clause as Clause( _, _ ) )::clauses ) = 
-            let val scope = !scopeCounter 
+            let val scope = getScope()
                 val liveClause as Clause( head, body ) = 
                         scopeClause( clause, scope ) 
-                val incScope = ( scopeCounter := !scopeCounter + 1 )
                 val unification = unify( unifier, ( Binding( term, head ) ) )
             in
                 if ( first( unification ) ) then 

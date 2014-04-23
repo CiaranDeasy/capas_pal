@@ -10,6 +10,10 @@ unification.
 *******************************************************************************)
 
 val scopeCounter = ref 2;
+fun getScope() = (
+        scopeCounter := !scopeCounter + 1;
+        !scopeCounter
+)
 
 (* Takes two lists of equal length, and returns a list of 2-tuples, where the 
    i'th tuple contains the i'th element of each input list. *)
