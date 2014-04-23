@@ -1,3 +1,13 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file defines a number of special-purpose built-in predicates which 
+are available to all Prolog programs.
+*******************************************************************************)
+
 exception UninstantiatedVariable;
 exception EvaluationTypeError;
     
@@ -229,3 +239,20 @@ fun specialPredicateCut( unifier, succ, globalFail ) =
         succ( unifier, globalFail );
 
 fun specialPredicateFail( unifier, succ, fail ) = fail();
+
+(*fun specialPredicateListing( unifier, arg, succ, fail ) = *)
+
+(*fun specialPredicateDelete( unifier, arg1, arg2, arg3, succ, fail ) = 
+        if( eqTerm( arg1, Term( Functor( "[]" ), [] ) ) ) then
+            succ( unifier, fail )
+        else
+            let val x as Term( Functor(f), [head,tail] ) = arg2
+                val x as (matches, _) = unify( arg2, head )
+            in
+                if( matches ) then
+                    let fun newSucc( newUni, _ ) = 
+                    let val x as (tailSucc, tailUnifier) = 
+                    specialPredicateDelete( *)
+                    
+(*fun specialPredicateUnifyWithoutBinding( unifier, arg1, arg2, succ, fail ) = 
+    let val x as (success, _) = *)

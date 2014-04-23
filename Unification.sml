@@ -1,3 +1,14 @@
+(********* Author: Ciaran Deasy    **********)
+(********* cfd27@cam.ac.uk ******************)
+(********* Part II Project ******************)
+(********* University of Cambridge **********)
+
+(*******************************************************************************
+This source file contains the unify() function used to perform unification in 
+the Prolgo interpreter/compiler, and a set of helper functions used in 
+unification.
+*******************************************************************************)
+
 val scopeCounter = ref 2;
 
 (* Takes two lists of equal length, and returns a list of 2-tuples, where the 
