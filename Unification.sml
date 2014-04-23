@@ -5,7 +5,7 @@
 
 (*******************************************************************************
 This source file contains the unify() function used to perform unification in 
-the Prolgo interpreter/compiler, and a set of helper functions used in 
+the Prolog interpreter/compiler, and a set of helper functions used in 
 unification.
 *******************************************************************************)
 
