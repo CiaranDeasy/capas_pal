@@ -662,11 +662,6 @@ By using the unary minus parent representation everywhere, we get a canonical fo
 
 % Evaluation and Conclusion: 2400 words
 
-%TODO Future Improvements
-% -- Error handling
-% -- Built-ins, ISO standard
-%TODO Negative Areas
-% -- Binding representation
 %TODO Speed analysis
 % -- Potential future gains
 
@@ -737,7 +732,17 @@ If I were approaching the project again, I would consider a datastructure closer
 The WAM focuses on structure-sharing, whereby variables are pointers into a heap of instantiated terms. 
 While ML is not necessarily very robust with respect to this low-level view of data, the principle of of having shared structures when variables are bound to each other could be refined into an appropriate concept for a datatype which might be more intuitive and less bug-prone than the \verb|Binding| datastructure I elected to use.
 
+\subsection{Comparison to commercial implementations}
+
+As has already been stressed, completeness of the implementations was not a goal of the project. As such, the final software does not support as rich a feature set as commercial Prolog interpreters like SWI-Prolog and GNU Prolog, lacking more elaborate features like I/O support.
+
+As one might expect, the implementations I wrote in a few months run far more slowly than commercial implementations with years of refinement and teams of developers. I did not collect detailed data to measure this, but an informal comparison with a handful of non-trivial programs indicated a speed difference of several orders of magnitude. A program that took a few seconds in SWI-Prolog took upwards of ten minutes for my implementation.
+
 \subsection{Benefits of compiling to ML}
+
+A more interesting comparison, which I investigated more thoroughly, is the difference in performance between my interpreter and compiler implementations. One of the stated goals of my project was to determine whether there was any gain from pre-compiling Prolog code, compared with simply interpreting it.
+
+It was difficult to collect substantial amounts of data because of the availability of appropriate programs. For a speed analysis, it's necessary to have interesting programs with non-trivial running time. While there is a reasonably plentiful supply of simple Prolog snippets from various tutorials that can be used to test correctness, this was not the case for more elaborate programs. Prolog is a relatively little-used language, so the number of available real programs is correspondingly few. Furthermore, real programs are very likely to use advanced language features, and since my implementations aren't complete, most of these real programs couldn't be run. Nonetheless, I was able to find a few appropriate programs for the comparison.
 
 [ Collect and display data showing the performance gains of the compiler over the interpreter ]
 
