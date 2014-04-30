@@ -67,6 +67,10 @@ fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
                  specialPredicateCut( unifier, succ, globalFail )
         else if( ( f = "fail" ) andalso ( List.length( args ) = 0 ) ) then
                  specialPredicateFail( unifier, succ, localFail )
+        else if( ( f = "delete" ) andalso ( List.length( args ) = 3 ) ) then
+            let val x as [arg1, arg2, arg3] = args in
+                delete_3( unifier, arg1, arg2, arg3, succ, localFail )
+            end
         else
             notSpecial();
         

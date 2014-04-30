@@ -256,3 +256,50 @@ fun specialPredicateFail( unifier, succ, fail ) = fail();
                     
 (*fun specialPredicateUnifyWithoutBinding( unifier, arg1, arg2, succ, fail ) = 
     let val x as (success, _) = *)
+
+fun delete_3( uni, arg1, arg2, arg3, succ, fail ) = 
+    let fun m1() = delete_3_patt_1( uni, arg1, arg2, arg3, succ, m2, fail )
+        and m2() = delete_3_patt_2( uni, arg1, arg2, arg3, succ, m3, fail )
+        and m3() = delete_3_patt_3( uni, arg1, arg2, arg3, succ, fail, fail ) in
+        m1()
+    end
+
+and delete_3_patt_1( uni0, arg1, arg2, arg3, succ, fail, globalFail ) = 
+    let val scope = getScope() in
+    let val x as (succ1, uni1) = unify( uni0, Binding( arg1, Term( Functor( "[]" ), [] ) ) )
+    in if( not(succ1) ) then fail() else
+    let val x as (succ2, uni2) = unify( uni1, Binding( arg2, Variable( "_1", scope ) ) )
+    in if( not(succ2) ) then fail() else
+    let val x as (succ3, uni3) = unify( uni2, Binding( arg3, Term( Functor( "[]" ), [] ) ) )
+    in if( not(succ3) ) then fail() else
+        succ( cleanupScope( uni3, scope ), fail )
+    end end end end
+
+and delete_3_patt_2( uni0, arg1, arg2, arg3, succ, fail, globalFail ) = 
+    let val scope = getScope() in
+    let val x as (succ1, uni1) = unify( uni0, Binding( arg1, Term( Functor( "." ), [ Variable( "H", scope ), Variable( "T", scope ) ] ) ) )
+    in if( not(succ1) ) then fail() else
+    let val x as (succ2, uni2) = unify( uni1, Binding( arg2, Variable( "H", scope ) ) )
+    in if( not(succ2) ) then fail() else
+    let val x as (succ3, uni3) = unify( uni1, Binding( arg3, Variable( "S", scope ) ) )
+    in if( not(succ3) ) then fail() else
+        let fun subSucc( uni, fail ) = succ( cleanupScope( uni, scope ), fail )
+            and m1( uni, fail1 ) = delete_3( uni, Variable( "T", scope ), Variable( "H", scope ), Variable( "S", scope ), m2, fail1 )
+            and m2( uni, fail2 ) = specialPredicateCut( uni, succ, globalFail ) in
+            m1( uni3, fail )
+        end
+    end end end end
+
+and delete_3_patt_3( uni0, arg1, arg2, arg3, succ, fail, globalFail ) = 
+    let val scope = getScope() in
+    let val x as (succ1, uni1) = unify( uni0, Binding( arg1, Term( Functor( "." ), [ Variable( "H", scope ), Variable( "T", scope ) ] ) ) )
+    in if( not(succ1) ) then fail() else
+    let val x as (succ2, uni2) = unify( uni1, Binding( arg2, Variable( "R", scope ) ) )
+    in if( not(succ2) ) then fail() else
+    let val x as (succ3, uni3) = unify( uni2, Binding( arg3, Term( Functor( "." ), [ Variable( "H", scope ), Variable( "S", scope ) ] ) ) )
+    in if( not(succ3) ) then fail() else
+        let fun subSucc( uni, fail ) = succ( cleanupScope( uni, scope ), fail )
+            and m1( uni, fail1 ) = delete_3( uni, Variable( "T", scope ), Variable( "R", scope ), Variable( "S", scope ), subSucc, fail1 ) in
+            m1( uni3, fail )
+        end
+    end end end end;
