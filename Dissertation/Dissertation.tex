@@ -170,9 +170,11 @@ Failure must backtrack to an earlier term's execution.
 
 A Prolog variable is said to trigger the occurs check if it is bound to a term containing itself.
 For example, if we had a binding \verb|A = a(A)|, this would trigger the occurs check.
-Typical Prolog implementations will accept such a binding, and mine are no exception.
-However, it should be clear that some care will likely be needed when substituting variables to handle bindings like these in a clean way.
-When I discuss substitutions in \S3.9, I will talk briefly about this.
+Such a binding results semantically in an infinite term \verb|a(a(a(a(...|, which logicians typically reject.
+However, due to the cost of performing the occurs check, most Prolog implementations allow such a binding, and provide a special \verb|unify_with_occurs_check| predicate for programmers that need to forbid such bindings.
+
+When substituting variables, care must be taken to ensure that self-referential bindings like these are handled in a clean way.
+When I discuss substitutions in \S3.9, I will talk in more detail about this.
 
 \subsubsection{Arithmetic Evaluation}
 
@@ -625,6 +627,8 @@ Say we have \verb|A = a(A)| and \verb|B = A|. By transitivity, we must also have
 When eliminating \verb|A|, \verb|B = A| is deleted as part of the normal algorithm. 
 We then want to substituted \verb|A = a(A)| into \verb|B = a(A)|. 
 The former will be detected as an occurs-check case, and the substitution will be changed so that we are substituting \verb|A = B| into \verb|B = a(A)|, which gives \verb|B = a(B)| as we would like.
+
+I previously stated that standard Prolog implementations omit the occurs check purely for efficiency, allowing self-referential bindings. My implementation must perform the occurs-check to get sensible substitution behaviour, so the reader may justifiably want to know why I allow these bindings when I'm already paying the performance penalty of detecting them. Indeed, there is an argument in favour of disallowing these bindings to more closely match the typical logician's view. However, I have decided that it is more useful to conform to the behaviour of the most prominent Prolog implementations, whereby these bindings are allowed in general and only disallowed if the programmer invokes the \verb|unify_with_occurs_check| predicate explicitly. 
 
 \subsection{Other Features}
 
