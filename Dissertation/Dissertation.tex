@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%% Updated by MR March 2007 %%%%%%%%%%%%%%%%
 \documentclass[12pt]{article}
 \usepackage{a4wide}
-\usepackage{graphics}       % Graphics commands
+\usepackage{graphicx}       % Graphics commands
 
 
 
@@ -194,9 +194,15 @@ A typical programming function can be modelled as a box with two ports: a ``call
 Once a function call returns, it is never re-entered.
 In Prolog, however, a predicate may find zero, one, or many answers to a call. 
 If there is no solution, then control leaves through a ``fail'' port, and enters an earlier predicate's ``redo'' port.
-A Prolog predicate is therefore viewed as a procedure with four ports: two ways in which control can be passed to the predicate, and two ways in which it can leave.
+A Prolog predicate is therefore viewed as a procedure with four ports: two ways in which control can be passed to the predicate, and two ways in which it can leave, as illustrated in the diagram below.
 This is called the Byrd box model.
 A deeper specification of this model is given by Jahier et al. \cite{byrd00}
+
+\vspace{30px}
+
+\includegraphics[scale=0.195]{Byrd.png}
+
+\vspace{20px}
 
 \subsection{The WAM}
 
