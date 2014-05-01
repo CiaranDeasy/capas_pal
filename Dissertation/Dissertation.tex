@@ -264,6 +264,37 @@ To address this, I spent a portion of my preparation time studying ``ML for the 
 The was no strong motivation to favour any particular variant of ML over another.
 I chose Standard ML of New Jersey (SML/NJ) because of an informal impression that it was the most frequently referenced variant in the literature I encountered.
 
+\subsection*{Development Planning}
+
+\subsubsection*{The five project components}
+
+Given my knowledge of compiling principles, and of the Prolog language, I knew the outline of the software to be developed would have five quite well-defined components.
+
+\begin{itemize}
+\item The lexer, which transforms an input Prolog source file into a token stream.
+\item The parser, which transforms the token stream into a concrete syntax tree.
+\item The unification algorithm, which takes as input two terms to unify and the existing variable bindings, and outputs the new set of variable bindings after the unification, or indicates that unification failed.
+\item The interpreter, which takes a concrete syntax tree containing queries and clauses, and runs the queries against the clauses, outputting success or failure as appropriate.
+\item The compiler, which takes a concrete syntax tree and outputs an ML source file which, when itself run, runs the queries against the clauses, outputting success or failure.
+\end{itemize}
+
+Once the datatypes to be used were specified, these components could be developed relatively independently.
+
+\subsubsection*{The sixth helper component}
+
+Generally in software engineering, it is best to tackle the most challenging aspects early. 
+I identified the unification algorithm and interpreter logic as the key areas that needed to be developed early. 
+It would not be easy to test these without a working front-end, so to facilitate this, I wanted to put together a ``quick and dirty'' lexer-parser that would give me parsed programs to use as test cases.
+
+The Prolog ISO standard includes predicates for reading and writing Prolog terms. 
+I reasoned that if I were to write a Prolog program that read in another Prolog source file and wrote out the ML datatype for that program, I would effectively get a working lexer and parser for relatively little development effort. 
+
+This gave rise to a sixth component to be developed, although it wasn't a part of the final software.
+
+\begin{itemize}
+\item The Prolog lexer/parser, which takes as input a Prolog source file and outputs a source ML file containing the concrete syntax tree.
+\end{itemize}
+
 \newpage
 
 \section{Implementation}
@@ -352,21 +383,14 @@ The \verb|Query| type contains a list of \verb|term|s, corresponding directly to
 
 \subsection{Prolog Lexer/Parser}
 
-Generally in software engineering, it is best to tackle the most challenging aspects early. 
-When starting the project, I identified the unification algorithm and interpreter logic as the key areas that needed to be developed early. 
-To facilitate this, I wanted to put together a ``quick and dirty'' front-end that would give me parsed programs to use as test cases.
-
-The Prolog ISO standard includes predicates for reading and writing Prolog terms. 
-I reasoned that if I were to write a Prolog program that read in another Prolog source file and wrote out the ML datatype for that program, I would effectively get a working lexer and parser for relatively little development effort. 
-
 The implementation was conceptually simple. 
 The \verb|read| predicate was called to read in clauses and queries from the source file. 
 These inputs were successively syntactically split up into terms and then into individual atoms, and these were printed to an output file in the appropriate format for the ML datatype I described in \S3.2 above.
 
 The development of the code was straightforward, but less so than I expected. 
-Given that the final lexer and parser, to be discussed in the sections which follow, were not very much more complicated to write, in hindsight it would actually have been better to just write those up-front. 
+Given that the final lexer and parser, to be discussed in the sections which follow, were not very much more complicated to write, there is a solid argument to be made that they should have been done first.
 Work on the important areas would have started a couple of weeks later, but I would have saved time overall.
-Nonetheless, the approach I took was still successful and with about a week's worth of development effort, I had a working front-end.
+Nonetheless, the approach I took was still successful at minimising risk, as with about a week's worth of development effort, I had a working front-end.
 
 \subsection{Lexer}
 
