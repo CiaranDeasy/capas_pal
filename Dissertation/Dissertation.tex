@@ -92,12 +92,12 @@ Date %TODO
 \subsection{Project Overview}
 
 The purpose of this project was to produce two implementations of the Prolog programming language, written in ML. 
-The first implementation was an interpreter.
-It would take as input a source file containing Prolog program clauses and queries, and for each query, run it against the program clauses. 
-It would output whether the query succeeded, and if it did, the bindings assigned to query variables.
-The second implementation was a compiler, taking the same input. 
-This would output an ML source file which, when itself compiled and run, would give the same output as the interpreter.
-The internal implementation was to use continuation-passing style, a technique that has been previously used to good effect to implement backtracking algorithms, with the aim of deciding whether this was a useful and intuitive way of implementing the Prolog language. 
+The first implementation is an interpreter.
+It takes as input a source file containing Prolog program clauses and queries, and for each query, runs it against the program clauses. 
+It outputs whether the query succeeded, and if it did, the bindings assigned to query variables.
+The second implementation is a compiler, taking the same input. 
+This outputs an ML source file which, when itself compiled and run, gives the same output as the interpreter.
+The internal implementation was written using continuation-passing style, a technique that has been previously used to good effect to implement backtracking algorithms, with the aim of deciding whether this is a useful and intuitive way of implementing the Prolog language. 
 The project also sought to investigate the potential performance gains of pre-compiling a Prolog program, compared with simply interpreting it.
 
 \subsection{Prolog}
@@ -628,7 +628,10 @@ When eliminating \verb|A|, \verb|B = A| is deleted as part of the normal algorit
 We then want to substituted \verb|A = a(A)| into \verb|B = a(A)|. 
 The former will be detected as an occurs-check case, and the substitution will be changed so that we are substituting \verb|A = B| into \verb|B = a(A)|, which gives \verb|B = a(B)| as we would like.
 
-I previously stated that standard Prolog implementations omit the occurs check purely for efficiency, allowing self-referential bindings. My implementation must perform the occurs-check to get sensible substitution behaviour, so the reader may justifiably want to know why I allow these bindings when I'm already paying the performance penalty of detecting them. Indeed, there is an argument in favour of disallowing these bindings to more closely match the typical logician's view. However, I have decided that it is more useful to conform to the behaviour of the most prominent Prolog implementations, whereby these bindings are allowed in general and only disallowed if the programmer invokes the \verb|unify_with_occurs_check| predicate explicitly. 
+I previously stated that standard Prolog implementations omit the occurs check purely for efficiency, allowing self-referential bindings.
+My implementation must perform the occurs-check to get sensible substitution behaviour, so the reader may justifiably want to know why I allow these bindings when I'm already paying the performance penalty of detecting them. 
+Indeed, there is an argument in favour of disallowing these bindings to more closely match the typical logician's view. 
+However, I have decided that it is more useful to conform to the behaviour of the most prominent Prolog implementations, whereby these bindings are allowed in general and only disallowed if the programmer invokes the \verb|unify_with_occurs_check| predicate explicitly. 
 
 \subsection{Other Features}
 
