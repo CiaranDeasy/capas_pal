@@ -264,9 +264,9 @@ To address this, I spent a portion of my preparation time studying ``ML for the 
 The was no strong motivation to favour any particular variant of ML over another.
 I chose Standard ML of New Jersey (SML/NJ) because of an informal impression that it was the most frequently referenced variant in the literature I encountered.
 
-\subsection*{Development Planning}
+\subsection{Development Planning}
 
-\subsubsection*{The five project components}
+\subsubsection{The five project components}
 
 Given my knowledge of compiling principles, and of the Prolog language, I knew the outline of the software to be developed would have five quite well-defined components.
 
@@ -280,7 +280,7 @@ Given my knowledge of compiling principles, and of the Prolog language, I knew t
 
 Once the datatypes to be used were specified, these components could be developed relatively independently.
 
-\subsubsection*{The sixth helper component}
+\subsubsection{The sixth helper component}
 
 Generally in software engineering, it is best to tackle the most challenging aspects early. 
 I identified the unification algorithm and interpreter logic as the key areas that needed to be developed early. 
@@ -294,12 +294,6 @@ This gave rise to a sixth component to be developed, although it wasn't a part o
 \begin{itemize}
 \item The Prolog lexer/parser, which takes as input a Prolog source file and outputs a source ML file containing the concrete syntax tree.
 \end{itemize}
-
-\newpage
-
-\section{Implementation}
-
-% Implementation: 4700 words
 
 \subsection{Unit Testing}
 
@@ -320,6 +314,12 @@ A set of test cases is simply a function consisting of calls to \verb|checkResul
 
 It was important, of course, that the unit tester be completely correct so that test failures would be properly detected. 
 To ensure this, I had the code for the unit tester code-reviewed by a fellow Part II student.
+
+\newpage
+
+\section{Implementation}
+
+% Implementation: 4700 words
 
 \subsection{Datatypes}
 
