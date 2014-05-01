@@ -140,7 +140,7 @@ Syntactically, it is written as \verb|:- QueryTerm|$_1$\verb|, ..., QueryTerm|$_
 \subsubsection{Unification}
 
 The most important operation in Prolog is unification of terms. 
-Two atoms unify if they are equal. 
+Two instantiated atoms unify if they are equal. 
 A variable can be made to unify with any other term by binding it to that term. 
 Two compound terms unify if they have the same functor symbol and the same arity, and each $i$th argument in one term unifies with the corresponding $i$th argument in the other term. 
 Performing unification in Prolog involves finding a consistent set of variable bindings such that two input terms unify successfully, or determining that no such set exists. 
@@ -161,7 +161,7 @@ If there is no point to backtrack to, then query execution is said to have faile
 
 \subsubsection{Cut}
 
-Prolog's cut operator, written `\verb|!|', is a special term which clears existing backtracking points.
+Prolog's cut operator, written `\verb|!|', is a special term which clears certain existing backtracking points.
 When it is reached during execution of the body terms in a clause, we are no longer allowed to backtrack to the execution of body terms that appear before it in the clause. 
 We are also no longer allowed to try another clause for the current execution of the current term. 
 Failure must backtrack to an earlier term's execution.
@@ -222,15 +222,15 @@ In particular, I will describe in \S2.1 how the use of continuation-passing styl
 The success criterion for the project is succinctly described as an implementation of ``pure'' Prolog. 
 However, pure Prolog is not an entirely well-defined delineation, so before commencing work on the project, I needed to expressly define pure Prolog to clarify the goals of the implementations.
 
-Pure Prolog includes Horn clauses of the syntactic form \verb|Head :- Body|, where \verb|Head| is a positive literal \verb|h| and \verb|Body| is a comma-separated list of positive literals \verb|b_1, ..., b_n|. 
-It also includes query terms of the syntactic form \verb|:- q_1, ..., q_n|.
+Pure Prolog includes Horn clauses of the syntactic form \verb|Head :- Body.|, where \verb|Head| is a positive literal \verb|h| and \verb|Body| is a comma-separated list of positive literals \verb|b_1, ..., b_n| $(\verb|n| > 0)$. 
+It also includes query terms of the syntactic form \verb|:- q_1, ..., q_n.| $(\verb|n| > 0)$.
 
 Pure Prolog does not include any built-in predicates, such as \verb|atomic/1|. 
 It also excludes arithmetic infix operators like \verb|+| and \verb|-|, and the \verb|is| keyword. 
 It does not include the cut operator \verb|!|.
 
 The final project was extended to include several of these elements, including arithmetic evaluation, the cut operator, and a selection of built-in predicates.
-However, the implementations are not an exhaustive realisation of the standard Prolog language, nor were they intended to be.
+However, the implementations are not an exhaustive realisation of the full standard Prolog language, nor were they intended to be.
 
 \subsection{Programming in Continuation-Passing Style}
 
@@ -268,8 +268,6 @@ I chose Standard ML of New Jersey (SML/NJ) because of an informal impression tha
 
 % Implementation: 4700 words
 
-Implementation took place over a span of around 14 weeks, starting in the second week of December and finishing in mid-March. 
-
 \subsection{Unit Testing}
 
 Being a relatively little-used language, particularly for building substantial pieces of software, the libraries available for ML are quite limited. 
@@ -292,22 +290,24 @@ To ensure this, I had the code for the unit tester code-reviewed by a fellow Par
 
 \subsection{Datatypes}
 
-For the implementations, a hierarchy of datatypes were needed to represent Prolog programs, as well as datatypes to represent the interpreter's and compiler's internal state. 
+For the implementations, a hierarchy of datatypes were needed to represent Prolog programs, as well as datatypes to represent the interpreter's and compiler's internal state. The details of these datatypes are discussed below.
 
 \subsubsection{Lexer tokens}
 
 A \verb|token| datatype was needed to represent the token types that could be recognised during lexing, as will be described in \S3.4. 
-The \verb|INT|, \verb|FLOAT|, \verb|ATOM| and \verb|VARIABLE| tokens contain relevant values, while all other token types have no internal values. 
-The only remarkable aspect of this datatype is that, because the \verb|FLOAT| token needs to contain a value of type \verb|real| which isn't an equality type in ML, the \verb|token| datatype isn't an equality type. 
+The \verb|INT|, \verb|FLOAT|, \verb|ATOM| and \verb|VARIABLE| tokens appear as ML constructors and contain relevant values, while all other token types have no internal values. 
+The only noteworthy aspect of this datatype is that, because the \verb|FLOAT| token needs to contain a value of type \verb|real| which isn't an equality type in ML, the \verb|token| datatype isn't an equality type. 
 Thus, an explicit equality function had to be defined.
 
 \subsubsection{Terms}
 
 At the bottom level, we have four types of \verb|term|s. 
-A \verb|Term| is a typical instantiated Prolog term, consisting of a \verb|Functor| string and a list of \verb|term|s representing its arguments. 
+A \verb|Term|\footnotemark[1] is a typical instantiated Prolog term, consisting of a \verb|Functor| string and a list of \verb|term|s representing its arguments. 
 An atom is represented as a \verb|Term| with zero arguments.
 An \verb|IntTerm| and a \verb|FloatTerm| are terms which represent integers and floats respectively. 
 These must be distinct types from Prolog \verb|Term|s so that, say, the number 256 does not unify with the string ``256'', as these are distinct atoms in Prolog.
+
+\footnotetext[1]{\texttt{ProTerm}s are actually called \texttt{Term}s in the source code. However, to avoid confusion between \texttt{term}, which encompasses all four term types, and \texttt{Term}, which refers specifically to Prolog terms, I will refer to that latter as \texttt{ProTerm} throughout this document.}
 
 An important point is that \verb|IntTerm|s and \verb|FloatTerm|s must be non-negative. 
 Negative numbers are represented by wrapping a positive number in a unary `\verb|-|' term. 
@@ -339,7 +339,7 @@ During unification, there may be \verb|Term|-to-\verb|Term| bindings generated w
 
 \subsubsection{Prolog programs}
 
-The \verb|Clause| type contains a ``head'' \verb|term| and a list of ``body'' \verb|term|s, corresponding directly to the Prolog clause syntax.
+The \verb|Clause| type contains a ``head'' \verb|term| and a list of ``body'' \verb|term|s, corresponding directly to the Prolog clause syntax described in \S1.2.2.
 
 The \verb|Program| type contains a list of \verb|Clause|s, and represents a complete parsed Prolog program.
 
@@ -465,8 +465,8 @@ As with the lexer, the parser fails cleanly if the token stream cannot be parsed
 The unification algorithm takes two arguments. 
 The first is a \verb|Unifier| containing all of the variable bindings that have been made so far, which must be respected by the new unification. 
 The second is a \verb|Binding|, containing the two terms which are to be unified. 
-The output is a two-tuple containing a \verb|bool| and a \verb|Unifier|. 
-If the unification is successful, the \verb|bool| will be \verb|true| and the \verb|Unifier| will satisfy both the original input \verb|Unifier| and the new unification.
+The output is a pair containing a \verb|bool| and a \verb|Unifier|. 
+If the unification is successful, the \verb|bool| will be \verb|true| and the \verb|Unifier| will contain the \verb|Binding|s from the input \verb|Unifier|, the input \verb|Binding|, and any additional \verb|Binding|s required to make the input \verb|Binding| consistent.
 
 \subsubsection{Conditions for success}
 
@@ -539,7 +539,7 @@ The failure continuation also holds all previous predicates' progress in a simil
 %TODO Diagram
 
 It is in this way that we realise the goal described in \S1.4 of retaining information about previous predicates without the WAM's explicit environment stack, by leveraging continuations. 
-When a continuation is defined, ML implicitly creates a closure containing all relevant state.
+When a continuation is defined using ML's \verb|let ... in| syntax, ML implicitly creates a closure at run-time containing all relevant state for the continuation function.
 
 \subsection{Compiler}
 
@@ -557,12 +557,12 @@ However, rather than interpreting the tree, it outputs source ML code to perform
 
 Every predicate in the input program is compiled to a function in the output program. 
 As a reminder, a predicate is a set of clauses with matching \verb|Functor| symbol and arity. 
-The individual clauses are compiled as pattern functions. 
+The individual clauses are compiled as pattern functions, described below. 
 The predicate function builds a chain of failure continuations that call each pattern function in turn, and then calls the first pattern function with this failure continuation and the arguments to the predicate.
 
 \subsubsection{Pattern Functions}
 
-A pattern function first unifies the input arguments with the relevant terms from the head of the clause that spawned it.
+A pattern function first unifies the input arguments with the relevant terms from the head of the clause from which it was created.
 If all of these unifications succeed, it builds a chain of success continuations which successively call the predicate functions corresponding to the body terms of the original clause, with the appropriate arguments.
 
 In this way, we have eliminated the linear search through the program clauses, replacing it with direct function calls that branch straight to the useful clauses for the predicate being evaluated.
@@ -576,7 +576,7 @@ Finally, an \verb|execute()| function is added which calls the query functions i
 
 \subsection{Variable Substitutions}
 
-In \S1.2.1, I described how when a variable is bound, the term to which it is bound replaces all occurrences of that variable. 
+In \S1.2.1, I described how when a variable is bound, the term to which it is bound logically replaces all occurrences of that variable. 
 Therefore, at some point during or after the execution of a query, the instantiation must be substituted for all occurrences of the variable. 
 For example, if we had the bindings \verb|A = a(B)| and \verb|B = b|, and \verb|A| was a query variable, we would want to return \verb|A = a(b)|.
 
@@ -616,7 +616,7 @@ For this reason, we still have to perform the end-of-execution substitution pass
 
 \subsubsection{Occurs Check}
 
-Substitution gets messy when a variable violates the occurs check, which I described in \S1.2.5. 
+Substitution gets messy when a variable violates the occurs check, which I described in \S1.2.7. 
 When a substitution is to be made, the source binding is checked to see whether the instantiation contains the variable it is instantiating. 
 If so, then some fix-up code is executed which performs the substitution correctly. 
 This is most clearly explained by example.
@@ -639,7 +639,7 @@ Similarly, the compiler reads and increments the scope counter's value at the st
 \subsubsection{Cut}
 
 The semantics of Prolog's special cut operator `\verb|!|' were introduced back in \S1.2.6.
-It is implemented by introducing a ``global fail'' continuation. 
+It is implemented by introducing an additional ``global fail'' continuation. 
 At any given time, this represents the new backtracking point if we were to encounter the cut operator. 
 In the interpreter, the fail continuation given at the beginning of a predicate's execution is kept as the global fail continuation for that predicate's execution. 
 Similarly in the compiler, the fail continuation supplied as an argument to a predicate function is its global fail continuation, and is passed to each pattern function.
@@ -651,11 +651,13 @@ However, rather than passing forward the ``local'' failure continuation that it 
 The Prolog standard defines a number of built-in predicates which can be used by a program without being defined in the source file, such as \verb|append| for joining two lists or \verb|fail| which always fails. 
 While my implementations are by no means exhaustive with respect to supporting these predicates, I included a handful of them to increase the range of sample programs that I could test my implementations on.
 
-These predicates are implemented by hand in an ML source file that both the interpreter and the compiler refer to.
+These predicates are implemented in an ML source file that both the interpreter and the compiler refer to.
 The interpreter tests a predicate to be evaluated against this known list of built-ins before going through the program clauses, and calls the relevant function if it finds a match. 
 Similarly, the compiler will output a call to a built-in predicate rather than the usual predicate function if it detects a match.
 
-\subsubsection{The `is' keyword}
+Some of these predicates can be expressed in Prolog, in which case I wrote them in Prolog and the compiled output was included in the built-in predicates file. Other predicates required non-standard behaviour, such as the `\verb|is|' predicate described below, and I implemented these by hand.
+
+\subsubsection{The `is' Predicate}
 
 As outlined in \S1.2.8, Prolog implementations should not arithmetically evaluate a term unless explicitly instructed to by the presence of the \verb|is| predicate.
 This predicate is provided through the built-in predicates system.
@@ -694,7 +696,7 @@ To establish the correctness of my implementations, I put together several suite
 By comparing the output of the program when run by my implementations with the output when run with the existing publicly-available SWI-Prolog implementation, I could verify that there was no difference and that my implementations were behaving correctly.
 
 The first suite was a collection of programs that I wrote myself, which were specially targetted at testing specific behaviours of the software.
-These included straightforward programs to test basic functionality like simple unifications, as well as more obtuse program with unusual syntax or semantics that would test rare edge cases, like variable names containing numbers and underscores.
+These included straightforward programs to test basic functionality like simple unifications, as well as more unusual program with uncommon syntax or semantics that would test rare edge cases, like variable names containing numbers and underscores.
 Some of the programs contained intentional compile-time or run-time errors, so that I could ensure that these were also handled cleanly and correctly.
 
 I built up this suite of test programs over the course of implementation, expanding it as I added functionality. 
@@ -770,7 +772,7 @@ It was difficult to collect substantial amounts of data because of the availabil
 
 While the software implemented for the project was sufficient for its goals, there are aspects which could be improved or expanded if it were to be developed further.
 
-Firstly, as discussed in \S3.4 and \S3.5, neither the lexer nor the parser has detailed error reporting because it wasn't essential to the goals of the project and would take a very non-trivial amount of development effort to implement to a satisfactory standard. 
+Firstly, as discussed in \S3.4 and \S3.5, neither the lexer nor the parser has detailed error reporting because it wasn't essential to the goals of the project and would take a significant amount of development effort to implement to a satisfactory standard. 
 In a commercial compiler, if a syntactic error arose which prevented successful lexing or parsing of the input source file, the compiler would report exactly where in the source file the problem arose, and what the problem was.
 
 Secondly, the current implementations do not support the use of infix operators in prefix notation. 
@@ -787,7 +789,7 @@ The current software only provides support for a small subset of these.
 
 \section{Conclusion}
 
-Both success criteria for the project were met. Both an interpreter for Prolog programs and a source-to-source compiler from Prolog to ML were written and shown to be correct with a high degree of confidence, through extensive testing. Continuations were found to be a concise and powerful way to express the backtracking behaviour of Prolog. Pre-compilation of a Prolog source program to ML was shown to give visible performance improvements compared to interpreting. The project work proceeded in a steady, structured manner and reached a successful result. 
+Both success criteria for the project were met. An interpreter for Prolog programs and a source-to-source compiler from Prolog to ML were written and shown to be correct with a high degree of confidence, through extensive testing. Continuations were found to be a concise and powerful way to express the backtracking behaviour of Prolog. Pre-compilation of a Prolog source program to ML was shown to give significant performance improvements compared to interpreting. The project work proceeded in a steady, structured manner and reached a successful result. 
 
 \begin{thebibliography}{9}
 
