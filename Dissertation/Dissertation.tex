@@ -1,6 +1,9 @@
 %%%%%%%%%%%%%%% Updated by MR March 2007 %%%%%%%%%%%%%%%%
 \documentclass[12pt]{article}
 \usepackage{a4wide}
+\usepackage{graphics}       % Graphics commands
+
+
 
 \newcommand{\al}{$<$}
 \newcommand{\ar}{$>$}
@@ -370,8 +373,24 @@ Prolog is syntactically a very lightweight language, particularly when restricte
 To tokenise the input, there are just 11 distinct token types required in the pure case, or 23 in the final version that I implemented. 
 Tokenising can be done for Prolog using standard lexing techniques: a type-3 Chomsky grammar, described by a finite state machine. 
 
-%TODO
-[include diagram of state machine]
+\newpage
+
+%\begin{figure}[H]
+\vspace{-50px}
+\includegraphics{lex65.png}%[scale=1]{lex.png}
+%\end{figure}
+
+\vspace{-10px}
+\begin{itemize}
+\item \verb|0-9| means any digit.\vspace{-4px}
+\item \verb|A-Z| means any uppercase letter.\vspace{-4px}
+\item \verb|a-z| means any lowercase letter, excluding those mentioned on another arc.\vspace{-4px}
+\item \verb|u/s| means underscore.\vspace{-4px}
+\item \verb|Spec| means the set of special characters $\{$\verb/:-.,[]|+*\<>=!`"/$\}$.\vspace{-4px}
+\item \verb|Whs| means whitespace: tabs, newlines, spaces.
+\end{itemize}
+
+\newpage
 
 For the most part, the state machine moves between an ``idle'' state and the state corresponding to a token being lexed. 
 We move to the appropriate state based on the first character lexed. 
@@ -400,29 +419,30 @@ The grammar I implemented is as follows:
 
 \newpage
 
-%TODO Update
 \texttt{
 S $\rightarrow$ Lines EOF\\
 Lines $\rightarrow$ Line DOT MoreLines\\
 MoreLines $\rightarrow$ $\epsilon$ | Lines\\
 Line $\rightarrow$ Query | Clause\\
 Query $\rightarrow$ COLONMINUS TermList\\
-Clause $\rightarrow$ Term COLONMINUS Body\\
-Body $\rightarrow$ $\epsilon$ | TermList\\
+Clause $\rightarrow$ Term Body\\
+Body $\rightarrow$ $\epsilon$ | COLONMINUS TermList\\
 TermList $\rightarrow$ Term IsTerm MoreTerms\\
-IsTerm $\rightarrow$ $\epsilon$ | IS Term IsTerm\\
+IsTerm $\rightarrow$ $\epsilon$ | IS Term IsTerm | EQUALS Term IsTerm\\
 MoreTerms $\rightarrow$ $\epsilon$ | COMMA TermList\\
 Term $\rightarrow$ ATOM Args | LEFTSQ TermList MoreList | Arith MoreArith\\
+.\hspace{20px} | NegArith MoreArith \\
 Args $\rightarrow$ $\epsilon$ | LEFTPAREN TermList RIGHTPAREN\\
 MoreList $\rightarrow$ RIGHTSQ | PIPE Tail RIGHTSQ\\
 Tail $\rightarrow$ VARIABLE | LEFTSQ TermList MoreList\\
 Arith $\rightarrow$ ArithTerm MoreArithTerms\\
+NegArith $\rightarrow$ NegArithTerm MoreArithTerms\\
 MoreArith $\rightarrow$ GREATER ArithTerm MoreArithTerms\\
 .\hspace{50px} | LESS ArithTerm MoreArithTerms \\
-.\hspace{50px} | EQUALS ArithTerm MoreArithTerms\\
 ArithTerm $\rightarrow$ Factor MoreFactors\\
+NegArithTerm $\rightarrow$ MINUS Factor MoreFactors\\
 MoreArithTerms $\rightarrow$ $\epsilon$ | PLUS Arith | MINUS Arith\\
-Factor $\rightarrow$ INT | FLOAT | LEFTPAREN Arith RIGHTPAREN | VARIABLE\\
+Factor $\rightarrow$ INT | FLOAT | LEFTPAREN Arith RIGHTPAREN | VARIABLE | CUT\\
 MoreFactors $\rightarrow$ MULT ArithTerm | DIV ArithTerm | MOD ArithTerm
 }
 
