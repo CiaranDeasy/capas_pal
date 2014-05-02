@@ -498,9 +498,17 @@ It then implements that rule by going left-to-right through the symbols on the r
 
 A full treatment of recursive-descent parsing methods is given by Aho et al. \cite{compiler}
 
-The parser for pure Prolog could be implemented by ``pure'' recursive descent. 
+The rules above allow the parser to trace out the abstract syntax tree for a given token stream.
+As this tree is being traced, the parser builds a concrete syntax tree representing the program, consisting of the datatypes described in \S3.1.
+A given function of the recursive descent parser therefore, in addition to consuming tokens from the stream, returns the concrete sub-tree corresponding to the abstract sub-tree it parsed.
+The top \verb|S| function will return the complete parsed program, which is suitable as input to the interpreting or compilation phase.
+
+Most of these are intuitive.
+For example, the \verb|Head| and \verb|Body| rules' functions will respectively return a \verb|term| and a list of \verb|term|s, and the \verb|Clause| rule's function will return a \verb|Clause| datastructure containing them.
+
+The parser for pure Prolog could be implemented by ``pure'' recursive descent, following the exact scheme described above.
 However, when arithmetic was added, it was not possible to write grammar rules without left recursion that would give the desired associativity. 
-Thus, it was necessary to write non-standard code to implement the grammar correctly: specifically, when parsing arithmetic terms, the earlier terms have to be ``passed along'' as arguments to later recursive calls to build the tree correctly.
+Thus, it was necessary to write non-standard code to implement the grammar correctly: specifically, when parsing arithmetic terms, the earlier terms have to be ``passed along'' as arguments to later recursive calls to build the concrete tree correctly.
 
 As with the lexer, the parser fails cleanly if the token stream cannot be parsed into a valid abstract syntax tree, but it doesn't give detailed error information, because doing so wasn't essential to the goals of the project.
 
