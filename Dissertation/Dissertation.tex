@@ -573,27 +573,26 @@ Doing so produces no transitive \verb|Binding|s, so the \verb|Binding| is simply
 
 The input to the interpreter is a \verb|Program| and a list of \verb|Query|s. 
 For each query, the aim is to find a \verb|Unifier| that unifies each term in the query with the head of some clause in the program. 
-If we visualise a queue of terms that need to be unified with a clause, then the query terms are the initial contents of that queue. 
-If the clause with which a term is unified has a body, then the terms in the body also have to be unified with a clause in the program.
-The unified term is therefore removed from the queue and the body terms are added to the front of the queue.
+If we visualise a stack of terms that need to be unified with a clause, the ``to-execute'' stack, then the query terms are the initial contents of that stack. 
+Additionally, we can consider the terms already executed as another stack, the ``backtracking stack'', to which we push newly-executed terms to be popped in the event that we need to backtrack.
 
-%TODO Diagram of queue, unification, expansion
+If the clause with which a term is unified has a body, then the terms in the body also have to be executed.
+The body terms are pushed to the top of the to-execute stack.
 
-At a given step of execution, there is a term at the front of the queue which must be satisfied, and a list of clauses with which to try to unify it. 
+\includegraphics[scale=0.48]{interpreter.png}
+
+At a given step of execution, there is a currently-executing term which must be satisfied, and a list of clauses with which to try to unify it. 
 Execution proceeds by taking a clause off the list and attempting the unification. 
 There are success and failure continuation functions, which are called based on the outcome of the unification.
-The success continuation is the execution of the rest of the terms in the queue. The failure continuation takes another clause from the list, or if the list is empty, backtracks to a previously completed queue item.
-
-%TODO Diagram of continuations
+The success continuation is the execution of the rest of the terms in the to-execute stack. The failure continuation takes another clause from the list, or if the list is empty, backtracks to a previously completed queue item.
 
 The success continuation takes two arguments: the \verb|Unifier| containing all \verb|Binding|s made so far, and the caller's failure continuation. 
 If the next predicate has to backtrack, it can go back to the previous predicate via this failure continuation, and will be at the same position in the clause list as when it left. 
 The failure continuation also holds all previous predicates' progress in a similar manner.
 
-%TODO Diagram
-
-It is in this way that we realise the goal described in \S1.4 of retaining information about previous predicates without the WAM's explicit environment stack, by leveraging continuations. 
-When a continuation is defined using ML's \verb|let ... in| syntax, ML implicitly creates a closure at run-time containing all relevant state for the continuation function.
+It is in this way that we realise the goal described in \S1.4 of retaining information about previous predicates by leveraging continuations.
+The WAM explicitly maintains the two stacks and has code to manipulate them to maintain and retrieve terms' execution environments. 
+In this interpreter however, when a continuation is defined using ML's \verb|let ... in| syntax, ML implicitly creates a closure at run-time containing all relevant state for the continuation function.
 
 \subsection{Compiler}
 
