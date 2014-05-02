@@ -335,7 +335,10 @@ For the implementations, a hierarchy of datatypes were needed to represent Prolo
 
 A \verb|token| datatype was needed to represent the token types that could be recognised during lexing, as will be described in \S3.4. 
 The \verb|INT|, \verb|FLOAT|, \verb|ATOM| and \verb|VARIABLE| tokens appear as ML constructors and contain relevant values, while all other token types have no internal values. 
-The only noteworthy aspect of this datatype is that, because the \verb|FLOAT| token needs to contain a value of type \verb|real| which isn't an equality type in ML, the \verb|token| datatype isn't an equality type. 
+
+\verb/datatype token = ATOM of string | VARIABLE of string | .../
+
+The only particularly noteworthy aspect of this datatype is that, because the \verb|FLOAT| token needs to contain a value of type \verb|real| which isn't an equality type in ML, the \verb|token| datatype isn't an equality type. 
 Thus, an explicit equality function had to be defined.
 
 \subsubsection{Terms}
@@ -384,8 +387,11 @@ The \verb|Program| type contains a list of \verb|Clause|s, and represents a comp
 
 The \verb|Query| type contains a list of \verb|term|s, corresponding directly to a Prolog query.
 
-%TODO
-[diagram to illustrate Prolog program datatypes hierarchy]
+A diagram of the datatype hierarchies is given below.
+
+\vspace{20px}
+
+\includegraphics[scale=0.33]{Datatypes.png}
 
 \subsection{Prolog Lexer/Parser}
 
