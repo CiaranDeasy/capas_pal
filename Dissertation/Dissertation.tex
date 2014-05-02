@@ -81,7 +81,7 @@ Date %TODO
 \vfil
 \eject
 
-\tableofcontents 
+%\tableofcontents 
 
 \newpage
 
@@ -731,7 +731,8 @@ However, rather than passing forward the ``local'' failure continuation that it 
 
 \subsubsection{Built-in Predicates}
 
-The Prolog standard defines a number of built-in predicates which can be used by a program without being defined in the source file, such as \verb|append| for joining two lists or \verb|fail| which always fails. 
+Prolog implementations a number of built-in predicates which can be used by a program without being defined in the source file, such as \verb|append| for joining two lists or \verb|fail| which always fails. 
+Some of these are defined in the ISO standard, while others are simply very common utility predicates.
 While my implementations are by no means exhaustive with respect to supporting these predicates, I included a handful of them to increase the range of sample programs that I could test my implementations on.
 
 These predicates are implemented in an ML source file that both the interpreter and the compiler refer to.
@@ -868,10 +869,9 @@ For example, the valid term \verb|+(1, 2)|, equivalent to \verb|1 + 2|, is not p
 The grammar would have to be altered to handle this.
 
 Thirdly, the number of built-in predicates could be expanded significantly. 
-The ISO standard for Prolog, ISO/IEC 13211-1, describes a large selection of built-in predicates which are required to be supported by any conforming implementation. 
+The ISO standard for Prolog, ISO/IEC 13211-1, describes a selection of about 70 built-in predicates which are required to be supported by any conforming implementation. 
 The current software only provides support for a small subset of these.
-
-%100-line interpreter shows effectiveness of continuations
+Additionally, there are various commonly-used predicates implicitly defined in leading implementations, which could be added.
 
 \newpage
 
