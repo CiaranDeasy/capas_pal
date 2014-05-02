@@ -727,15 +727,16 @@ Recall that scope \verb|`1'| is reserved for query variables.
 When the interpreter tries to unify the current predicate with a program clause, it first sets the scope of all variables in that clause to the value of the scope counter and increments the counter. 
 Similarly, the compiler reads and increments the scope counter's value at the start of a pattern function and uses it for variables in that pattern.
 
-\subsubsection{Cut}
+\subsubsection{Wildcards}
 
-The semantics of Prolog's special cut operator `\verb|!|' were introduced back in \S1.2.6.
-It is implemented by introducing an additional ``global fail'' continuation. 
-At any given time, this represents the new backtracking point if we were to encounter the cut operator. 
-In the interpreter, the fail continuation given at the beginning of a predicate's execution is kept as the global fail continuation for that predicate's execution. 
-Similarly in the compiler, the fail continuation supplied as an argument to a predicate function is its global fail continuation, and is passed to each pattern function.
-If a cut term is encountered, then it calls the success continuation to evaluate the next term in the clause.
-However, rather than passing forward the ``local'' failure continuation that it was given, it passes the global fail continuation, which gives exactly the desired behaviour.
+Prolog allows the use of ``wildcards'', indicated by an underscore character `\verb|_|', which are effectively anonymous variables. 
+Typically, they are used in the head of a clause to indicate ``don't-care'' arguments. 
+
+These are implemented in the lexer.
+When an underscore character is seen while not parsing a token (ie: in the Idle state), a \verb|VARIABLE| token is output. 
+It is uniquely named by reading and incrementing a counter, similar to the scoping described above.
+An example variable name might be `\verb|__1234|'.
+This will parse correctly, and the uniquely-named variable will not relate to any other variables, as is the desired semantics.
 
 \subsubsection{Built-in Predicates}
 
@@ -747,7 +748,17 @@ These predicates are implemented in an ML source file that both the interpreter 
 The interpreter tests a predicate to be evaluated against this known list of built-ins before going through the program clauses, and calls the relevant function if it finds a match. 
 Similarly, the compiler will output a call to a built-in predicate rather than the usual predicate function if it detects a match.
 
-Some of these predicates can be expressed in Prolog, in which case I wrote them in Prolog and the compiled output was included in the built-in predicates file. Other predicates required non-standard behaviour, such as the `\verb|is|' predicate described below, and I implemented these by hand.
+Some of these predicates can be expressed in Prolog, in which case I wrote them in Prolog and the compiled output was included in the built-in predicates file. Other predicates required non-standard behaviour, such as the `\verb|cut|' and `\verb|is|' predicates described below, and I implemented these by hand.
+
+\subsubsection{Cut}
+
+The semantics of Prolog's special cut operator `\verb|!|' were introduced back in \S1.2.6.
+It is implemented by introducing an additional ``global fail'' continuation. 
+At any given time, this represents the new backtracking point if we were to encounter the cut operator. 
+In the interpreter, the fail continuation given at the beginning of a predicate's execution is kept as the global fail continuation for that predicate's execution. 
+Similarly in the compiler, the fail continuation supplied as an argument to a predicate function is its global fail continuation, and is passed to each pattern function.
+If a cut term is encountered, then it calls the success continuation to evaluate the next term in the clause.
+However, rather than passing forward the ``local'' failure continuation that it was given, it passes the global fail continuation, which gives exactly the desired behaviour.
 
 \subsubsection{The `is' Predicate}
 
@@ -758,7 +769,7 @@ Arithmetic expressions are parsed into a tree of Prolog terms at the parser stag
 When variables are encountered during evaluation, the current \verb|Unifier| is searched for a binding of that variable.
 If one is not found, an \verb|UninstantiatedVariable| exception is raised. 
 
-I mentioned when describing the \verb|term| datatype in \S3.2.2 that negative numbers are represented by a positive term with a unary minus parent.
+I mentioned when describing the \verb|term| datatype in \S3.1.2 that negative numbers are represented by a positive term with a unary minus parent.
 To understand the rationale, consider the expressions \verb|-X + 4|, \verb|Y + 4| and \verb|-9 + 4|. 
 Consider unifying any two of these directly, without the \verb|is| predicate. 
 If \verb|X| was bound to 9 and \verb|Y| to -9, we would expect success. 
