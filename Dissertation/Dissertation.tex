@@ -804,11 +804,16 @@ Having completed the implementation, I can say that CPS was a very successful st
 The code in the interpreter module of the software is relatively straightforward. 
 Execution of any given predicate is passed a success continuation and a failure continuation, and the appropriate continuation is called based on the outcome of the execution, as was described in detail in \S3.7. 
 These continuations are easy to define: a series of success continuations are defined by a call to a recursive function that executes each predicate of a clause in turn, and a failure continuation is defined as attempting to execute a predicate using the remaining clauses that haven't been tried yet. 
-These calls are already integral to interpreting Prolog code, and applying CPS simply means that we pass these calls around.
+These calls are already integral to interpreting Prolog code, and applying CPS simply means that we pass these calls around as arguments.
 
 The code for the interpreter module is concise, being about 150 lines long. 
 It did not take significant development time to write, and no subtle bugs were found in it later on when the programs being executed became more complex. 
 It was small, intuitive and maintainable.
+
+The benefit of continuations particularly shone through with the implementation of the cut operator, described in \S3.9.2.
+The actual development effort required was minimal.
+All we actually do is keep the appropriate post-cut fail continuation in scope, and replace the current fail continuation with it when cut is called.
+Compared with the environment stack manipulation that has to be done in the WAM-based model, this is both conceptually simpler and easier to code.
 
 \subsection{Implementation problems: the Binding representation}
 
