@@ -599,15 +599,51 @@ However, rather than interpreting the tree, it outputs source ML code to perform
 
 Every predicate in the input program is compiled to a function in the output program. 
 As a reminder, a predicate is a set of clauses with matching \verb|Functor| symbol and arity. 
-The individual clauses are compiled as pattern functions, described below. 
-The predicate function builds a chain of failure continuations that call each pattern function in turn, and then calls the first pattern function with this failure continuation and the arguments to the predicate.
+The \verb|Functor| symbol and arity are combined to give the predicate function a unique name: \verb|functor_arity|, eg: \verb|append_3|.
+
+The purpose of a predicate function is to act as a local top-level for predicate execution that tries each relevant clause. The individual clauses are compiled as pattern functions, described in the next section. 
+
+The predicate function builds a chain of continuations that call each pattern function in turn.
+That is, the $i$th continuation function is a call to the $i$th pattern function with the $(i+1)$th continuation function as a failure continuation.
+
+An example predicate function for the \verb|append/3| predicate is as follows:
+
+\begin{verbatim}
+fun append_3( uni, arg1, arg2, arg3, succ, fail ) = 
+let fun m1() = append_3_patt_1( uni, arg1, arg2, arg3, succ, m2, fail )
+    and m2() = append_3_patt_2( uni, arg1, arg2, arg3, succ, fail, fail ) 
+in
+        m1()
+end
+\end{verbatim}
 
 \subsubsection{Pattern Functions}
 
-A pattern function first unifies the input arguments with the relevant terms from the head of the clause from which it was created.
-If all of these unifications succeed, it builds a chain of success continuations which successively call the predicate functions corresponding to the body terms of the original clause, with the appropriate arguments.
+A pattern function represents attempting to unify a term being executed with a clause head, and then executing the body terms if that succeeds.
 
-In this way, we have eliminated the linear search through the program clauses, replacing it with direct function calls that branch straight to the useful clauses for the predicate being evaluated.
+The function first unifies the input arguments with the relevant terms from the head of the clause from which it was created.
+If all of these unifications succeed, it builds a chain of success continuations which successively call the predicate functions corresponding to the body terms of the original clause, with the appropriate arguments.
+``A chain of continuations'' means similar to the previous section above, whereby the $i$th continuation executes the $i$th body term with the $(i+1)$th continuation as a success continuation.
+
+The following abridged snippet shows an example of a pattern function's signature, unification of the second argument with the variable \verb|L1|, and a continuation which executes the body term \verb|append( T, L1, L2 )|.
+
+\begin{verbatim}
+fun append_3_patt_2( uni0, arg1, arg2, arg3, succ, fail, globalFail ) = 
+    ...
+    let val x as (succ2, uni2) = 
+            unify( uni1, Binding( arg2, Variable( "L1", scope ) ) )
+    in if( not(succ2) ) then fail() else
+    ...
+    and m1( uni, fail1 ) = append_3( uni, Variable( "T", scope ), 
+                                          Variable( "L1", scope ), 
+                                          Variable( "L2", scope ), 
+                                          m2, fail1 )
+    ...
+\end{verbatim}
+
+The \verb|globalFail| argument relates to the implementation of the cut operator, which will be explained in \S3.9.2.
+
+The full version of the compiled \verb|append/3| predicate, including the source Prolog clauses, predicate function and pattern functions, is given in the appendix.
 
 %TODO other optimisations?
 
