@@ -371,7 +371,7 @@ This representation corresponds closely to the \verb/[H|T]/ syntax of Prolog, as
 
 \subsubsection{Variable Bindings}
 
-The \verb|Binding| type contains two \verb|term|s, and indicates that they are equivalent. 
+The \verb|Binding| type contains two \verb|term|s, at least one of which is a \verb|Variable|, and indicates that they are equivalent. 
 It is defined to be symmetric, such that a \verb|Binding| $(A,B)$ and a \verb|Binding| $(B,A)$ are equal.
 
 The \verb|Unifier| type contains a list of \verb|Binding|s. 
