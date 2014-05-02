@@ -903,4 +903,66 @@ Both success criteria for the project were met. An interpreter for Prolog progra
 
 \end{thebibliography}
 
+\newpage
+
+\section*{Appendix}
+
+\subsection*{Compiled output}
+
+The Prolog code for the \verb|append/3| predicate is as follows:
+
+\begin{verbatim}
+append( [], L, L ).
+append( [H|T], L1, [H|L2] ) :- append( T, L1, L2 ).
+\end{verbatim}
+
+When given to the compiler, the output is as follows:
+
+\begin{verbatim}
+fun  append_3( uni, arg1, arg2, arg3, succ, fail ) = 
+    let fun m1() = append_3_patt_1( uni, arg1, arg2, arg3, succ, m2, fail )
+        and m2() = append_3_patt_2( uni, arg1, arg2, arg3, succ, fail, fail ) 
+    in
+        m1()
+    end
+
+and append_3_patt_1( uni0, arg1, arg2, arg3, succ, fail, globalFail ) = 
+    let val scope = getScope() in
+    let val x as (succ1, uni1) = 
+            unify( uni0, Binding( arg1, Term( Functor( "[]" ), [] ) ) )
+    in if( not(succ1) ) then fail() else
+    let val x as (succ2, uni2) = 
+            unify( uni1, Binding( arg2, Variable( "L", scope ) ) )
+    in if( not(succ2) ) then fail() else
+    let val x as (succ3, uni3) = 
+            unify( uni2, Binding( arg3, Variable( "L", scope ) ) )
+    in if( not(succ3) ) then fail() else
+        succ( cleanupScope( uni3, scope ), fail )
+    end end end end
+
+and append_3_patt_2( uni0, arg1, arg2, arg3, succ, fail, globalFail ) = 
+    let val scope = getScope() in
+    let val x as (succ1, uni1) = 
+            unify( uni0, Binding( arg1, Term( Functor( "." ), [ 
+                    Variable( "H", scope ), Variable( "T", scope ) ] ) ) )
+    in if( not(succ1) ) then fail() else
+    let val x as (succ2, uni2) = 
+            unify( uni1, Binding( arg2, Variable( "L1", scope ) ) )
+    in if( not(succ2) ) then fail() else
+    let val x as (succ3, uni3) = 
+            unify( uni2, Binding( arg3, Term( Functor( "." ), [ 
+                    Variable( "H", scope ), Variable( "L2", scope ) ] ) ) )
+    in if( not(succ3) ) then fail() else
+        let fun subSucc( uni, fail ) = 
+                    succ( cleanupScope( uni, scope ), fail )
+            and m1( uni, fail1 ) = append_3( uni, Variable( "T", scope ), 
+                                                  Variable( "L1", scope ), 
+                                                  Variable( "L2", scope ), 
+                                                  subSucc, fail1 ) in
+            m1( uni3, fail )
+        end
+    end end end end
+\end{verbatim}
+
+
 \end{document}
