@@ -219,6 +219,14 @@ This project does not follow the WAM's model.
 Rather, the focus is on leveraging ML's language features to achieve a cleaner, simpler and more intuitive implementation of Prolog. 
 In particular, I will describe in \S2.1 how the use of continuation-passing style removes the need for the WAM's environment stack by using ML's function closures to implicitly retain the required information.
 
+\subsection{Compiling to ML}
+
+When running a predicate through the interpreter, we will see that it has to search the head of every program clause for a potential unification. 
+Depending on the scale of the program, there could be dozens, hundreds or even thousands of clauses to search through, only a tiny number of which are even relevant to the predicate we are trying to evaluate.
+This could represent a significant and extremely common run-time overhead. 
+The ambition of the compiler is to eliminate this overhead to achieve a performance gain. 
+This is done by compiling the program clauses into ML functions, such that evaluating a clause requires simply calling the relevant function and branching directly to the relevant code, rather than doing a linear search through the clause list.
+
 \newpage
 
 \section{Preparation}
@@ -580,10 +588,6 @@ It is in this way that we realise the goal described in \S1.4 of retaining infor
 When a continuation is defined using ML's \verb|let ... in| syntax, ML implicitly creates a closure at run-time containing all relevant state for the continuation function.
 
 \subsection{Compiler}
-
-When running a predicate through the interpreter, it has to search the head of every program clause for a potential unification. 
-Depending on the scale of the program, there could be dozens, hundreds or even thousands of clauses to search through, only a tiny number of which are even relevant to the predicate we are trying to evaluate.
-This could represent a significant and extremely common run-time overhead. The ambition of the compiler is to eliminate this overhead to achieve a performance gain.
 
 \subsubsection{Overlap With Interpreter}
 
