@@ -341,10 +341,10 @@ Thus, an explicit equality function had to be defined.
 \subsubsection{Terms}
 
 At the bottom level, we have four types of \verb|term|s. 
-A \verb|Term|\footnotemark[1] is a typical instantiated Prolog term, consisting of a \verb|Functor| string and a list of \verb|term|s representing its arguments. 
-An atom is represented as a \verb|Term| with zero arguments.
+A \verb|ProTerm|\footnotemark[1] is a typical instantiated Prolog term, consisting of a \verb|Functor| string and a list of \verb|term|s representing its arguments. 
+An atom is represented as a \verb|ProTerm| with zero arguments.
 An \verb|IntTerm| and a \verb|FloatTerm| are terms which represent integers and floats respectively. 
-These must be distinct types from Prolog \verb|Term|s so that, say, the number 256 does not unify with the string ``256'', as these are distinct atoms in Prolog.
+These must be distinct types from Prolog \verb|ProTerm|s so that, say, the number 256 does not unify with the string ``256'', as these are distinct atoms in Prolog.
 
 \footnotetext[1]{\texttt{ProTerm}s are actually called \texttt{Term}s in the source code. However, to avoid confusion between \texttt{term}, which encompasses all four term types, and \texttt{Term}, which refers specifically to Prolog terms, I will refer to that latter as \texttt{ProTerm} throughout this document.}
 
@@ -360,10 +360,10 @@ When reporting a successful query, only the bindings of variables that appeared 
 Thus, by reserving scope `1' for query variables, all other bindings can be easily filtered out.
 
 A list is represented as a hierarchy of terms. 
-A list item is represented by a \verb|Term| whose \verb|Functor| symbol is the dot character `\verb|.|' and which has two arguments. 
+A list item is represented by a \verb|ProTerm| whose \verb|Functor| symbol is the dot character `\verb|.|' and which has two arguments. 
 The first argument is the term in that position in the list. 
 The second argument is the tail of the list, which could be either another list item, a variable, or an empty list.
-An empty list is represented by a \verb|Term| with \verb|Functor| symbol `\verb|[]|' and no arguments. 
+An empty list is represented by a \verb|ProTerm| with \verb|Functor| symbol `\verb|[]|' and no arguments. 
 This representation corresponds closely to the \verb/[H|T]/ syntax of Prolog, as described in \S1.2.1.
 
 \subsubsection{Variable Bindings}
@@ -374,7 +374,7 @@ It is defined to be symmetric, such that a \verb|Binding| $(A,B)$ and a \verb|Bi
 The \verb|Unifier| type contains a list of \verb|Binding|s. 
 It is returned by the unification algorithm, as discussed in \S3.6, to indicate the variable bindings which were made to unify two terms. 
 The ordering of the list has no semantic meaning.
-During unification, there may be \verb|Term|-to-\verb|Term| bindings generated when verifying consistency, but they aren't returned in the unification result because they contain no useful information.
+During unification, there may be \verb|ProTerm|-to-\verb|ProTerm| bindings generated when verifying consistency, but they aren't returned in the unification result because they contain no useful information.
 
 \subsubsection{Prolog programs}
 
@@ -512,7 +512,7 @@ Otherwise, we must call \verb|validateUnifier()| to check that the updated \verb
 This leaves three cases. 
 If both terms are \verb|IntTerm|s, or both terms are \verb|FloatTerm|s, unification succeeds if and only if they are equal, returning the same input \verb|Unifier| because no new \verb|Bindings| were made. 
 
-Finally, if both terms are Prolog \verb|Term|s, then unification succeeds if and only if the \verb|Functor|s are equal, the arities are equal, and the arguments are pairwise unifiable. 
+Finally, if both terms are Prolog \verb|ProTerm|s, then unification succeeds if and only if the \verb|Functor|s are equal, the arities are equal, and the arguments are pairwise unifiable. 
 Testing that the arguments are unifiable involves applying the unification function to each pair, with the output \verb|Unifier| from each being the input \verb|Unifier| to the next. 
 The final output \verb|Unifier| has already been passed through \verb|validateUnifier()| to test that it is consistent, so it is returned as a success.
 
@@ -779,7 +779,7 @@ In practice, correctly enforcing this was conceptually challenging.
 It presented a major hazard for subtle bugs to slip through. 
 
 When I changed my substitution algorithm to perform substitutions during execution, this produced further complications. 
-Great care was needed to efficiently eliminate \verb|Binding|s which were no longer useful after substitution: either because they became term-to-term bindings, or because they became duplicates of existing \verb|Binding|s. 
+Great care was needed to efficiently eliminate \verb|Binding|s which were no longer useful after substitution: either because they became \verb|ProTerm|-to-\verb|ProTerm| bindings, or because they became duplicates of existing \verb|Binding|s. 
 This was another area that needed significant development effort to fully debug to achieve an efficient implementation.
 
 Finally, the occurs check was difficult to handle with this scheme. 
