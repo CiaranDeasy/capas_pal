@@ -36,7 +36,7 @@ fun scopeClause( Clause( head, body ), scope ) =
    cut operator. *)
 fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
   | specialPredicate( FloatTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
-  | specialPredicate( Variable(i), _, _, notSpecial, _, _) = notSpecial()
+  | specialPredicate( Variable(i), _, _, notSpecial, _, _ ) = notSpecial()
   | specialPredicate( Term( Functor( f ), args ), 
             unifier, succ, notSpecial, localFail, globalFail ) = 
         if( ( f = "atomic" ) andalso ( List.length( args ) = 1 ) ) then
@@ -78,7 +78,14 @@ fun specialPredicate( IntTerm(i), _, _, notSpecial, _, _ ) = notSpecial()
    satisfiable by the (hardcoded) Prolog program, in a way that is consistent 
    with the input Unifier, then the first continuation is called with the 
    updated Unifier. If not, then the second continuation is called with unit. *)
-fun findUnifier( program, term, unifier, succ, localFail, globalFail ) = 
+    (* Special case for "not": flip the success and failure continuations! *)
+fun findUnifier( program, Term( Functor("not"), [arg] ), unifier, succ, localFail, globalFail ) = 
+    let fun newSucc( _, _ ) = localFail()
+        fun newFail() = succ( unifier, localFail )
+    in
+        findUnifier( program, arg, unifier, newSucc, newFail, newFail )
+    end
+  | findUnifier( program, term, unifier, succ, localFail, globalFail ) = 
     (* Takes a list of terms and finds a unifier that satisfies all of them. *)
     let fun findUnifiers( terms, unifier, scope, globalSucc, localFail, globalFail ) = 
             let fun worker( [], unifier, succ, localFail ) =
@@ -115,7 +122,8 @@ fun findUnifier( program, term, unifier, succ, localFail, globalFail ) =
         fun notSpecial() = worker( getClauses( program ) )
     in
         (* But first check if we're dealing with a special predicate. *)
-        specialPredicate(term, unifier, succ, notSpecial, localFail, globalFail)
+        specialPredicate( term, unifier, succ, notSpecial, localFail, 
+                globalFail )
     end;
     
 (* Takes a program, a query and two continuations. If the query is satisfiable 

@@ -246,7 +246,48 @@ and compilePattern( out, clause, pattNum ) =
                 worker( args, 1 )
             end
         fun outputBodyContinuations() = 
-            let fun worker( Term( Functor( f ), args )::terms, num ) = (
+            let fun worker( Term( Functor("not"), 
+                            [ Term( Functor( f ), args ) ] )::terms, num ) = (
+                        TextIO.output( out, "m" );
+                        TextIO.output( out, Int.toString( num ) );
+                        TextIO.output( out, "( uni, fail" );
+                        TextIO.output( out, Int.toString( num ) );
+                        TextIO.output( out, " ) = \n" );
+                        TextIO.output( out, "                " );
+                        TextIO.output( out, "let fun newSucc( _, _ ) = fail" );
+                        TextIO.output( out, Int.toString( num ) );
+                        TextIO.output( out, "()\n" );
+                        TextIO.output( out, "                    " );
+                        TextIO.output( out, "fun newFail() = " );
+                        if( num < ( List.length( body ) ) ) then (
+                            TextIO.output( out, "m" );
+                            TextIO.output( out, Int.toString( num+1 ) )
+                        )
+                        else (
+                            TextIO.output( out, "subSucc" )
+                        );
+                        TextIO.output( out, "( uni, fail" );
+                        TextIO.output( out, Int.toString( num ) );
+                        TextIO.output( out, " )\n" );
+                        TextIO.output( out, "                in\n" );
+                        TextIO.output( out, "                    " );
+                        outputPredicateCall( out, f, ( List.length( args ) ) );
+                        TextIO.output( out, "( uni, " );
+                        if( List.length( args ) > 0 ) then (
+                            outputTermListDatatypeFlat( out, args );
+                            TextIO.output( out, ", " )
+                        ) else ();
+                        TextIO.output( out, "newSucc, newFail )\n" );
+                        TextIO.output( out, "                end" );
+                        if( num < ( List.length( body ) ) ) then (
+                            TextIO.output( out, "\n            and " );
+                            worker( terms, num+1 )
+                        )
+                        else (
+                            TextIO.output( out, " in\n" )
+                        )
+                )
+                  | worker( Term( Functor( f ), args )::terms, num ) = (
                         if( ( f = "!" ) andalso List.length( args ) = 0 ) then 
                             outputBodyContinuationCut( num, terms ) 
                         else (
