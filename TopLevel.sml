@@ -33,11 +33,11 @@ fun interpret( filename ) =
 
 (* Single top-level function to compile a Prolog source file. *)
 fun compile( inFilename, outFilename ) = 
-    let val fileInStream = TextIO.openIn( filename )
+    let val fileInStream = TextIO.openIn( inFilename )
         val tokenStream = lex( fileInStream )
         val x = TextIO.closeIn( fileInStream )
         val parsed as ( program, queries ) = parseStart( tokenStream )
     in
         compileProgram( outFilename, program, queries )
-    end end;
+    end;
 
