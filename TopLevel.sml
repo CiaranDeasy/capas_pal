@@ -23,16 +23,20 @@ val _ = (
 
 (* Single top-level function to interpret a Prolog source file. *)
 fun interpret( filename ) = 
-    let val tokenStream = lex( TextIO.openIn( filename ) ) in
-    let val parsed = parseStart( tokenStream )
+    let val fileInStream = TextIO.openIn( filename )
+        val tokenStream = lex( fileInStream )
+        val x = TextIO.closeIn( fileInStream )
+        val parsed = parseStart( tokenStream )
     in
         executeQueries( parsed )
-    end end;
+    end;
 
 (* Single top-level function to compile a Prolog source file. *)
 fun compile( inFilename, outFilename ) = 
-    let val tokenStream = lex( TextIO.openIn( inFilename ) ) in
-    let val parsed as ( program, queries ) = parseStart( tokenStream )
+    let val fileInStream = TextIO.openIn( filename )
+        val tokenStream = lex( fileInStream )
+        val x = TextIO.closeIn( fileInStream )
+        val parsed as ( program, queries ) = parseStart( tokenStream )
     in
         compileProgram( outFilename, program, queries )
     end end;
