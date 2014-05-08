@@ -5,6 +5,8 @@
 
 \usepackage{float}			% Eliminate pesky floating figures
 
+\usepackage{amsmath}
+
 
 
 \newcommand{\al}{$<$}
@@ -44,8 +46,14 @@
 \vspace{0.3in}
 \centerline{\large Computer Science Tripos, Part II, 2014}
 \vspace{0.1in}
-\centerline{ ***** words} %TODO
+\centerline{ 9700 words}
 \vspace{0.25in}
+
+%Intro: 1726 words
+%Prep: 1233 words
+%Impl: 4997 words
+%Eval: 1660 words
+%Conc: 88 words
 
 {\bf Author:} Ciaran Deasy\\
 {\bf College:} Churchill College
@@ -776,16 +784,16 @@ When the interpreter tries to unify the current predicate with a program clause,
 Similarly, the compiler reads and increments the scope counter's value at the start of a pattern function and uses it for variables in that pattern.
 This can be seen in the compiled output in Appendix B.
 
-\subsubsection{Wildcards}
+%\subsubsection{Wildcards}
 
-Prolog allows the use of ``wildcards'', indicated by an underscore character `\verb|_|', which are effectively anonymous variables. 
-Typically, they are used in the head of a clause to indicate ``don't-care'' arguments. 
+%Prolog allows the use of ``wildcards'', indicated by an underscore character `\verb|_|', which are effectively anonymous variables. 
+%Typically, they are used in the head of a clause to indicate ``don't-care'' arguments. 
 
-These are implemented in the lexer.
-When an underscore character is seen while not parsing a token (ie: in the Idle state), a \verb|VARIABLE| token is output. 
-It is uniquely named by reading and incrementing a counter, similar to the scoping described above.
-An example variable name might be `\verb|__1234|'.
-This will parse correctly, and the uniquely-named variable will not relate to any other variables, as are the desired semantics.
+%These are implemented in the lexer.
+%When an underscore character is seen while not parsing a token (ie: in the Idle state), a \verb|VARIABLE| token is output. 
+%It is uniquely named by reading and incrementing a counter, similar to the scoping described above.
+%An example variable name might be `\verb|__1234|'.
+%This will parse correctly, and the uniquely-named variable will not relate to any other variables, as are the desired semantics.
 
 \subsubsection{Built-in Predicates}
 
@@ -936,7 +944,20 @@ A more interesting comparison, which I investigated more thoroughly, is the diff
 
 It was difficult to collect a substantial amount of data because of the availability of appropriate programs. For a speed analysis, it is necessary to have interesting programs with non-trivial running time. While there is a reasonably plentiful supply of simple Prolog snippets from various tutorials that can be used to test correctness, this was not the case for more elaborate programs. Prolog is a relatively little-used language, so the number of available real programs is correspondingly few. Furthermore, real programs are very likely to use advanced language features, and since my implementations are not complete, most of these real programs could not be run. Nonetheless, I was able to find a few appropriate programs for the comparison.
 
-[ Collect and display data showing the performance gains of the compiler over the interpreter ]
+\begin{figure}
+\includegraphics[scale=0.1]{Graph65.png}
+\caption{Performance results comparing the interpreter and compiler implementations.}
+\end{figure}
+
+Figure 6 gives a graphical representation of the running times of a number of programs when run through both implementations. The times exclude front-end processing (lexing, parsing, and compiling to output): only the actual query execution was included. I ran each program ten times and calculated the mean time.
+
+Most programs showed a small but consistent improvement in running time. I calculated the speedup for each program using the standard formula:
+
+\[ \text{Speedup} = \frac{\text{Old execution time}}{\text{New execution time}} \]
+
+From this, I determined that the average speedup for programs in my test suite was 1.023, or a 2.3\% improvement. 
+
+Interestingly, the \verb|Mergesort| program ran 9.8\% more slowly when compiled. This suggests that there may be some rarely-encountered inefficiency in the compiler that may slow down code compared to interpreting.
 
 \subsection{Future developments}
 
