@@ -1,0 +1,51 @@
+Bubblesort-35 interpreted: 8.410
+Bubblesort-35 compiled: 8.349
+Speedup: .73
+
+Bubblesort-60 interpreted: 38.030
+Bubblesort-60 compiled: 37.952
+Speedup: .21
+
+Cube-5 interpreted: 32.085
+Cube-5 compiled: 28.130
+Speedup: 14.06
+
+Cube-6 interpreted: 2.298
+Cube-6 compiled: 2.329
+Speedup: -1.33
+
+Factorialsort-9 interpreted: 7.643
+Factorialsort-9 compiled: 7.364
+Speedup: 3.7
+
+IsPrime-6 interpreted: 14.651
+IsPrime-6 compiled: 14.050
+Speedup: 4.28
+
+IsPrime-7 interpreted: 30.619
+IsPrime-7 compiled: 29.649
+Speedup: 3.27
+
+Knights-5 interpreted: 509.654
+Knights-5 compiled: 503.694
+Speedup: 1.18
+
+Mergesort-185 interpeted: 12.389
+Mergesort-185 compiled: 13.736
+Speedup: -9.81
+
+Nqueens-10 interpreted: 5.677
+Nqueens-10 compiled: 5.467
+Speedup: 3.84
+
+Nqueens-12 interpreted: 27.668
+Nqueens-12 compiled: 26.138
+Speedup: 5.85
+
+Totient-150 interpreted: 15.749
+Totient-150 compiled: 15.390
+Speedup: 2.33
+
+Totient-200 interpreted: 38.461
+Totient-200 compiled: 37.647
+Speedup: 2.16
