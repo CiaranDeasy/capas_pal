@@ -60,7 +60,7 @@ fun unitTestInterpreter() =
   ] 
   in ( 
   
-    UnitTester.printResultPoly "getTransitiveBinding 1" (
+(*    UnitTester.printResultPoly "getTransitiveBinding 1" (
       getTransitiveBinding( Binding( Variable("1",0), Variable("2",0) ),
         Binding( Variable("2",0), Variable("3",0) ) ) 
     ) 
@@ -470,7 +470,7 @@ fun unitTestInterpreter() =
         Variable("7",1)
       ] )
     )
-    eqClause;
+    eqClause;*)
     
     (* ------------------------------- *)
 
@@ -481,7 +481,8 @@ fun unitTestInterpreter() =
         Term( Functor( "green" ), [] ),
         Unifier([]),
         ( fn( x, y ) => eqUnifier( Unifier([]), x ) ),
-        ( fn () => false ) 
+        ( fn () => false ),
+        ( fn () => false )        
       )
     ) true;
     
@@ -492,6 +493,7 @@ fun unitTestInterpreter() =
         Term( Functor( "blue" ), [] ),
         Unifier([]),
         ( fn( x, y ) => false ), 
+        ( fn () => true ) , 
         ( fn () => true ) 
       )
     ) true;
@@ -512,6 +514,7 @@ fun unitTestInterpreter() =
             Variable("2",0), 
             Variable("3",0)
           ) ] ), x ) ) ), 
+        ( fn () => true ) , 
         ( fn () => true ) ) 
       ) true;
     
@@ -524,6 +527,7 @@ fun unitTestInterpreter() =
         Variable("1",0), 
         Term( Functor( "green" ), [] )
       ) ] ), x ) ) ), 
+      ( fn () => false ), 
       ( fn () => false ) )
     ) true;
     
@@ -548,6 +552,7 @@ fun unitTestInterpreter() =
           Term( Functor( "green" ), [] )
         ) ] ), x ) ) ), 
       (* k2 *)
+      ( fn () => false ), 
       ( fn () => false ) )
     ) true;
     
@@ -577,6 +582,7 @@ fun unitTestInterpreter() =
           x 
         )
       ) ), 
+      ( fn () => false ), 
       ( fn () => false ) )
     ) true;
     
@@ -589,6 +595,7 @@ fun unitTestInterpreter() =
             ] ) ),
             Unifier([]), 
             ( fn( x, y ) => eqUnifier ( Unifier([]), x ) ), 
+            ( fn () => false ), 
             ( fn () => false ) )
     ) true;
     
@@ -610,6 +617,7 @@ fun unitTestInterpreter() =
                 Term( Functor( "honey" ), [] )
               )
             ]), x ) ), 
+            ( fn () => false ), 
             ( fn () => false ) )
     ) true;
     
@@ -620,6 +628,7 @@ fun unitTestInterpreter() =
             Term( Functor( "purple" ), [] ),
             Unifier([]), 
             ( fn( x, y ) => false), 
+            ( fn () => true ), 
             ( fn () => true ) )
     ) true;
     
@@ -632,6 +641,7 @@ fun unitTestInterpreter() =
         ]) 
       ),
       ( fn x => eqUnifier ( Unifier([]), x ) ),
+      ( fn() => false ),
       ( fn() => false )
       )
     ) true;
@@ -645,6 +655,7 @@ fun unitTestInterpreter() =
         ]) 
       ),
       ( fn x => false ),
+      ( fn() => true ),
       ( fn() => true )
       )
     ) true;
@@ -662,14 +673,15 @@ fun unitTestInterpreter() =
           Term( Functor( "pooh" ), [] )
         )
       ]), x ) ),
+      ( fn() => false ),
       ( fn() => false )
       )
-    ) true;
+    ) true
     
     (* ---------------------------------------------------------------------- *)
     
     (* B1( V, V ), B2( V, V ) *)
-    UnitTester.printResultPoly "substitute 1" ( 
+    (*UnitTester.printResultPoly "substitute 1" ( 
       substitute(
         Binding( Variable("1",0), Variable("2",0) ),
         Binding( Variable("3",0), Variable("4",0) )
@@ -823,7 +835,7 @@ fun unitTestInterpreter() =
         Binding( Term( Functor("4"), [] ), Variable("2",0) )
       ])
     )
-    eqUnifier
+    eqUnifier*)
   )
   end end;
   

@@ -162,6 +162,11 @@ fun executeQueries( _, [] ) = true
             let val {usr, sys} = Timer.checkCPUTimer( timer )
             in
                 print( Time.toString( Time.+( usr, sys ) ) );
+                print( " (" );
+                print( Time.toString( usr ) );
+                print( " + " );
+                print( Time.toString( sys ) );
+                print( ") " );
                 print "\n"
             end
             end end;
